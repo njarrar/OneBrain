@@ -9,19 +9,23 @@ nothing is thrown away.
 
 | Folder | What it is |
 | --- | --- |
-| `web/` | Next.js web app (and later the API the iPhone app uses) |
-| `db/migrations/` | Postgres schema, run in name order |
+| `web/` | Next.js web app, run on Cloudflare Workers (and later the API the iPhone app uses) |
+| `db/migrations/` | D1 (SQLite) schema, applied in name order by Wrangler |
+
+Everything runs on Cloudflare: the app on Workers, the data in D1 (`digital-brain`),
+and photos and screenshots in R2 (`digital-brain-files`).
 
 ## Run it locally
 
-You need Node 20+ and a Postgres database (a free Supabase project works).
+You need Node 20+. Wrangler keeps a local copy of D1 and R2 in `web/.wrangler`.
 
 ```sh
 cd web
 npm install
-cp .env.example .env.local      # then fill in DATABASE_URL, APP_PASSWORD, SESSION_SECRET
-npm run migrate                 # creates the tables
+cp .dev.vars.example .dev.vars  # then set APP_PASSWORD and SESSION_SECRET
+npm run migrate                 # creates the tables in the local D1 copy
 npm run dev                     # http://localhost:3000
+npm run preview                 # the real Worker build, http://localhost:8787
 ```
 
 ## Import X bookmarks you already exported
@@ -34,7 +38,15 @@ cd web
 npm run import:x -- ../../x-bookmark-manager/bookmarks_export.json ../../x-bookmarks-review/bookmarks_db.json
 ```
 
-Add `--status read` to keep them out of the inbox.
+Add `--remote` to load them into the real D1 database, and `--status read` to keep them out of the inbox.
+
+## Put it online
+
+1. Turn on R2 in the Cloudflare dashboard, then create the `digital-brain-files` bucket.
+2. `npm run migrate:remote` to create the tables in the real D1 database.
+3. Set the two secrets: `npx wrangler secret put APP_PASSWORD` and `npx wrangler secret put SESSION_SECRET`.
+4. `npm run deploy`, or connect this repo in Workers & Pages so each push to `main` deploys
+   (root directory `web`, build command `npx opennextjs-cloudflare build`, deploy command `npx opennextjs-cloudflare deploy`).
 
 ## Build order
 

@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local runs. In production set these as Worker secrets.
+APP_PASSWORD=change-me
+SESSION_SECRET=replace-with-a-long-random-string
