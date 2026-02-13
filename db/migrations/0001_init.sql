@@ -1,3 +1,4 @@
+-- Keep BEGIN and END in capitals: the real D1 database only splits triggers correctly that way.
 -- Core tables for the digital brain, on Cloudflare D1 (SQLite). One person, one database.
 -- Times are ISO 8601 text in UTC.
 
@@ -55,22 +56,22 @@ create virtual table items_fts using fts5 (
   tokenize = 'unicode61 remove_diacritics 2'
 );
 
-create trigger items_fts_insert after insert on items begin
+create trigger items_fts_insert after insert on items BEGIN
   insert into items_fts (rowid, title, note, summary, author, author_handle, body)
   values (new.rowid, new.title, new.note, new.summary, new.author, new.author_handle, new.body);
-end;
+END;
 
-create trigger items_fts_delete after delete on items begin
+create trigger items_fts_delete after delete on items BEGIN
   insert into items_fts (items_fts, rowid, title, note, summary, author, author_handle, body)
   values ('delete', old.rowid, old.title, old.note, old.summary, old.author, old.author_handle, old.body);
-end;
+END;
 
-create trigger items_fts_update after update of title, note, summary, author, author_handle, body on items begin
+create trigger items_fts_update after update of title, note, summary, author, author_handle, body on items BEGIN
   insert into items_fts (items_fts, rowid, title, note, summary, author, author_handle, body)
   values ('delete', old.rowid, old.title, old.note, old.summary, old.author, old.author_handle, old.body);
   insert into items_fts (rowid, title, note, summary, author, author_handle, body)
   values (new.rowid, new.title, new.note, new.summary, new.author, new.author_handle, new.body);
-end;
+END;
 
 -- Where and when each item was saved. An item can have many saves.
 create table saves (
@@ -80,7 +81,7 @@ create table saves (
   external_id  text,
   saved_at     text,
   original_url text,
-  raw          text,                          -- the source's data as JSON, kept as is
+  raw          text,                          -- the data from the source as JSON, kept as is
   created_at   text not null default (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   unique (source_id, external_id)
 );
