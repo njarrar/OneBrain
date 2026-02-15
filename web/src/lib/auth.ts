@@ -1,39 +1,69 @@
-// One person uses this app, so sign in is a single password from APP_PASSWORD.
-// The session cookie holds an HMAC of a fixed message, keyed by SESSION_SECRET.
-// Uses Web Crypto so it also runs in middleware.
+import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
+import { nextCookies } from "better-auth/next-js";
+import { username } from "better-auth/plugins";
+import { env } from "@/lib/db";
 
-export const SESSION_COOKIE = "brain_session";
-
-async function hmac(message: string): Promise<string> {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) throw new Error("SESSION_SECRET is not set");
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
-  return Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, "0")).join("");
+// This is a personal archive, so not everyone who finds the URL may make an account.
+// ALLOWED_EMAILS (comma separated) lists who may. Without it, only the first account
+// can be created, and sign up closes after that.
+async function mayCreateAccount(e: CloudflareEnv, email: string): Promise<boolean> {
+  const allowed = (e.ALLOWED_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowed.length) return allowed.includes(email.toLowerCase());
+  const row = await e.DB.prepare(`select count(*) as n from "user"`).first<{ n: number }>();
+  return (row?.n ?? 0) === 0;
 }
 
-export function sessionToken(): Promise<string> {
-  return hmac("brain-session-v1");
+function build(e: CloudflareEnv) {
+  const google =
+    e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET
+      ? { google: { clientId: e.GOOGLE_CLIENT_ID, clientSecret: e.GOOGLE_CLIENT_SECRET } }
+      : {};
+  const apple =
+    e.APPLE_CLIENT_ID && e.APPLE_CLIENT_SECRET
+      ? { apple: { clientId: e.APPLE_CLIENT_ID, clientSecret: e.APPLE_CLIENT_SECRET, appBundleIdentifier: e.APPLE_APP_BUNDLE_ID } }
+      : {};
+
+  return betterAuth({
+    database: e.DB,
+    secret: e.BETTER_AUTH_SECRET,
+    baseURL: e.BETTER_AUTH_URL,
+    trustedOrigins: ["https://appleid.apple.com"],
+    emailAndPassword: { enabled: true, minPasswordLength: 10 },
+    socialProviders: { ...google, ...apple },
+    session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            if (!(await mayCreateAccount(e, user.email))) {
+              throw new APIError("FORBIDDEN", { message: "This archive is private. Sign up is closed." });
+            }
+          },
+        },
+      },
+    },
+    plugins: [username(), nextCookies()],
+  });
 }
 
-export async function isValidSession(token: string | undefined): Promise<boolean> {
-  if (!token) return false;
-  const expected = await sessionToken();
-  if (token.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < token.length; i++) diff |= token.charCodeAt(i) ^ expected.charCodeAt(i);
-  return diff === 0;
+export type Auth = ReturnType<typeof build>;
+
+let cached: { db: D1Database; auth: Auth } | undefined;
+
+export async function getAuth(): Promise<Auth> {
+  const e = await env();
+  if (!cached || cached.db !== e.DB) cached = { db: e.DB, auth: build(e) };
+  return cached.auth;
 }
 
-export async function passwordMatches(input: string): Promise<boolean> {
-  const real = process.env.APP_PASSWORD;
-  if (!real) return false;
-  // Compare HMACs so the check takes the same time whatever the input.
-  return (await hmac("pw:" + input)) === (await hmac("pw:" + real));
+export async function enabledProviders(): Promise<{ google: boolean; apple: boolean }> {
+  const e = await env();
+  return {
+    google: !!(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET),
+    apple: !!(e.APPLE_CLIENT_ID && e.APPLE_CLIENT_SECRET),
+  };
 }

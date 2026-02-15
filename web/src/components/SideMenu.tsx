@@ -13,10 +13,12 @@ export function SideMenu({
   views,
   categories,
   tags,
+  userName,
 }: {
   views: { inbox: number; all: number; archived: number };
   categories: Count[];
   tags: Count[];
+  userName: string;
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
@@ -90,7 +92,10 @@ export function SideMenu({
         <div className="menu-group">
           {row("/sources", "Sources", null, pathname === "/sources")}
           <form action={logout}>
-            <button className="menu-row as-button" type="submit">Sign out</button>
+            <button className="menu-row as-button" type="submit">
+              <span>Sign out</span>
+              <span className="count" dir="auto">{userName}</span>
+            </button>
           </form>
         </div>
       </nav>

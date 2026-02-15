@@ -1,28 +1,17 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db, env, first, now, run } from "@/lib/db";
-import { SESSION_COOKIE, passwordMatches, sessionToken } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
+import { requireUser } from "@/lib/session";
 import { unfurl } from "@/lib/unfurl";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-export async function login(_: string | null, form: FormData): Promise<string | null> {
-  if (!(await passwordMatches(String(form.get("password") ?? "")))) return "That password is wrong.";
-  (await cookies()).set(SESSION_COOKIE, await sessionToken(), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 90,
-  });
-  redirect("/");
-}
-
 export async function logout() {
-  (await cookies()).delete(SESSION_COOKIE);
+  await (await getAuth()).api.signOut({ headers: await headers() });
   redirect("/login");
 }
 
@@ -32,17 +21,20 @@ function done(id: string) {
 }
 
 export async function saveNote(id: string, form: FormData) {
+  await requireUser();
   const note = String(form.get("note") ?? "").trim() || null;
   await run(`update items set note = ?, updated_at = ? where id = ?`, note, now(), id);
   done(id);
 }
 
 export async function setStatus(id: string, status: "inbox" | "read" | "archived") {
+  await requireUser();
   await run(`update items set status = ?, updated_at = ? where id = ?`, status, now(), id);
   done(id);
 }
 
 export async function setCategory(id: string, form: FormData) {
+  await requireUser();
   const category = String(form.get("category") ?? "") || null;
   await run(`update items set category = ?, updated_at = ? where id = ?`, category, now(), id);
   done(id);
@@ -66,12 +58,14 @@ function splitTags(raw: FormDataEntryValue | null): string[] {
 }
 
 export async function addTags(id: string, form: FormData) {
+  await requireUser();
   const stmts = await tagStatements(id, splitTags(form.get("tags")));
   if (stmts.length) await (await db()).batch(stmts);
   done(id);
 }
 
 export async function removeTag(id: string, name: string) {
+  await requireUser();
   await run(
     `delete from item_tags where item_id = ? and tag_id in (select id from tags where name = ?)`,
     id,
@@ -81,6 +75,7 @@ export async function removeTag(id: string, name: string) {
 }
 
 export async function addItem(_: string | null, form: FormData): Promise<string | null> {
+  await requireUser();
   const url = String(form.get("url") ?? "").trim() || null;
   const note = String(form.get("note") ?? "").trim() || null;
   let title = String(form.get("title") ?? "").trim() || null;

@@ -158,3 +158,12 @@ textarea { resize: vertical; }
 .pill.warn { background: var(--warn-bg); color: var(--warn); }
 .pill.bad { background: var(--bad-bg); color: var(--bad); }
 .pill.off { background: var(--bg); color: var(--soft); }
+
+/* Sign in */
+.login-box { display: flex; flex-direction: column; gap: 14px; }
+.login-box .viewing button { font: inherit; font-size: 13px; cursor: pointer; background: none; }
+.login-box .viewing .seg.on { background: var(--ink); color: var(--bg); }
+.social { display: flex; flex-direction: column; gap: 8px; }
+.social-btn { width: 100%; text-align: center; }
+.social-btn.apple { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.or { text-align: center; }

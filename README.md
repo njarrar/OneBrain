@@ -22,7 +22,7 @@ You need Node 20+. Wrangler keeps a local copy of D1 and R2 in `web/.wrangler`.
 ```sh
 cd web
 npm install
-cp .dev.vars.example .dev.vars  # then set APP_PASSWORD and SESSION_SECRET
+cp .dev.vars.example .dev.vars  # then set BETTER_AUTH_SECRET
 npm run migrate                 # creates the tables in the local D1 copy
 npm run dev                     # http://localhost:3000
 npm run preview                 # the real Worker build, http://localhost:8787
@@ -42,11 +42,21 @@ Add `--remote` to load them into the real D1 database, and `--status read` to ke
 
 ## Put it online
 
-1. Turn on R2 in the Cloudflare dashboard, then create the `digital-brain-files` bucket.
-2. `npm run migrate:remote` to create the tables in the real D1 database.
-3. Set the two secrets: `npx wrangler secret put APP_PASSWORD` and `npx wrangler secret put SESSION_SECRET`.
-4. `npm run deploy`, or connect this repo in Workers & Pages so each push to `main` deploys
-   (root directory `web`, build command `npx opennextjs-cloudflare build`, deploy command `npx opennextjs-cloudflare deploy`).
+Every push to `main` publishes the app: `.github/workflows/deploy.yml` applies new D1
+migrations, then builds and deploys the Worker. It needs a `CLOUDFLARE_API_TOKEN`
+repository secret (Edit Cloudflare Workers template, plus D1 Edit).
+
+Worker secrets, set once with `npx wrangler secret put NAME`:
+
+| Secret | What it is |
+| --- | --- |
+| `BETTER_AUTH_SECRET` | Long random string that signs sessions |
+| `ALLOWED_EMAILS` | Who may create an account, comma separated. Unset means only the first account |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Shows "Continue with Google" |
+| `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_APP_BUNDLE_ID` | Optional. Shows "Continue with Apple" |
+
+Google's redirect URL is `https://<your app>/api/auth/callback/google`, and Apple's is
+`https://<your app>/api/auth/callback/apple`.
 
 ## Build order
 

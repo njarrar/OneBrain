@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, isValidSession } from "@/lib/auth";
+import { getSessionCookie } from "better-auth/cookies";
 
-export async function middleware(req: NextRequest) {
-  if (await isValidSession(req.cookies.get(SESSION_COOKIE)?.value)) return NextResponse.next();
+// A quick check for a session cookie. Pages and actions check the session itself.
+export function middleware(req: NextRequest) {
+  if (getSessionCookie(req)) return NextResponse.next();
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.search = "";
@@ -10,5 +11,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
 };
