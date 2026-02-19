@@ -34,6 +34,8 @@ function build(e: CloudflareEnv) {
     trustedOrigins: ["https://appleid.apple.com"],
     emailAndPassword: { enabled: true, minPasswordLength: 10 },
     socialProviders: { ...google, ...apple },
+    // Signing in with Google joins the account that already has that email.
+    account: { accountLinking: { enabled: true, trustedProviders: ["google"] } },
     session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
     databaseHooks: {
       user: {

@@ -1,0 +1,329 @@
+<title>Second Brain Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F4F1; --panel:#FFFFFF; --ink:#18202A; --soft:#56606B; --line:#D9DDD6;
+  --accent:#2F6B5E; --accent-bg:#E1EEE9;
+  --ok:#2F7D4F; --ok-bg:#E2F2E7; --warn:#9A6A12; --warn-bg:#FBF0D8; --bad:#A33A2F; --bad-bg:#F8E3DF;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12171C; --panel:#1A2128; --ink:#E6EAE7; --soft:#9AA5AE; --line:#2C353E;
+    --accent:#7CC2B0; --accent-bg:#1E3530;
+    --ok:#7CCB96; --ok-bg:#1C3226; --warn:#E3B45E; --warn-bg:#3A2E16; --bad:#EE8E81; --bad-bg:#3B211E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12171C; --panel:#1A2128; --ink:#E6EAE7; --soft:#9AA5AE; --line:#2C353E;
+  --accent:#7CC2B0; --accent-bg:#1E3530;
+  --ok:#7CCB96; --ok-bg:#1C3226; --warn:#E3B45E; --warn-bg:#3A2E16; --bad:#EE8E81; --bad-bg:#3B211E;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);padding-inline:20px;padding-block:32px 64px}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:26px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+p{margin:0;max-width:66ch}
+a{color:var(--accent)}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lead{font-size:17px;color:var(--soft)}
+section{display:flex;flex-direction:column;gap:18px}
+.muted{color:var(--soft)}
+code,.mono{font-family:var(--mono);font-size:13px}
+header{display:flex;flex-direction:column;gap:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font:13px var(--mono);color:var(--soft)}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:stretch}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.step b{font-family:var(--display);font-size:15px}
+.step span{font-size:13px;color:var(--soft);line-height:1.45}
+@media (max-width:720px){.flow{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.flow{grid-template-columns:1fr}}
+
+/* sources */
+.src{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.src-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.pill{font:500 12px/1 var(--mono);padding:5px 9px;border-radius:99px;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}
+.p-warn{background:var(--warn-bg);color:var(--warn)}
+.p-bad{background:var(--bad-bg);color:var(--bad)}
+.src dl{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin:0}
+.src dt{font:500 12px/1.6 var(--mono);color:var(--soft);text-transform:uppercase;letter-spacing:.05em}
+.src dd{margin:0}
+@media (max-width:520px){.src dl{grid-template-columns:1fr}.src dt{margin-top:6px}}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+tr:last-child td{border-bottom:0}
+td code{color:var(--accent)}
+
+pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;margin:0;font:13px/1.55 var(--mono)}
+
+/* screens */
+.screens{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.phone{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.phone h3{font-size:16px}
+.phone .what{font-size:13px;color:var(--soft)}
+.mock{border:1px dashed var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.chip{font:500 11px/1 var(--mono);padding:4px 7px;border-radius:5px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.bar{height:30px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;padding:0 10px;color:var(--soft)}
+.btn{font:500 12px var(--body);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:3px 8px}
+
+/* build order */
+ol.phases{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;counter-reset:ph}
+ol.phases li{counter-increment:ph;display:grid;grid-template-columns:44px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+ol.phases li::before{content:counter(ph);font:700 22px var(--display);color:var(--accent)}
+ol.phases li div{display:flex;flex-direction:column;gap:4px}
+ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.note{background:var(--accent-bg);border-radius:10px;padding:14px 16px}
+.sources a{word-break:break-word}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Design draft · 27 Sep 2026</span>
+  <h1>A second brain for everything you save</h1>
+  <p class="lead">One place that pulls in your X bookmarks, YouTube playlists and saved videos, Instagram saves, screenshots and Feedly saves, has Claude sort and tag them, and lets you search, read, archive and retag each one on iPhone and the web. Nothing gets thrown away.</p>
+  <div class="meta"><span>Stage: design, no code yet</span><span>Apps: iOS + web</span><span>Owner: one person</span></div>
+</header>
+
+<section>
+  <span class="eyebrow">How it works</span>
+  <h2>Every item takes the same five steps</h2>
+  <div class="flow">
+    <div class="step"><b>1. Collect</b><span>A sync job, an import file, or the iPhone share sheet drops the raw item in.</span></div>
+    <div class="step"><b>2. Keep the raw copy</b><span>Store the original data as is, before anything else touches it.</span></div>
+    <div class="step"><b>3. Fill in</b><span>Fetch the page text, images and author. Read the text inside screenshots.</span></div>
+    <div class="step"><b>4. Sort with Claude</b><span>Claude picks a category, tags, a title and a two line summary.</span></div>
+    <div class="step"><b>5. Show</b><span>The item lands in your inbox, ready to search, read, archive or retag.</span></div>
+  </div>
+  <p class="muted">The same item saved in two places (a link you bookmarked on X and also saved in Feedly) becomes one item that remembers both places and both dates.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Sources</span>
+  <h2>What each source allows today</h2>
+  <p>I checked each one against current docs. Only X and YouTube have a real, open way to read your saves. The rest need a workaround, and the plan below uses the most solid one for each.</p>
+
+  <div class="src">
+    <div class="src-head"><h3>X (Twitter) bookmarks</h3><span class="pill p-ok">Official API</span></div>
+    <dl>
+      <dt>How</dt><dd>Sign in with X once (OAuth, <code>bookmark.read</code> scope), then a job pulls new bookmarks every few hours.</dd>
+      <dt>Cost</dt><dd>X now charges per read. Reading your own bookmarks counts as an "owned read" at $0.001 per post, so 1,000 bookmarks costs about $1. You need your own X developer app with billing on.</dd>
+      <dt>Catch</dt><dd>Developers report the API only returns your 800 most recent bookmarks. For older ones, a one time helper scrolls your bookmarks page in your own browser and saves what it sees. That helper is a gray area under X's terms, so we run it once, by hand, if you want the old ones.</dd>
+    </dl>
+  </div>
+
+  <div class="src">
+    <div class="src-head"><h3>YouTube playlists and saved videos</h3><span class="pill p-ok">Official API, one gap</span></div>
+    <dl>
+      <dt>How</dt><dd>Sign in with Google once (read only YouTube access). A job then pulls your own playlists, every video in them, and your liked videos, and checks for new ones every few hours. It's free within YouTube's daily limit, which is far more than one person needs.</dd>
+      <dt>Catch</dt><dd>Since 2016 YouTube's API returns an empty list for Watch Later. So for Watch Later, and for playlists other people made that you saved, the plan is a Google Takeout export of your YouTube data, uploaded once. After that, new saves come in through the share sheet: tap Share on a video in the YouTube app and pick "Save to Brain".</dd>
+      <dt>Extra</dt><dd>For each video the app stores the title, channel, length and description, and pulls the captions where the owner allows it, so Claude can tag the video by what it says and search finds words spoken in it.</dd>
+    </dl>
+  </div>
+
+  <div class="src">
+    <div class="src-head"><h3>Instagram saves</h3><span class="pill p-bad">No API</span></div>
+    <dl>
+      <dt>How</dt><dd><b>Past saves:</b> request your data from Instagram (Accounts Center, Download your information, JSON). Its <code>saved_posts.json</code> file lists each post's link, the account, and when you saved it. You upload that file and the app imports it.<br><b>New saves:</b> in Instagram, tap Share on a post and pick "Save to Brain". The iOS app catches it at once.</dd>
+      <dt>Catch</dt><dd>The export has no caption and no image, only links. To fill those in, the app can fetch the public post preview. Posts that got deleted stay as links with the account and date.</dd>
+    </dl>
+  </div>
+
+  <div class="src">
+    <div class="src-head"><h3>Screenshots (Google Photos)</h3><span class="pill p-warn">Limited API</span></div>
+    <dl>
+      <dt>How</dt><dd><b>On iPhone:</b> the iOS app asks for photo access and reads the Screenshots album on the phone itself. This is the best path, since your screenshots start there before they reach Google Photos.<br><b>Past screenshots in Google Photos:</b> Google Takeout exports them as a zip you upload once. For odd ones, the web app opens Google's photo picker so you choose which to add.</dd>
+      <dt>Catch</dt><dd>Since March 2025 Google no longer lets outside apps read your whole Google Photos library. Apps only see photos you pick by hand. So no app can quietly sync all your Google Photos screenshots anymore.</dd>
+    </dl>
+  </div>
+
+  <div class="src">
+    <div class="src-head"><h3>Feedly saved for later</h3><span class="pill p-warn">Paid plan only</span></div>
+    <dl>
+      <dt>How</dt><dd>Feedly's own API tokens are only for Enterprise plans now. The workable path: an IFTTT or Zapier rule "new article saved for later in Feedly" that sends each save to the app. For past saves, a one time export or a request to Feedly support for a personal token.</dd>
+      <dt>Catch</dt><dd>I still need to confirm the IFTTT or Zapier Feedly trigger works on your Feedly plan. If it does not, the fallback is the share sheet from the Feedly app, same as Instagram.</dd>
+    </dl>
+  </div>
+
+  <div class="src">
+    <div class="src-head"><h3>Anything else, by hand</h3><span class="pill p-ok">Built in</span></div>
+    <dl>
+      <dt>How</dt><dd>Paste a link, type a note, or add a photo or file, from the web app or the iPhone share sheet. The share sheet also covers Safari, YouTube, Reddit and any app with a Share button.</dd>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Claude</span>
+  <h2>How Claude sorts and tags</h2>
+  <ul class="plain">
+    <li><b>One call per item.</b> Claude gets the item's text, the page it links to, and for images the picture itself (it can read text in screenshots). It also gets your current list of categories and tags, so it reuses them instead of inventing near copies.</li>
+    <li><b>It returns fixed fields:</b> a title, a two line summary, one category, three to six tags, and the content type (thread, article, recipe, product, quote, place, video, and so on).</li>
+    <li><b>Your tags win.</b> Tags Claude adds are marked "suggested". Tags you add or keep are marked "yours" and Claude never removes them. When you retag, the app saves the change as an example so Claude learns your style on later items.</li>
+    <li><b>Cheap first import.</b> The big first import runs through Anthropic's batch mode, which costs half as much. A fast, small model (Haiku 4.5) does most items, and a stronger one (Sonnet 5) handles long articles or items the first pass is unsure about.</li>
+    <li><b>Your notes count.</b> A note you add to a bookmark is searchable, and Claude reads it when tagging, so a note like "gift idea for Dad" can add a gifts tag.</li>
+    <li><b>Search by meaning.</b> Each item also gets a vector, so "that thread about sleep and caffeine" finds it even if those words never appear.</li>
+  </ul>
+<pre>{
+  "title": "How to cut caffeine without losing focus",
+  "summary": "Thread on tapering coffee over 2 weeks. Swaps and timing tips.",
+  "category": "Health",
+  "tags": ["sleep", "caffeine", "habits"],
+  "kind": "thread"
+}</pre>
+</section>
+
+<section>
+  <span class="eyebrow">Data</span>
+  <h2>What we store</h2>
+  <p>One Postgres database holds everything, with files (images, screenshots, saved pages) in object storage next to it. The original raw data from each source is always kept, so we can redo tagging later with a better model without fetching anything again. A full export (JSON plus files) is one button in Settings.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Table</th><th>Holds</th><th>Key fields</th></tr></thead>
+    <tbody>
+      <tr><td><code>items</code></td><td>One row per saved thing</td><td>title, summary, body text, your note, url, kind, category, status (inbox, read, archived), vector</td></tr>
+      <tr><td><code>saves</code></td><td>Where and when you saved it. An item can have many.</td><td>item, source, saved at, link back to the original, raw data</td></tr>
+      <tr><td><code>sources</code></td><td>Your connected accounts</td><td>kind (x, youtube, instagram, photos, feedly, manual), status, last sync, error</td></tr>
+      <tr><td><code>tags</code>, <code>item_tags</code></td><td>Tags and who added them</td><td>name, added by (you or Claude), added at</td></tr>
+      <tr><td><code>files</code></td><td>Images, screenshots, saved page copies</td><td>item, type, size, storage path</td></tr>
+      <tr><td><code>sync_runs</code></td><td>A log of each sync or import</td><td>source, started, finished, items added, errors</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">Screens</span>
+  <h2>The iOS and web screens</h2>
+  <p>Both apps show the same screens. On the web a side menu stays open on the left, with the item list and the open item beside it. On iPhone the same menu slides in from the left. The iPhone app also adds the share sheet and screenshot access.</p>
+  <div class="screens">
+    <div class="phone">
+      <h3>Inbox</h3><span class="what">New items, newest first. Swipe to archive or mark read.</span>
+      <div class="mock">
+        <div class="row"><b>Cut caffeine without losing focus</b></div>
+        <div class="row"><span class="chips"><span class="chip">X</span><span class="chip">sleep</span></span><span class="muted">2h</span></div>
+        <div class="row"><b>Pasta alla vodka, 20 min</b></div>
+        <div class="row"><span class="chips"><span class="chip">Instagram</span><span class="chip">recipe</span></span><span class="muted">1d</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <h3>Search</h3><span class="what">Type words or a plain question. Filter by source, tag, category, date, status.</span>
+      <div class="mock">
+        <div class="bar">that sleep thread from spring</div>
+        <div class="chips"><span class="chip">Source: X</span><span class="chip">Mar to May</span></div>
+        <div class="row"><b>Cut caffeine without losing focus</b></div>
+      </div>
+    </div>
+    <div class="phone">
+      <h3>Item</h3><span class="what">Clean reading view, original link, where you saved it, and your own note.</span>
+      <div class="mock">
+        <b>Cut caffeine without losing focus</b>
+        <span class="muted">Saved on X, 3 Sep 2026 · also in Feedly, 5 Sep</span>
+        <div class="chips"><span class="chip">sleep</span><span class="chip">caffeine</span><span class="chip">+ tag</span></div>
+        <div class="bar">Note: try the 2 week taper in January</div>
+        <div class="row"><span class="btn">Open original</span><span class="btn">Archive</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <h3>Side menu</h3><span class="what">Every category and tag with its count. Tap one to see everything in it. Rename or merge tags from here.</span>
+      <div class="mock">
+        <span class="muted mono">CATEGORIES</span>
+        <div class="row"><span>Health</span><span class="mono">214</span></div>
+        <div class="row"><span>Cooking</span><span class="mono">98</span></div>
+        <span class="muted mono">TAGS</span>
+        <div class="row"><span>sleep</span><span class="mono">37</span></div>
+        <div class="row"><span>recipe</span><span class="mono">61</span></div>
+        <span class="muted mono">ALSO</span>
+        <div class="row"><span>Inbox · Archive · Sources</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <h3>Add</h3><span class="what">Paste a link, write a note, or add a photo or file.</span>
+      <div class="mock">
+        <div class="bar">Paste a link</div>
+        <div class="bar">Write a note</div>
+        <div class="row"><span class="btn">Add photo</span><span class="btn">Save</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <h3>Sources</h3><span class="what">What is connected, when it last synced, and anything broken.</span>
+      <div class="mock">
+        <div class="row"><span>X</span><span class="pill p-ok">Synced 1h ago</span></div>
+        <div class="row"><span>YouTube</span><span class="pill p-ok">Synced 3h ago</span></div>
+        <div class="row"><span>Instagram</span><span class="pill p-warn">Import file</span></div>
+        <div class="row"><span>Screenshots</span><span class="pill p-ok">On</span></div>
+        <div class="row"><span>Feedly</span><span class="pill p-bad">Not set up</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Build</span>
+  <h2>Tools I suggest</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Part</th><th>Pick</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Database, files, sign in</td><td>Supabase (Postgres + pgvector)</td><td>One service covers data, vectors for search, file storage and login.</td></tr>
+      <tr><td>Web app and API</td><td>Next.js</td><td>One codebase for the web screens and the sync and import endpoints.</td></tr>
+      <tr><td>iPhone app</td><td>SwiftUI</td><td>The share sheet and the Screenshots album work best in a native app.</td></tr>
+      <tr><td>Background jobs</td><td>Scheduled jobs + a queue</td><td>Runs X sync, fills in pages, and calls Claude without blocking the app.</td></tr>
+      <tr><td>AI</td><td>Claude API</td><td>Tagging, summaries, reading screenshots, batch mode for the first import.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">Order</span>
+  <h2>Build order</h2>
+  <p>Each step leaves you with something you can use.</p>
+  <ol class="phases">
+    <li><div><h3>Core and add by hand</h3><p>Database, sign in, the web app with Inbox, Item and Add. You can save links and notes on day one.</p></div></li>
+    <li><div><h3>Claude sorting and search</h3><p>Tags, summaries, categories, word and meaning search, the side menu of tags and categories, notes, retag and archive.</p></div></li>
+    <li><div><h3>X bookmarks and YouTube</h3><p>Connect X and YouTube. Pull the latest 800 bookmarks, your playlists and liked videos, then sync every few hours. Sources screen goes live.</p></div></li>
+    <li><div><h3>iPhone app</h3><p>Same screens, plus the share sheet (covers new Instagram and Feedly saves) and the Screenshots album.</p></div></li>
+    <li><div><h3>Past Instagram, YouTube Watch Later, Feedly and Google Photos</h3><p>Import the Instagram JSON, the Google Takeout zips (YouTube and Photos), and set up the Feedly rule.</p></div></li>
+    <li><div><h3>Later</h3><p>Ask questions across your whole archive, weekly "things you saved and forgot" digest, and the one time X backfill if you want it.</p></div></li>
+  </ol>
+</section>
+
+<section>
+  <span class="eyebrow">Your call</span>
+  <h2>Things I need from you</h2>
+  <ul class="plain">
+    <li>Okay to set up a GitHub repo and start on step 1?</li>
+    <li>Are you fine paying X a small amount per bookmark read (about $1 per 1,000)?</li>
+    <li>Which Feedly plan do you have? That decides the Feedly path.</li>
+  </ul>
+</section>
+
+<section class="sources">
+  <span class="eyebrow">Checked against</span>
+  <ul class="plain muted">
+    <li><a href="https://docs.x.com/x-api/getting-started/pricing">X API pay per use pricing</a></li>
+    <li><a href="https://docs.x.com/x-api/posts/bookmarks/quickstart/bookmarks-lookup">X bookmarks lookup</a></li>
+    <li><a href="https://devcommunity.x.com/t/bookmark-retrieves-only-800-most-recent/169433">X forum: 800 most recent bookmarks</a></li>
+    <li><a href="https://developers.google.com/youtube/v3/revision_history">YouTube API history: Watch Later empty since 2016</a></li>
+    <li><a href="https://developers.google.com/youtube/v3/docs/playlists">YouTube playlists API</a></li>
+    <li><a href="https://developers.google.com/photos/support/updates">Google Photos API changes, March 2025</a></li>
+    <li><a href="https://www.marqly.com/blog/export-instagram-saved-posts">Exporting Instagram saved posts</a></li>
+    <li><a href="https://developers.feedly.com/reference/authorization">Feedly API sign in rules</a></li>
+  </ul>
+</section>
+
+</div>

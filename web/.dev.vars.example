@@ -8,3 +8,6 @@ GOOGLE_CLIENT_SECRET=
 APPLE_CLIENT_ID=
 APPLE_CLIENT_SECRET=
 APPLE_APP_BUNDLE_ID=
+
+# The live URL is set in wrangler.jsonc. Point it at your machine when running locally.
+BETTER_AUTH_URL=http://localhost:3000

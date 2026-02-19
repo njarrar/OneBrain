@@ -4,6 +4,8 @@ One place for everything you save: X bookmarks, YouTube, Instagram saves,
 screenshots, Feedly and things added by hand. Claude sorts and tags it all, and
 nothing is thrown away.
 
+The design lives in [docs/second-brain-plan.html](docs/second-brain-plan.html).
+
 
 ## Layout
 

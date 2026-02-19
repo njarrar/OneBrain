@@ -15,5 +15,6 @@
     }
   ],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "digital-brain-files" }],
+  "vars": { "BETTER_AUTH_URL": "https://brain.example.workers.dev" },
   "observability": { "enabled": true }
 }
