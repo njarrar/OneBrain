@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { logout } from "@/lib/actions";
 
 type Count = { name: string; count: number };
+type CategoryCount = Count & { color: string | null };
 
 const TOP_TAGS = 25;
 
@@ -15,8 +16,8 @@ export function SideMenu({
   tags,
   userName,
 }: {
-  views: { inbox: number; all: number; archived: number };
-  categories: Count[];
+  views: { inbox: number; all: number; archived: number; media: number; sensitive: number };
+  categories: CategoryCount[];
   tags: Count[];
   userName: string;
 }) {
@@ -31,13 +32,19 @@ export function SideMenu({
   const view = params.get("view") ?? "inbox";
   const category = params.get("category");
   const tag = params.get("tag");
-  const filtered = !!(category || tag || params.get("source") || params.get("q"));
+  const media = params.get("media");
+  const sensitive = params.get("sensitive") === "1";
+  const filtered = !!(category || tag || media || sensitive || params.get("lang") || params.get("source") || params.get("q"));
+  const only = (key: string) => onList && [...params.keys()].every((k) => k === key || k === "view" || k === "layout");
   const isView = (v: string) => onList && !filtered && view === v;
   const shownTags = allTags ? tags : tags.slice(0, TOP_TAGS);
 
-  const row = (href: string, label: string, count: number | null, active: boolean) => (
+  const row = (href: string, label: string, count: number | null, active: boolean, color?: string | null) => (
     <Link href={href} className={active ? "menu-row active" : "menu-row"} aria-current={active ? "page" : undefined}>
-      <span dir="auto">{label}</span>
+      <span dir="auto">
+        {color !== undefined && <i className="dot" style={{ background: color ?? "var(--soft)" }} aria-hidden="true" />}
+        {label}
+      </span>
       {count !== null && <span className="count">{count.toLocaleString()}</span>}
     </Link>
   );
@@ -67,12 +74,14 @@ export function SideMenu({
           {row("/", "Inbox", views.inbox, isView("inbox"))}
           {row("/?view=all", "All", views.all, isView("all"))}
           {row("/?view=archived", "Archive", views.archived, isView("archived"))}
+          {row("/?view=all&media=with", "With media", views.media, only("media") && media === "with")}
+          {row("/?view=all&sensitive=1", "Sensitive", views.sensitive, only("sensitive") && sensitive)}
         </div>
 
         <div className="menu-group">
           <div className="menu-label">Categories</div>
           {categories.map((c) =>
-            row(`/?view=all&category=${encodeURIComponent(c.name)}`, c.name, c.count, onList && category === c.name),
+            row(`/?view=all&category=${encodeURIComponent(c.name)}`, c.name, c.count, onList && category === c.name, c.color),
           )}
         </div>
 

@@ -2,6 +2,7 @@
 interface CloudflareEnv {
   BETTER_AUTH_URL?: string;
   GOOGLE_CLIENT_ID?: string;
+  ANTHROPIC_API_KEY?: string;
   GOOGLE_CLIENT_SECRET?: string;
   APPLE_CLIENT_ID?: string;
   APPLE_CLIENT_SECRET?: string;

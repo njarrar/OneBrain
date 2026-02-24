@@ -1,18 +1,76 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db, env, first, now, run } from "@/lib/db";
 import { getAuth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 import { unfurl } from "@/lib/unfurl";
+import { sortItems, unsortedCount } from "@/lib/sorter";
+import { importInstagram } from "@/lib/instagram";
+import { disconnect as disconnectYT, syncYouTube } from "@/lib/youtube";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export async function logout() {
   await (await getAuth()).api.signOut({ headers: await headers() });
   redirect("/login");
+}
+
+// Blur on sensitive items is on unless you turn it off.
+export async function toggleBlur() {
+  await requireUser();
+  const jar = await cookies();
+  const off = jar.get("blur")?.value === "off";
+  jar.set("blur", off ? "on" : "off", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: true, httpOnly: true });
+  revalidatePath("/", "layout");
+}
+
+// Sorts the next batch of unsorted items. The Sources page calls this in a loop.
+export async function sortNext(): Promise<{ sorted: number; remaining: number; error?: string }> {
+  await requireUser();
+  try {
+    const sorted = await sortItems();
+    revalidatePath("/", "layout");
+    return { sorted, remaining: await unsortedCount() };
+  } catch (err) {
+    return { sorted: 0, remaining: await unsortedCount(), error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+const MAX_IMPORT_BYTES = 90 * 1024 * 1024;
+
+export async function importInstagramFile(_: string | null, form: FormData): Promise<string | null> {
+  await requireUser();
+  const file = form.get("file");
+  if (!(file instanceof File) || !file.size) return "Pick your Instagram file first.";
+  if (file.size > MAX_IMPORT_BYTES) return "That file is too big. Ask Instagram for JSON with low media quality, or upload only saved_posts.json.";
+  try {
+    const r = await importInstagram(file.name, new Uint8Array(await file.arrayBuffer()));
+    revalidatePath("/", "layout");
+    return `Found ${r.found.toLocaleString()} saved posts, ${r.added.toLocaleString()} of them new.`;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+export async function syncYouTubeNow(): Promise<string> {
+  await requireUser();
+  try {
+    const added = await syncYouTube();
+    revalidatePath("/", "layout");
+    return `Done. ${added.toLocaleString()} new YouTube saves.`;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+export async function disconnectYouTube() {
+  await requireUser();
+  await disconnectYT();
+  revalidatePath("/sources");
 }
 
 function done(id: string) {
@@ -132,6 +190,9 @@ export async function addItem(_: string | null, form: FormData): Promise<string 
   }
   stmts.push(...(await tagStatements(id, tags)));
   await d.batch(stmts);
+
+  // Claude sorts the new item in the background, so saving stays quick.
+  if (!existing) getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
 
   revalidatePath("/", "layout");
   redirect(`/item/${id}`);

@@ -39,6 +39,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
           {item.posted_at && <span className="muted"> · {shortDate(item.posted_at)}</span>}
         </p>
       )}
+      {item.subtopic && <span className="topic" dir="auto">{item.subtopic}</span>}
       {heading && <h1 className="item-title" dir="auto">{heading}</h1>}
       {item.summary && <p className="summary" dir="auto">{item.summary}</p>}
       {item.body && <div className={item.title ? "body" : "body lead-text"} dir="auto">{item.body}</div>}

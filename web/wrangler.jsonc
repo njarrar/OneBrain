@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "digital-brain",
-  "main": ".open-next/worker.js",
+  "main": "worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
@@ -16,5 +16,6 @@
   ],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "digital-brain-files" }],
   "vars": { "BETTER_AUTH_URL": "https://brain.example.workers.dev" },
+  "triggers": { "crons": ["0 */6 * * *"] },
   "observability": { "enabled": true }
 }

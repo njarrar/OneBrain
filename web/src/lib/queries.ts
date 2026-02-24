@@ -1,6 +1,12 @@
 import { all, first, ftsQuery } from "@/lib/db";
 
 export type View = "inbox" | "all" | "archived";
+export type MediaFilter = "with" | "without";
+export type Layout = "grid" | "list";
+export type Lang = "en" | "ar";
+
+// An item has media when it came with pictures or has an image file attached.
+const HAS_MEDIA = `(i.media <> '[]' or exists (select 1 from files f where f.item_id = i.id and f.mime like 'image/%'))`;
 
 export type ItemRow = {
   id: string;
@@ -11,22 +17,28 @@ export type ItemRow = {
   url: string | null;
   kind: string;
   category: string | null;
+  category_color: string | null;
+  subtopic: string | null;
+  lang: string | null;
+  sensitive: number;
   status: "inbox" | "read" | "archived";
   author: string | null;
   author_handle: string | null;
   posted_at: string | null;
   created_at: string;
   media: string[];
+  images: string[];
   sources: string[];
   tags: string[];
 };
 
-type RawItem = Omit<ItemRow, "media" | "sources" | "tags"> & { media: string; sources?: string; tags?: string };
+type RawItem = Omit<ItemRow, "media" | "images" | "sources" | "tags"> & { media: string; images?: string; sources?: string; tags?: string };
 
 function parse(r: RawItem): ItemRow {
   return {
     ...r,
     media: JSON.parse(r.media || "[]"),
+    images: JSON.parse(r.images || "[]"),
     sources: JSON.parse(r.sources || "[]"),
     tags: JSON.parse(r.tags || "[]"),
   };
@@ -38,6 +50,10 @@ export type ListFilter = {
   tag?: string;
   source?: string;
   q?: string;
+  media?: MediaFilter;
+  lang?: Lang;
+  sensitive?: boolean;
+  layout?: Layout;
   page: number;
 };
 
@@ -62,6 +78,13 @@ export async function listItems(f: ListFilter): Promise<{ items: ItemRow[]; tota
     conds.push(`exists (select 1 from saves s where s.item_id = i.id and s.source_id = ?)`);
     params.push(f.source);
   }
+  if (f.lang) {
+    conds.push(`i.lang = ?`);
+    params.push(f.lang);
+  }
+  if (f.sensitive) conds.push(`i.sensitive = 1`);
+  if (f.media === "with") conds.push(HAS_MEDIA);
+  else if (f.media === "without") conds.push(`not ${HAS_MEDIA}`);
   const match = f.q ? ftsQuery(f.q) : null;
   if (f.q && !match) conds.push("0");
   if (match) {
@@ -77,7 +100,9 @@ export async function listItems(f: ListFilter): Promise<{ items: ItemRow[]; tota
 
   const rows = await all<RawItem>(
     `select i.*,
+       (select color from categories c where c.name = i.category) as category_color,
        (select json_group_array(distinct s.source_id) from saves s where s.item_id = i.id) as sources,
+       (select json_group_array(f.id) from files f where f.item_id = i.id and f.mime like 'image/%') as images,
        (select json_group_array(name) from (select t.name from item_tags it join tags t on t.id = it.tag_id
           where it.item_id = i.id order by t.name)) as tags
      ${from} ${where} ${order} limit ? offset ?`,
@@ -90,7 +115,10 @@ export async function listItems(f: ListFilter): Promise<{ items: ItemRow[]; tota
 }
 
 export async function getItem(id: string) {
-  const raw = await first<RawItem>(`select * from items where id = ?`, id);
+  const raw = await first<RawItem>(
+    `select i.*, (select color from categories c where c.name = i.category) as category_color from items i where id = ?`,
+    id,
+  );
   if (!raw) return null;
   const item = parse(raw);
   const saves = await all<{ source_id: string; name: string; saved_at: string | null; original_url: string | null; created_at: string }>(
@@ -112,14 +140,16 @@ export async function getItem(id: string) {
 }
 
 export async function menuCounts() {
-  const views = (await first<{ inbox: number; all: number; archived: number }>(
+  const views = (await first<{ inbox: number; all: number; archived: number; media: number; sensitive: number }>(
     `select coalesce(sum(status = 'inbox'), 0) as inbox,
             coalesce(sum(status <> 'archived'), 0) as "all",
-            coalesce(sum(status = 'archived'), 0) as archived
-     from items`,
+            coalesce(sum(status = 'archived'), 0) as archived,
+            coalesce(sum(status <> 'archived' and ${HAS_MEDIA}), 0) as media,
+            coalesce(sum(status <> 'archived' and sensitive = 1), 0) as sensitive
+     from items i`,
   ))!;
-  const categories = await all<{ name: string; count: number }>(
-    `select c.name, count(i.id) as count
+  const categories = await all<{ name: string; color: string | null; count: number }>(
+    `select c.name, c.color, count(i.id) as count
      from categories c left join items i on i.category = c.name and i.status <> 'archived'
      group by c.name order by c.name`,
   );
@@ -138,6 +168,10 @@ export async function listSources() {
      from sources so
      order by case so.id when 'manual' then 1 else 0 end, so.name`,
   );
+}
+
+export async function listCategories() {
+  return all<{ name: string; color: string | null }>(`select name, color from categories order by name`);
 }
 
 export async function listCategoryNames(): Promise<string[]> {

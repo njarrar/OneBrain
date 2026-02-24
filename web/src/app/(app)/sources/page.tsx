@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { listSources } from "@/lib/queries";
 import { shortDate } from "@/lib/links";
+import { sorterReady, unsortedCount } from "@/lib/sorter";
+import { hookKey } from "@/lib/settings";
+import { env } from "@/lib/db";
+import { youtubeConnected } from "@/lib/youtube";
+import { disconnectYouTube } from "@/lib/actions";
+import { SortPanel } from "@/components/SortPanel";
+import { CopyField, InstagramImport, YouTubeSync } from "@/components/SourceTools";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
   connected: { label: "Connected", tone: "ok" },
@@ -9,20 +16,72 @@ const STATUS: Record<string, { label: string; tone: string }> = {
   error: { label: "Needs attention", tone: "bad" },
 };
 
-const NEXT_STEP: Record<string, string> = {
-  x: "Live sync with the X API comes in step 3.",
-  youtube: "Playlist and liked video sync comes in step 3.",
-  instagram: "Import your Instagram data file in step 5. New saves come from the iPhone share sheet.",
-  photos: "The iPhone app reads your Screenshots album in step 4.",
-  feedly: "An IFTTT rule sends each Feedly save here, set up in step 5.",
-  manual: "Links, notes and photos you add yourself.",
-};
-
 export default async function SourcesPage() {
-  const sources = await listSources();
+  const [sources, ready, unsorted, key, e, ytOn] = await Promise.all([
+    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(),
+  ]);
+  const base = e.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const feedlyHook = `${base}/api/ingest/feedly?key=${key}`;
+  const googleReady = !!(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET);
+
+  const extra: Record<string, React.ReactNode> = {
+    feedly: (
+      <details className="how">
+        <summary>Set up Feedly</summary>
+        <ol>
+          <li>Open <a href="https://ifttt.com/create" target="_blank" rel="noreferrer">ifttt.com/create</a> and sign in.</li>
+          <li>Click <b>If This</b>, pick <b>Feedly</b>, then <b>New article saved for later</b>. Connect your Feedly account.</li>
+          <li>Click <b>Then That</b>, pick <b>Webhooks</b>, then <b>Make a web request</b>.</li>
+          <li>URL: paste the link below. Method: <b>POST</b>. Content type: <b>application/json</b>.</li>
+          <li>Body: paste the text below, then click <b>Create action</b> and <b>Finish</b>.</li>
+        </ol>
+        <CopyField label="Feedly link" value={feedlyHook} />
+        <CopyField
+          label="Body"
+          value={'{"url":"{{EntryUrl}}","title":"{{EntryTitle}}","body":"{{EntryContent}}","author":"{{EntryAuthor}}","image":"{{EntryImageUrl}}","feed":"{{FeedTitle}}","published":"{{EntryPublished}}"}'}
+        />
+        <p className="small muted">Keep this link private. Anyone with it can add items to your Brain. IFTTT may ask for its Pro plan to use Webhooks.</p>
+      </details>
+    ),
+    instagram: (
+      <details className="how">
+        <summary>Import your saved posts</summary>
+        <ol>
+          <li>Open <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank" rel="noreferrer">Instagram&apos;s Download your information</a>.</li>
+          <li>Click <b>Download or transfer information</b>, pick your account, then <b>Some of your information</b>.</li>
+          <li>Tick <b>Saved</b> only, click <b>Next</b>, then <b>Download to device</b>.</li>
+          <li>Set Date range to <b>All time</b>, Format to <b>JSON</b>, Media quality to <b>Low</b>, then <b>Create files</b>.</li>
+          <li>When Instagram emails you, download the zip and pick it here.</li>
+        </ol>
+        <InstagramImport />
+        <p className="small muted">Instagram gives only the link, the account and the date, not the picture or caption.</p>
+      </details>
+    ),
+    youtube: ytOn ? (
+      <div className="inline-actions">
+        <YouTubeSync />
+        <form action={disconnectYouTube}><button className="link-btn">Disconnect</button></form>
+      </div>
+    ) : googleReady ? (
+      <a className="btn small" href="/api/youtube/connect" style={{ alignSelf: "flex-start" }}>Connect YouTube</a>
+    ) : (
+      <p className="small muted">Needs the Google keys first.</p>
+    ),
+  };
+
+  const NEXT: Record<string, string> = {
+    x: "Live sync with the X API comes next.",
+    youtube: "Brings in your liked videos and every video in your playlists, then checks again every six hours.",
+    instagram: "",
+    photos: "The iPhone app will read your Screenshots album.",
+    feedly: "Each article you save for later in Feedly arrives here through IFTTT.",
+    manual: "Links, notes and photos you add yourself.",
+  };
+
   return (
     <div className="narrow">
       <header className="page-head"><h1>Sources</h1></header>
+      <SortPanel ready={ready} remaining={unsorted} />
       <ul className="sources">
         {sources.map((s) => {
           const st = STATUS[s.status] ?? STATUS.not_connected;
@@ -33,11 +92,12 @@ export default async function SourcesPage() {
                 <span className={`pill ${st.tone}`}>{st.label}</span>
               </div>
               <p className="muted small">
-                {s.items.toLocaleString()} items
+                {s.items.toLocaleString()} {s.items === 1 ? "item" : "items"}
                 {s.last_sync_at && ` · last update ${shortDate(s.last_sync_at)}`}
               </p>
               {s.last_error && <p className="error small">{s.last_error}</p>}
-              <p className="small">{NEXT_STEP[s.id]}</p>
+              {NEXT[s.id] && <p className="small">{NEXT[s.id]}</p>}
+              {extra[s.id]}
             </li>
           );
         })}
