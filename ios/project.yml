@@ -1,0 +1,37 @@
+# Generate the Xcode project with: brew install xcodegen && xcodegen
+name: Brain
+options:
+  bundleIdPrefix: com.njarrar
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.10"
+    DEVELOPMENT_TEAM: ""   # set to your Apple team ID, or pick it in Xcode under Signing
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Brain:
+    type: application
+    platform: iOS
+    sources: [Brain, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.njarrar.brain
+        CODE_SIGN_ENTITLEMENTS: Brain/Brain.entitlements
+        INFOPLIST_FILE: Brain/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - target: BrainShare
+  BrainShare:
+    type: app-extension
+    platform: iOS
+    sources: [BrainShare, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.njarrar.brain.share
+        CODE_SIGN_ENTITLEMENTS: BrainShare/BrainShare.entitlements
+        INFOPLIST_FILE: BrainShare/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"

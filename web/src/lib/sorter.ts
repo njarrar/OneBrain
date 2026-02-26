@@ -18,7 +18,26 @@ type Pending = {
   author: string | null;
   author_handle: string | null;
   media: string;
+  kind: string;
 };
+
+const MAX_IMAGE = 4 * 1024 * 1024;
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+
+// Screenshots and photos have no text, so Claude looks at the picture itself.
+async function pictureBlock(itemId: string): Promise<Anthropic.ImageBlockParam | null> {
+  const f = await first<{ mime: string; size: number; r2_key: string }>(
+    `select mime, size, r2_key from files where item_id = ? and mime like 'image/%' order by created_at limit 1`,
+    itemId,
+  );
+  if (!f || f.size > MAX_IMAGE || !IMAGE_TYPES.has(f.mime)) return null;
+  const obj = await (await env()).FILES.get(f.r2_key);
+  if (!obj) return null;
+  const bytes = new Uint8Array(await obj.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return { type: "image", source: { type: "base64", media_type: f.mime as "image/jpeg", data: btoa(bin) } };
+}
 
 export async function sorterReady() {
   return !!(await env()).ANTHROPIC_API_KEY;
@@ -54,6 +73,18 @@ function describe(p: Pending) {
   ].filter(Boolean).join("\n");
 }
 
+async function contentFor(pending: Pending[]): Promise<Anthropic.ContentBlockParam[]> {
+  const blocks: Anthropic.ContentBlockParam[] = [];
+  for (const p of pending) {
+    blocks.push({ type: "text", text: describe(p) });
+    if (p.kind === "image") {
+      const pic = await pictureBlock(p.id);
+      if (pic) blocks.push({ type: "text", text: `Picture for item ${p.id}:` }, pic);
+    }
+  }
+  return blocks;
+}
+
 // Sorts the given items, or the next batch of unsorted ones. Returns how many it sorted.
 export async function sortItems(ids?: string[]): Promise<number> {
   const e = await env();
@@ -61,11 +92,11 @@ export async function sortItems(ids?: string[]): Promise<number> {
 
   const pending = ids?.length
     ? await all<Pending>(
-        `select id, title, body, url, author, author_handle, media from items where id in (${ids.map(() => "?").join(",")})`,
+        `select id, title, body, url, author, author_handle, media, kind from items where id in (${ids.map(() => "?").join(",")})`,
         ...ids,
       )
     : await all<Pending>(
-        `select id, title, body, url, author, author_handle, media from items where category is null
+        `select id, title, body, url, author, author_handle, media, kind from items where category is null
          order by coalesce(posted_at, created_at) desc limit ?`,
         BATCH,
       );
@@ -102,7 +133,7 @@ For every item give:
 - tags: 2 to 4 short English tags in Title Case.
 - lang: "ar" if the text is mainly Arabic, "en" if mainly English, otherwise "other".
 - sensitive: true for adult, explicit or NSFW content.`,
-    messages: [{ role: "user", content: pending.map(describe).join("\n\n") }],
+    messages: [{ role: "user", content: await contentFor(pending) }],
     output_config: { format: zodOutputFormat(Result) },
   });
   const out = response.parsed_output?.items ?? [];

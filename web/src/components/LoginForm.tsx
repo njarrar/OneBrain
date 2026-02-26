@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 
 type Mode = "signin" | "signup";
 
-export function LoginForm({ google, apple }: { google: boolean; apple: boolean }) {
+export function LoginForm({ google, apple, next = "/" }: { google: boolean; apple: boolean; next?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +33,13 @@ export function LoginForm({ google, apple }: { google: boolean; apple: boolean }
       setError(result.error.message ?? "That didn't work. Try again.");
       return;
     }
-    router.replace("/");
+    router.replace(next);
     router.refresh();
   }
 
   async function social(provider: "google" | "apple") {
     setError(null);
-    const result = await authClient.signIn.social({ provider, callbackURL: "/" });
+    const result = await authClient.signIn.social({ provider, callbackURL: next });
     if (result.error) setError(result.error.message ?? "That didn't work. Try again.");
   }
 

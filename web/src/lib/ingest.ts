@@ -66,10 +66,17 @@ export async function saveStatements(x: Incoming): Promise<{ id: string; stmts: 
   return { id, stmts };
 }
 
+// Saves one item and returns the id it ended up under (an older item with the same link wins).
 export async function saveOne(x: Incoming): Promise<string> {
   const { id, stmts } = await saveStatements(x);
-  await (await db()).batch(stmts);
-  return id;
+  const d = await db();
+  await d.batch(stmts);
+  const url = x.url?.trim() || null;
+  const row = await d
+    .prepare(`select id from items where id = ? or (? is not null and url = ?) order by id = ? desc limit 1`)
+    .bind(id, url, url, id)
+    .first<{ id: string }>();
+  return row?.id ?? id;
 }
 
 export async function markSynced(source: string, added: number, error: string | null = null, status = "connected") {

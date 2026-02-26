@@ -116,7 +116,12 @@ export async function listItems(f: ListFilter): Promise<{ items: ItemRow[]; tota
 
 export async function getItem(id: string) {
   const raw = await first<RawItem>(
-    `select i.*, (select color from categories c where c.name = i.category) as category_color from items i where id = ?`,
+    `select i.*, (select color from categories c where c.name = i.category) as category_color,
+       (select json_group_array(distinct s.source_id) from saves s where s.item_id = i.id) as sources,
+       (select json_group_array(f.id) from files f where f.item_id = i.id and f.mime like 'image/%') as images,
+       (select json_group_array(name) from (select t.name from item_tags it join tags t on t.id = it.tag_id
+          where it.item_id = i.id order by t.name)) as tags
+     from items i where id = ?`,
     id,
   );
   if (!raw) return null;
