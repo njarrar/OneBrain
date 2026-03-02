@@ -98,30 +98,67 @@ function video(videoId: string, s: Snippet, savedAt: string | null, from: string
   };
 }
 
-// Pulls liked videos and every video in your own playlists. Returns how many saves were new.
-export async function syncYouTube(): Promise<number> {
+async function accessToken() {
   const refresh = await getSetting("youtube_refresh_token");
-  if (!refresh) return 0;
+  if (!refresh) throw new Error("YouTube is not connected.");
+  return (await tokenRequest({ refresh_token: refresh, grant_type: "refresh_token" })).access_token!;
+}
+
+export type Playlist = { id: string; title: string; count: number };
+
+// Your own playlists, for picking which ones to bring in.
+async function playlists(token: string): Promise<Playlist[]> {
+  const out: Playlist[] = [];
+  type Row = { id: string; snippet: { title: string }; contentDetails?: { itemCount?: number } };
+  for await (const batch of pages<Row>(token, "playlists", { part: "snippet,contentDetails", mine: "true" })) {
+    out.push(...batch.map((p) => ({ id: p.id, title: p.snippet.title, count: p.contentDetails?.itemCount ?? 0 })));
+  }
+  return out;
+}
+
+export async function listPlaylists() {
+  return playlists(await accessToken());
+}
+
+// Which lists to bring in: playlist ids, and "liked" for liked videos. Null until you pick.
+export async function pickedPlaylists(): Promise<string[] | null> {
+  const raw = await getSetting("youtube_playlists");
+  if (!raw) return null;
+  try {
+    const ids = JSON.parse(raw);
+    return Array.isArray(ids) ? ids.filter((v): v is string => typeof v === "string") : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setPickedPlaylists(ids: string[]) {
+  await setSetting("youtube_playlists", JSON.stringify([...new Set(ids)]));
+}
+
+// Pulls the lists you picked (liked videos only, until you pick). Returns how many saves were new.
+export async function syncYouTube(): Promise<number> {
+  if (!(await youtubeConnected())) return 0;
   const d = await db();
   const before = (await d.prepare(`select count(*) as n from saves where source_id = 'youtube'`).first<{ n: number }>())?.n ?? 0;
   try {
-    const { access_token: token } = await tokenRequest({ refresh_token: refresh, grant_type: "refresh_token" });
+    const token = await accessToken();
+    const picked = new Set((await pickedPlaylists()) ?? ["liked"]);
     const incoming: Incoming[] = [];
 
-    for await (const batch of pages<{ id: string; snippet: Snippet }>(token!, "videos", { part: "snippet", myRating: "like" })) {
-      for (const v of batch) incoming.push(video(v.id, v.snippet, null, "liked"));
+    if (picked.has("liked")) {
+      for await (const batch of pages<{ id: string; snippet: Snippet }>(token, "videos", { part: "snippet", myRating: "like" })) {
+        for (const v of batch) incoming.push(video(v.id, v.snippet, null, "liked"));
+      }
     }
-    const lists: { id: string; snippet: { title: string } }[] = [];
-    for await (const batch of pages<{ id: string; snippet: { title: string } }>(token!, "playlists", { part: "snippet", mine: "true" })) {
-      lists.push(...batch);
-    }
+    const lists = picked.size > (picked.has("liked") ? 1 : 0) ? (await playlists(token)).filter((p) => picked.has(p.id)) : [];
     for (const list of lists) {
-      for await (const batch of pages<{ snippet: Snippet }>(token!, "playlistItems", { part: "snippet", playlistId: list.id })) {
+      for await (const batch of pages<{ snippet: Snippet }>(token, "playlistItems", { part: "snippet", playlistId: list.id })) {
         for (const it of batch) {
           const id = it.snippet.resourceId?.videoId;
           // Deleted and private videos come back with no thumbnail and a stock title.
           if (id && it.snippet.thumbnails && Object.keys(it.snippet.thumbnails).length) {
-            incoming.push({ ...video(id, it.snippet, it.snippet.publishedAt ?? null, list.id), raw: { from: "playlist", playlist: list.snippet.title, videoId: id } });
+            incoming.push({ ...video(id, it.snippet, it.snippet.publishedAt ?? null, list.id), raw: { from: "playlist", playlist: list.title, videoId: id } });
           }
         }
       }

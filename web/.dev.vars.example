@@ -8,6 +8,9 @@ GOOGLE_CLIENT_SECRET=
 APPLE_CLIENT_ID=
 APPLE_CLIENT_SECRET=
 APPLE_APP_BUNDLE_ID=
+# Optional. Live sync of X bookmarks (an OAuth 2.0 app in the X developer portal).
+X_CLIENT_ID=
+X_CLIENT_SECRET=
 
 # The live URL is set in wrangler.jsonc. Point it at your machine when running locally.
 BETTER_AUTH_URL=http://localhost:3000

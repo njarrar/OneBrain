@@ -4,10 +4,11 @@ import { shortDate } from "@/lib/links";
 import { sorterReady, unsortedCount } from "@/lib/sorter";
 import { hookKey } from "@/lib/settings";
 import { env } from "@/lib/db";
-import { youtubeConnected } from "@/lib/youtube";
-import { disconnectYouTube } from "@/lib/actions";
+import { listPlaylists, pickedPlaylists, youtubeConnected, type Playlist } from "@/lib/youtube";
+import { xConnected } from "@/lib/x";
+import { disconnectX, disconnectYouTube } from "@/lib/actions";
 import { SortPanel } from "@/components/SortPanel";
-import { CopyField, InstagramImport, YouTubeSync } from "@/components/SourceTools";
+import { CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
   connected: { label: "Connected", tone: "ok" },
@@ -17,12 +18,25 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 };
 
 export default async function SourcesPage() {
-  const [sources, ready, unsorted, key, e, ytOn] = await Promise.all([
-    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(),
+  const [sources, ready, unsorted, key, e, ytOn, xOn] = await Promise.all([
+    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(),
   ]);
   const base = e.BETTER_AUTH_URL ?? "http://localhost:3000";
   const feedlyHook = `${base}/api/ingest/feedly?key=${key}`;
   const googleReady = !!(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET);
+  const xReady = !!(e.X_CLIENT_ID && e.X_CLIENT_SECRET);
+
+  // Your playlists, for the picker. Until you pick, only liked videos come in.
+  const picked = ytOn ? await pickedPlaylists() : null;
+  let lists: Playlist[] = [];
+  let listsError: string | null = null;
+  if (ytOn) {
+    try {
+      lists = await listPlaylists();
+    } catch (err) {
+      listsError = err instanceof Error ? err.message : String(err);
+    }
+  }
 
   const extra: Record<string, React.ReactNode> = {
     feedly: (
@@ -57,11 +71,29 @@ export default async function SourcesPage() {
         <p className="small muted">Instagram gives only the link, the account and the date, not the picture or caption.</p>
       </details>
     ),
-    youtube: ytOn ? (
+    x: xOn ? (
       <div className="inline-actions">
-        <YouTubeSync />
-        <form action={disconnectYouTube}><button className="link-btn">Disconnect</button></form>
+        <XSync />
+        <form action={disconnectX}><button className="link-btn">Disconnect</button></form>
       </div>
+    ) : xReady ? (
+      <a className="btn small" href="/api/x/connect" style={{ alignSelf: "flex-start" }}>Connect X</a>
+    ) : (
+      <p className="small muted">Needs the X keys first.</p>
+    ),
+    youtube: ytOn ? (
+      <>
+        <div className="inline-actions">
+          <YouTubeSync />
+          <form action={disconnectYouTube}><button className="link-btn">Disconnect</button></form>
+        </div>
+        <details className="how" open={!picked}>
+          <summary>Pick what to bring in</summary>
+          {!picked && <p className="small muted">Only liked videos come in until you pick.</p>}
+          {listsError && <p className="error small">{listsError}</p>}
+          <YouTubePicker lists={lists} picked={picked ?? ["liked"]} />
+        </details>
+      </>
     ) : googleReady ? (
       <a className="btn small" href="/api/youtube/connect" style={{ alignSelf: "flex-start" }}>Connect YouTube</a>
     ) : (
@@ -70,8 +102,8 @@ export default async function SourcesPage() {
   };
 
   const NEXT: Record<string, string> = {
-    x: "Live sync with the X API comes next.",
-    youtube: "Brings in your liked videos and every video in your playlists, then checks again every six hours.",
+    x: "Brings in your newest bookmarks from X, then checks again every six hours.",
+    youtube: "Brings in the lists you pick, then checks again every six hours.",
     instagram: "",
     photos: "The iPhone app will read your Screenshots album.",
     feedly: "Each article you save for later in Feedly arrives here through IFTTT.",

@@ -256,3 +256,8 @@ a.chip:hover { color: var(--ink); text-decoration: none; }
 .copy-field input { font: 12px var(--mono); }
 .inline-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .inline-form input[type="file"] { padding: 6px; }
+.pick-list { display: flex; flex-direction: column; gap: 6px; }
+.pick { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+.pick input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; padding: 0; flex: none; }
+.pick .muted { margin-inline-start: auto; font-family: var(--mono); }
+.pick-list .inline-actions { margin-top: 6px; }

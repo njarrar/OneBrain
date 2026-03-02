@@ -1,9 +1,10 @@
 import { env } from "@/lib/db";
 import { sameKey } from "@/lib/settings";
 import { syncYouTube, youtubeConnected } from "@/lib/youtube";
+import { syncX, xConnected } from "@/lib/x";
 import { sortItems } from "@/lib/sorter";
 
-// The Worker's timer calls this every few hours (see worker.ts): pull new YouTube saves,
+// The Worker's timer calls this every few hours (see worker.ts): pull new YouTube saves and X bookmarks,
 // then sort a few batches of anything still unsorted.
 const SORT_BATCHES = 10;
 
@@ -18,6 +19,13 @@ export async function POST(req: Request) {
       report.youtube = await syncYouTube();
     } catch (err) {
       report.youtube = String(err);
+    }
+  }
+  if (await xConnected()) {
+    try {
+      report.x = await syncX();
+    } catch (err) {
+      report.x = String(err);
     }
   }
   let sorted = 0;

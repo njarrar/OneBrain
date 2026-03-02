@@ -9,7 +9,8 @@ import { requireUser } from "@/lib/session";
 import { unfurl } from "@/lib/unfurl";
 import { sortItems, unsortedCount } from "@/lib/sorter";
 import { importInstagram } from "@/lib/instagram";
-import { disconnect as disconnectYT, syncYouTube } from "@/lib/youtube";
+import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
+import { disconnect as disconnectXApi, syncX } from "@/lib/x";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -56,10 +57,16 @@ export async function importInstagramFile(_: string | null, form: FormData): Pro
   }
 }
 
+// Claude sorts what a sync brought in, in the background.
+function sortLater(added: number) {
+  if (added) getCloudflareContext().ctx.waitUntil(sortItems().catch((err) => console.error("sort failed", err)));
+}
+
 export async function syncYouTubeNow(): Promise<string> {
   await requireUser();
   try {
     const added = await syncYouTube();
+    sortLater(added);
     revalidatePath("/", "layout");
     return `Done. ${added.toLocaleString()} new YouTube saves.`;
   } catch (err) {
@@ -67,9 +74,36 @@ export async function syncYouTubeNow(): Promise<string> {
   }
 }
 
+// Saves which playlists to bring in, then brings them in.
+export async function pickYouTubePlaylists(_: string | null, form: FormData): Promise<string | null> {
+  await requireUser();
+  const ids = form.getAll("pick").map(String).filter(Boolean);
+  if (!ids.length) return "Pick at least one list.";
+  await setPickedPlaylists(ids);
+  return syncYouTubeNow();
+}
+
 export async function disconnectYouTube() {
   await requireUser();
   await disconnectYT();
+  revalidatePath("/sources");
+}
+
+export async function syncXNow(): Promise<string> {
+  await requireUser();
+  try {
+    const added = await syncX();
+    sortLater(added);
+    revalidatePath("/", "layout");
+    return `Done. ${added.toLocaleString()} new X bookmarks.`;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+export async function disconnectX() {
+  await requireUser();
+  await disconnectXApi();
   revalidatePath("/sources");
 }
 
