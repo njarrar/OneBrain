@@ -4,7 +4,6 @@ struct ItemListView: View {
     @Binding var filter: Filter
     var onChange: () async -> Void
 
-    @Environment(AppSession.self) private var session
     @AppStorage("blurSensitive") private var blur = true
     @State private var items: [Item] = []
     @State private var total = 0
@@ -117,14 +116,12 @@ struct ItemListView: View {
         loading = true
         defer { loading = false }
         do {
-            let result = try await API.shared.items(filter, page: page)
+            let result = try await Store.shared.items(filter, page: page)
             error = nil
             total = result.total
             let known = Set(items.map(\.id))
             items += result.items.filter { !known.contains($0.id) }
             done = items.count >= result.total || result.items.isEmpty
-        } catch APIError.signedOut {
-            session.signOut()
         } catch is CancellationError {
         } catch let e as URLError where e.code == .cancelled {
         } catch {
@@ -135,7 +132,7 @@ struct ItemListView: View {
     private func set(_ item: Item, _ status: String) {
         Task {
             do {
-                let d = try await API.shared.change(item.id, .init(status: status))
+                let d = try await Store.shared.change(item.id, .init(status: status))
                 replace(d.item)
                 await onChange()
             } catch {

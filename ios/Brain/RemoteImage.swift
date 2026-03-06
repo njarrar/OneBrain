@@ -10,13 +10,20 @@ final class ImageCache {
     func set(_ url: URL, _ image: UIImage) { cache.setObject(image, forKey: url as NSURL) }
 }
 
-/// Like AsyncImage, but sends the app's key for Brain's own files.
+/// Like AsyncImage, but also reads Brain's own pictures from the phone.
 struct RemoteImage: View {
     let url: URL
     var contentMode: ContentMode = .fill
 
     @State private var image: UIImage?
     @State private var failed = false
+
+    static func load(_ url: URL) async throws -> Data {
+        if url.isFileURL { return try Data(contentsOf: url) }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard ((response as? HTTPURLResponse)?.statusCode ?? 0) < 400 else { throw URLError(.fileDoesNotExist) }
+        return data
+    }
 
     var body: some View {
         ZStack {
@@ -33,7 +40,7 @@ struct RemoteImage: View {
         .task(id: url) {
             if let hit = ImageCache.shared.get(url) { image = hit; return }
             do {
-                let data = try await API.shared.imageData(url)
+                let data = try await Self.load(url)
                 if let img = UIImage(data: data) {
                     ImageCache.shared.set(url, img)
                     image = img

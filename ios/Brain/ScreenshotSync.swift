@@ -1,7 +1,7 @@
 import Photos
 import UIKit
 
-/// Sends new screenshots from the phone's Screenshots album to Brain.
+/// Adds new screenshots from the phone's Screenshots album to Brain. They stay on the phone.
 /// The first run takes the last 30 days; "Send older screenshots" takes the rest.
 @Observable
 final class ScreenshotSync {
@@ -56,21 +56,18 @@ final class ScreenshotSync {
         for asset in assets.prefix(maxPerRun) {
             guard let data = await jpeg(asset) else { continue }
             do {
-                _ = try await API.shared.save(
-                    image: data, filename: "screenshot.jpg", mime: "image/jpeg",
-                    externalId: asset.localIdentifier, takenAt: asset.creationDate
-                )
-                sent += 1
+                let saved = try await Store.shared.save(image: data, externalId: asset.localIdentifier, takenAt: asset.creationDate)
+                if !saved.existed { sent += 1 }
                 if !older, let d = asset.creationDate, d > (lastDate ?? .distantPast) { lastDate = d }
-                status = "Sent \(sent) of \(min(assets.count, maxPerRun))…"
+                status = "Added \(sent) of \(min(assets.count, maxPerRun))…"
             } catch {
                 status = error.localizedDescription
                 return
             }
         }
         status = assets.count > maxPerRun
-            ? "Sent \(sent). More left; they go next time."
-            : "Sent \(sent) screenshots."
+            ? "Added \(sent). More left; they come next time."
+            : "Added \(sent) screenshots."
     }
 
     private func fetch(since: Date?, before: Date?) -> [PHAsset] {

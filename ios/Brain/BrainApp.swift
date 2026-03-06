@@ -20,18 +20,22 @@ struct BrainApp: App {
     }
 }
 
-/// Whether this phone has a key for Brain.
+/// Who is signed in on this phone. Signing out keeps your saves; they stay on the phone.
 @Observable
 final class AppSession {
-    var signedIn = KeyStore.token != nil
+    var signedIn = Secrets[.account] != nil
+    var name = Secrets[.accountName]
 
-    func signIn(token: String) {
-        KeyStore.save(token)
+    func signIn(account: String, name: String?) {
+        Secrets[.account] = account
+        if let name { Secrets[.accountName] = name }
+        self.name = name ?? Secrets[.accountName]
         signedIn = true
     }
 
     func signOut() {
-        KeyStore.clear()
+        Secrets[.account] = nil
+        Secrets[.googleRefresh] = nil
         signedIn = false
     }
 }

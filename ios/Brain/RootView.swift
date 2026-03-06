@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct RootView: View {
-    @Environment(AppSession.self) private var session
     @Environment(\.scenePhase) private var phase
     @State private var filter = Filter()
     @State private var menu: MenuData?
@@ -23,19 +22,37 @@ struct RootView: View {
                 ItemListView(filter: $filter, onChange: loadMenu)
             }
         }
-        .sheet(isPresented: $showSettings) { SettingsView(menu: menu) }
-        .task { await loadMenu() }
+        .sheet(isPresented: $showSettings) { SettingsView(menu: menu, changed: loadMenu) }
+        .task { await catchUp() }
         .onChange(of: phase) { _, now in
-            if now == .active { Task { await screenshots.syncIfOn(); await loadMenu() } }
+            if now == .active { Task { await catchUp() } }
         }
     }
 
+    /// Each time Brain opens: new screenshots, X and YouTube every six hours, then Claude sorts what's new.
+    private func catchUp() async {
+        await loadMenu()
+        await screenshots.syncIfOn()
+        let defaults = UserDefaults.standard
+        let due = { (key: String) -> Bool in
+            let last = defaults.object(forKey: key) as? Date ?? .distantPast
+            return Date.now.timeIntervalSince(last) > 6 * 3600
+        }
+        if XBookmarks.connected, due("xAuto") {
+            defaults.set(Date.now, forKey: "xAuto")
+            _ = try? await XBookmarks.sync()
+        }
+        if YouTube.connected, due("youtubeAuto") {
+            defaults.set(Date.now, forKey: "youtubeAuto")
+            _ = try? await YouTube.sync()
+        }
+        await loadMenu()
+        await Sorter.shared.run()
+        await loadMenu()
+    }
+
     private func loadMenu() async {
-        do {
-            menu = try await API.shared.menu()
-        } catch APIError.signedOut {
-            session.signOut()
-        } catch {}
+        menu = try? await Store.shared.menu()
     }
 }
 

@@ -146,8 +146,8 @@ struct ItemDetailView: View {
 
     private func load() async {
         do {
-            async let d = API.shared.item(id)
-            async let m = API.shared.menu()
+            async let d = Store.shared.item(id)
+            async let m = Store.shared.menu()
             detail = try await d
             note = detail?.item.note ?? ""
             categories = (try? await m)?.categories ?? []
@@ -156,11 +156,11 @@ struct ItemDetailView: View {
         }
     }
 
-    private func change(_ c: API.Change) async {
+    private func change(_ c: Store.Change) async {
         saving = true
         defer { saving = false }
         do {
-            let d = try await API.shared.change(id, c)
+            let d = try await Store.shared.change(id, c)
             detail = d
             note = d.item.note ?? ""
             error = nil
