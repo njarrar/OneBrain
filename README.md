@@ -95,9 +95,9 @@ Each source shows its status on the Sources page (`/sources`).
 
 | Source | How it connects today |
 | --- | --- |
-| X | Import from an export file with `npm run import:x` (see below). Live sync with the X API is coming. |
+| X | Click Connect X on the Sources page. Brain pulls new bookmarks from the X API on Sync now and every six hours, and stops at the first page it has already seen. Older bookmarks can come from an export file with `npm run import:x` (see below). |
 | Feedly | Each article you save for later reaches Brain through an IFTTT webhook. The Sources page shows the link and the body to paste into IFTTT. |
-| YouTube | Its own Google connection with read-only YouTube access. It brings in liked videos and every video in your playlists, then checks again every six hours. Needs the Google keys. |
+| YouTube | Its own Google connection with read-only YouTube access. Tick Liked videos and any of your playlists on the Sources page, and Brain brings in those, then checks again every six hours. Needs the Google keys. |
 | Instagram | Upload Instagram's "Download your information" export (the zip or `saved_posts.json`) on the Sources page. Instagram gives only the link, the account and the date. You can also share a post to Brain from the iPhone share sheet. |
 | Screenshots | The iPhone app sends your Screenshots album. Claude looks at each picture to sort it. |
 | Added by hand | The `/add` page, or "Save to Brain" in any iPhone app. |
@@ -137,9 +137,23 @@ the Sources page says "Needs API key".
 The app is in `ios/`. It is a SwiftUI app built with XcodeGen, with a share extension
 called **Save to Brain** that saves a link, text or picture from any app.
 
-It is being reworked so the phone keeps its own data on the device (backed up with the
-normal iPhone or iCloud backup), signs in with Apple or Google, and pulls X and YouTube
-directly. See [ios/README.md](ios/README.md) to build it.
+The phone keeps its own data: one SQLite file with full-text search, backed up by iPhone
+and iCloud Backup. You sign in with Apple or Google. X bookmarks and the YouTube playlists
+you pick come straight from X and YouTube, and Claude sorts new items with your own
+Anthropic key. Settings can copy your saves from the web app once. See
+[ios/README.md](ios/README.md) to build it.
+
+<p>
+  <img src="docs/images/iphone-signin.png" width="180" alt="Sign in with Apple or Google">
+  <img src="docs/images/iphone-list.png" width="180" alt="Inbox with cards and pictures">
+  <img src="docs/images/iphone-menu.png" width="180" alt="Side menu with views and categories">
+  <img src="docs/images/iphone-item.png" width="180" alt="Item page with note and actions">
+  <img src="docs/images/iphone-settings.png" width="180" alt="Settings with sources">
+</p>
+
+Sign in, the inbox, the side menu, an item and Settings. The shots use made-up sample
+data: debug builds launched with `-demo` skip sign in and fill Brain with it, and
+`-screen menu|item|settings` opens on that screen.
 
 ## Deploys
 

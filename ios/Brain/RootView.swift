@@ -7,6 +7,7 @@ struct RootView: View {
     @State private var column = NavigationSplitViewColumn.detail
     @State private var showSettings = false
     @State private var screenshots = ScreenshotSync.shared
+    @State private var path = NavigationPath()
 
     var body: some View {
         NavigationSplitView(preferredCompactColumn: $column) {
@@ -18,12 +19,23 @@ struct RootView: View {
                     }
                 }
         } detail: {
-            NavigationStack {
+            NavigationStack(path: $path) {
                 ItemListView(filter: $filter, onChange: loadMenu)
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView(menu: menu, changed: loadMenu) }
-        .task { await catchUp() }
+        .task {
+            await catchUp()
+            #if DEBUG
+            switch Demo.screen {
+            case "menu": column = .sidebar
+            case "settings": showSettings = true
+            case "item":
+                if let first = try? await Store.shared.items(Filter(), page: 1).items.first { path.append(first) }
+            default: break
+            }
+            #endif
+        }
         .onChange(of: phase) { _, now in
             if now == .active { Task { await catchUp() } }
         }
