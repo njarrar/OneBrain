@@ -14,20 +14,22 @@ struct SignInView: View {
             Text("Brain").font(.system(size: 40, weight: .bold))
             Text("Everything you save, kept on this phone.").foregroundStyle(Theme.soft)
             Spacer()
-            SignInWithAppleButton(.signIn) { req in
-                req.requestedScopes = [.fullName, .email]
-            } onCompletion: { result in
-                switch result {
-                case .success(let auth):
-                    guard let cred = auth.credential as? ASAuthorizationAppleIDCredential else { return }
-                    let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-                    session.signIn(account: "apple:\(cred.user)", name: cred.email ?? (name.isEmpty ? nil : name))
-                case .failure(let e):
-                    if (e as? ASAuthorizationError)?.code != .canceled { error = e.localizedDescription }
+            if Config.appleSignIn {
+                SignInWithAppleButton(.signIn) { req in
+                    req.requestedScopes = [.fullName, .email]
+                } onCompletion: { result in
+                    switch result {
+                    case .success(let auth):
+                        guard let cred = auth.credential as? ASAuthorizationAppleIDCredential else { return }
+                        let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
+                        session.signIn(account: "apple:\(cred.user)", name: cred.email ?? (name.isEmpty ? nil : name))
+                    case .failure(let e):
+                        if (e as? ASAuthorizationError)?.code != .canceled { error = e.localizedDescription }
+                    }
                 }
+                .signInWithAppleButtonStyle(.white)
+                .frame(height: 50)
             }
-            .signInWithAppleButtonStyle(.white)
-            .frame(height: 50)
 
             Button(action: google) {
                 HStack {

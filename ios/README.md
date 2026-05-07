@@ -35,7 +35,8 @@ and the picture for screenshots, go to Anthropic for this.
   with the YouTube Data API v3 turned on.
 - `xClientID`: the OAuth 2.0 client ID of an X app of type Native App, with callback `brain://x`.
 
-Sign in with Apple needs a paid Apple Developer account.
+Sign in with Apple needs a paid Apple Developer account. It is off for now: set `appleSignIn` in
+`Shared/Config.swift` and add the `com.apple.developer.applesignin` entitlement to turn it on.
 
 ## Build
 

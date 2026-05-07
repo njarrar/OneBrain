@@ -138,7 +138,7 @@ The app is in `ios/`. It is a SwiftUI app built with XcodeGen, with a share exte
 called **Save to Brain** that saves a link, text or picture from any app.
 
 The phone keeps its own data: one SQLite file with full-text search, backed up by iPhone
-and iCloud Backup. You sign in with Apple or Google. X bookmarks and the YouTube playlists
+and iCloud Backup. You sign in with Google (Apple comes with a paid developer account). X bookmarks and the YouTube playlists
 you pick come straight from X and YouTube, and Claude sorts new items with your own
 Anthropic key. Settings can copy your saves from the web app once. See
 [ios/README.md](ios/README.md) to build it.

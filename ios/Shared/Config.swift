@@ -13,6 +13,10 @@ enum Config {
     /// X app client ID, from the X developer portal, Keys and tokens, OAuth 2.0. Not a secret.
     static let xClientID = ""
 
+    /// Sign in with Apple needs a paid Apple Developer account. Turn this on, and add the
+    /// com.apple.developer.applesignin entitlement back to Brain.entitlements, once there is one.
+    static let appleSignIn = false
+
     static var googleScheme: String {
         "com.googleusercontent.apps." + googleClientID.replacingOccurrences(of: ".apps.googleusercontent.com", with: "")
     }
