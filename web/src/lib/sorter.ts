@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { all, db, env, first, now } from "@/lib/db";
+import { getAnthropicKey } from "@/lib/secrets";
 
 // Claude sorts items the way x-bookmarks-review did: one of the categories, a sub-topic,
 // a one-line summary, a few tags, the language, and whether it is sensitive.
@@ -40,7 +41,7 @@ async function pictureBlock(itemId: string): Promise<Anthropic.ImageBlockParam |
 }
 
 export async function sorterReady() {
-  return !!(await env()).ANTHROPIC_API_KEY;
+  return !!(await getAnthropicKey());
 }
 
 export async function unsortedCount() {
@@ -87,8 +88,8 @@ async function contentFor(pending: Pending[]): Promise<Anthropic.ContentBlockPar
 
 // Sorts the given items, or the next batch of unsorted ones. Returns how many it sorted.
 export async function sortItems(ids?: string[]): Promise<number> {
-  const e = await env();
-  if (!e.ANTHROPIC_API_KEY) return 0;
+  const apiKey = await getAnthropicKey();
+  if (!apiKey) return 0;
 
   const pending = ids?.length
     ? await all<Pending>(
@@ -117,7 +118,7 @@ export async function sortItems(ids?: string[]): Promise<number> {
     ),
   });
 
-  const client = new Anthropic({ apiKey: e.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey });
   const response = await client.messages.parse({
     model: MODEL,
     max_tokens: 8000,

@@ -3,12 +3,13 @@ import { listSources } from "@/lib/queries";
 import { shortDate } from "@/lib/links";
 import { sorterReady, unsortedCount } from "@/lib/sorter";
 import { hookKey } from "@/lib/settings";
+import { anthropicKeyStatus } from "@/lib/secrets";
 import { env } from "@/lib/db";
 import { listPlaylists, pickedPlaylists, youtubeConnected, type Playlist } from "@/lib/youtube";
 import { xConnected } from "@/lib/x";
 import { disconnectX, disconnectYouTube } from "@/lib/actions";
 import { SortPanel } from "@/components/SortPanel";
-import { CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
+import { ClaudeKey, CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
   connected: { label: "Connected", tone: "ok" },
@@ -18,8 +19,8 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 };
 
 export default async function SourcesPage() {
-  const [sources, ready, unsorted, key, e, ytOn, xOn] = await Promise.all([
-    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(),
+  const [sources, ready, unsorted, key, e, ytOn, xOn, claude] = await Promise.all([
+    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(), anthropicKeyStatus(),
   ]);
   const base = e.BETTER_AUTH_URL ?? "http://localhost:3000";
   const feedlyHook = `${base}/api/ingest/feedly?key=${key}`;
@@ -114,6 +115,7 @@ export default async function SourcesPage() {
     <div className="narrow">
       <header className="page-head"><h1>Sources</h1></header>
       <SortPanel ready={ready} remaining={unsorted} />
+      <ClaudeKey last4={claude.last4} fromEnv={claude.fromEnv} />
       <ul className="sources">
         {sources.map((s) => {
           const st = STATUS[s.status] ?? STATUS.not_connected;

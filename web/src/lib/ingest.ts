@@ -2,6 +2,8 @@ import { db, now } from "@/lib/db";
 
 export type Incoming = {
   source: string;
+  // An id made elsewhere (the iPhone app) to keep as is.
+  id?: string;
   externalId?: string | null;
   // Names the item when one thing can be saved more than once from a source (a video liked and in a playlist).
   itemKey?: string;
@@ -42,7 +44,7 @@ export async function saveStatements(x: Incoming): Promise<{ id: string; stmts: 
   const d = await db();
   const url = clean(x.url, 2000);
   const key = x.itemKey ?? x.externalId;
-  const id = key ? `${x.source}-${await safeId(key)}` : crypto.randomUUID();
+  const id = x.id ?? (key ? `${x.source}-${await safeId(key)}` : crypto.randomUUID());
   const stmts = [
     d.prepare(
       `insert into items (id, title, body, url, kind, author, author_handle, posted_at, media)

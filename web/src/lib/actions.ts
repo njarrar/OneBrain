@@ -11,6 +11,7 @@ import { sortItems, unsortedCount } from "@/lib/sorter";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
+import { setAnthropicKey } from "@/lib/secrets";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -39,6 +40,22 @@ export async function sortNext(): Promise<{ sorted: number; remaining: number; e
   } catch (err) {
     return { sorted: 0, remaining: await unsortedCount(), error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+// The Claude key typed on the Sources page. Kept encrypted; the page shows only its last four characters.
+export async function saveAnthropicKey(_: string | null, form: FormData): Promise<string | null> {
+  await requireUser();
+  const key = String(form.get("key") ?? "").trim();
+  if (!key.startsWith("sk-ant-")) return "Claude keys start with sk-ant-";
+  await setAnthropicKey(key);
+  revalidatePath("/sources");
+  return "Saved.";
+}
+
+export async function removeAnthropicKey() {
+  await requireUser();
+  await setAnthropicKey(null);
+  revalidatePath("/sources");
 }
 
 const MAX_IMPORT_BYTES = 90 * 1024 * 1024;
