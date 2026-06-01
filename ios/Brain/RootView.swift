@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct RootView: View {
+    @Environment(AppSession.self) private var session
     @Environment(\.scenePhase) private var phase
     @State private var filter = Filter()
     @State private var menu: MenuData?
     @State private var column = NavigationSplitViewColumn.detail
     @State private var showSettings = false
     @State private var screenshots = ScreenshotSync.shared
-    @State private var path = NavigationPath()
 
     var body: some View {
         NavigationSplitView(preferredCompactColumn: $column) {
@@ -19,52 +19,26 @@ struct RootView: View {
                     }
                 }
         } detail: {
-            NavigationStack(path: $path) {
+            NavigationStack {
                 ItemListView(filter: $filter, onChange: loadMenu)
             }
         }
-        .sheet(isPresented: $showSettings) { SettingsView(menu: menu, changed: loadMenu) }
+        .sheet(isPresented: $showSettings) { SettingsView(menu: menu) }
         .task {
-            await catchUp()
-            #if DEBUG
-            switch Demo.screen {
-            case "menu": column = .sidebar
-            case "settings": showSettings = true
-            case "item":
-                if let first = try? await Store.shared.items(Filter(), page: 1).items.first { path.append(first) }
-            default: break
-            }
-            #endif
+            await LocalUpload.shared.runIfNeeded()
+            await loadMenu()
         }
         .onChange(of: phase) { _, now in
-            if now == .active { Task { await catchUp() } }
+            if now == .active { Task { await screenshots.syncIfOn(); await loadMenu() } }
         }
-    }
-
-    /// Each time Brain opens: new screenshots, X and YouTube every six hours, then Claude sorts what's new.
-    private func catchUp() async {
-        await loadMenu()
-        await screenshots.syncIfOn()
-        let defaults = UserDefaults.standard
-        let due = { (key: String) -> Bool in
-            let last = defaults.object(forKey: key) as? Date ?? .distantPast
-            return Date.now.timeIntervalSince(last) > 6 * 3600
-        }
-        if XBookmarks.connected, due("xAuto") {
-            defaults.set(Date.now, forKey: "xAuto")
-            _ = try? await XBookmarks.sync()
-        }
-        if YouTube.connected, due("youtubeAuto") {
-            defaults.set(Date.now, forKey: "youtubeAuto")
-            _ = try? await YouTube.sync()
-        }
-        await loadMenu()
-        await Sorter.shared.run()
-        await loadMenu()
     }
 
     private func loadMenu() async {
-        menu = try? await Store.shared.menu()
+        do {
+            menu = try await API.shared.menu()
+        } catch APIError.signedOut {
+            session.signOut()
+        } catch {}
     }
 }
 

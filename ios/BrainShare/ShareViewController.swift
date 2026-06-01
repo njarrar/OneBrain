@@ -57,7 +57,7 @@ final class ShareModel {
         }
         if url == nil && text == nil && image == nil {
             state = .failed("Nothing to save here.")
-        } else if Secrets[.account] == nil {
+        } else if KeyStore.token == nil {
             state = .failed("Open Brain and sign in first.")
         } else {
             state = .ready
@@ -73,7 +73,7 @@ final class ShareModel {
         case let i as UIImage: raw = i.jpegData(compressionQuality: 0.85)
         default: raw = nil
         }
-        // Re-encode as a JPEG no bigger than 1600 points, so it stays small and Claude can read it.
+        // Re-encode as a JPEG no bigger than 1600 points, so it uploads fast and Claude can read it.
         guard let raw, let img = UIImage(data: raw) else { return raw }
         let scale = min(1, 1600 / max(img.size.width, img.size.height, 1))
         let size = CGSize(width: img.size.width * scale, height: img.size.height * scale)
@@ -86,10 +86,11 @@ final class ShareModel {
         let extra = note.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
             if let image {
-                _ = try await Store.shared.save(image: image, externalId: nil, takenAt: nil, text: extra.isEmpty ? text : extra)
+                _ = try await API.shared.save(image: image, filename: "shared.jpg", mime: "image/jpeg", externalId: nil, takenAt: nil,
+                                              text: extra.isEmpty ? text : extra)
             } else {
                 let body = [text, extra.isEmpty ? nil : extra].compactMap { $0 }.joined(separator: "\n\n")
-                _ = try await Store.shared.save(url: url, text: body.isEmpty ? nil : body)
+                _ = try await API.shared.save(url: url, text: body.isEmpty ? nil : body)
             }
             state = .saved
             try? await Task.sleep(for: .milliseconds(700))

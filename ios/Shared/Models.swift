@@ -28,7 +28,8 @@ struct Item: Codable, Identifiable, Hashable {
 
     /// Files added to Brain first, then pictures that came with the post.
     var pictures: [URL] {
-        (images ?? []).map(Paths.file) + media.compactMap(URL.init(string:))
+        let files = (images ?? []).compactMap { URL(string: "/files/\($0)", relativeTo: Config.baseURL)?.absoluteURL }
+        return files + media.compactMap(URL.init(string:))
     }
 
     var mainText: String {
@@ -129,6 +130,21 @@ struct Filter: Hashable {
         case .all: return "All"
         case .archived: return "Archive"
         }
+    }
+
+    var queryItems: [URLQueryItem] {
+        var q: [URLQueryItem] = [URLQueryItem(name: "view", value: view.rawValue)]
+        func add(_ name: String, _ value: String?) {
+            if let value, !value.isEmpty { q.append(URLQueryItem(name: name, value: value)) }
+        }
+        add("category", category)
+        add("tag", tag)
+        add("source", source)
+        add("q", self.q)
+        add("media", media?.rawValue)
+        add("lang", lang)
+        if sensitive { add("sensitive", "1") }
+        return q
     }
 
     static func all(_ change: (inout Filter) -> Void) -> Filter {

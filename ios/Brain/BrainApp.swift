@@ -4,12 +4,6 @@ import SwiftUI
 struct BrainApp: App {
     @State private var session = AppSession()
 
-    init() {
-        #if DEBUG
-        Demo.seed()
-        #endif
-    }
-
     var body: some Scene {
         WindowGroup {
             Group {
@@ -26,28 +20,18 @@ struct BrainApp: App {
     }
 }
 
-/// Who is signed in on this phone. Signing out keeps your saves; they stay on the phone.
+/// Whether this phone has a key for Brain.
 @Observable
 final class AppSession {
-    var signedIn = Secrets[.account] != nil || AppSession.demo
-    var name = Secrets[.accountName]
+    var signedIn = KeyStore.token != nil
 
-    #if DEBUG
-    static let demo = Demo.on
-    #else
-    static let demo = false
-    #endif
-
-    func signIn(account: String, name: String?) {
-        Secrets[.account] = account
-        if let name { Secrets[.accountName] = name }
-        self.name = name ?? Secrets[.accountName]
+    func signIn(token: String) {
+        KeyStore.save(token)
         signedIn = true
     }
 
     func signOut() {
-        Secrets[.account] = nil
-        Secrets[.googleRefresh] = nil
+        KeyStore.clear()
         signedIn = false
     }
 }

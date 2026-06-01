@@ -137,10 +137,10 @@ the Sources page says "Needs API key".
 The app is in `ios/`. It is a SwiftUI app built with XcodeGen, with a share extension
 called **Save to Brain** that saves a link, text or picture from any app.
 
-The phone keeps its own data: one SQLite file with full-text search, backed up by iPhone
-and iCloud Backup. You sign in with Google (Apple comes with a paid developer account). X bookmarks and the YouTube playlists
-you pick come straight from X and YouTube, and Claude sorts new items with your own
-Anthropic key. Settings can copy your saves from the web app once. See
+It reads and writes the same cloud data as the web app, so a note, tag or archive on one
+shows up on the other. You sign in with the same account as the web, Google included.
+Sources and the Claude key are set once on the web and shared. Screenshots from the
+Screenshots album and anything shared to Save to Brain go straight to the cloud. See
 [ios/README.md](ios/README.md) to build it.
 
 <p>
@@ -151,9 +151,7 @@ Anthropic key. Settings can copy your saves from the web app once. See
   <img src="docs/images/iphone-settings.png" width="180" alt="Settings with sources">
 </p>
 
-Sign in, the inbox, the side menu, an item and Settings. The shots use made-up sample
-data: debug builds launched with `-demo` skip sign in and fill Brain with it, and
-`-screen menu|item|settings` opens on that screen.
+Sign in, the inbox, the side menu, an item and Settings, with made-up sample data.
 
 ## Deploys
 
