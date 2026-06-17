@@ -16,7 +16,7 @@ Claude Haiku reads each new item and gives it:
 You can then search, filter, read, archive, change the category or tags, add a note, and
 add items by hand. Arabic text shows right to left.
 
-The full design is in [docs/second-brain-plan.html](docs/second-brain-plan.html).
+The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
 
 ## What it looks like
 

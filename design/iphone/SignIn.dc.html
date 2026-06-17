@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
+a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 58px 24px 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="flex-grow: 1"></div>
+<img src="/_blob/23ddb5e15c764356ded41d3a396703a7" alt="Brain app icon" style="width: 112px; height: 112px; border-radius: 26px; border: 1px solid {{t.line}}">
+<h1 style="margin: 8px 0 0; font-size: 40px; font-weight: 700; letter-spacing: -0.5px">Brain</h1>
+<p style="margin: 0; font-size: 16px; color: {{t.soft}}">Everything you save, in one place.</p>
+<div style="flex-grow: 1"></div>
+<a href="Main.dc.html" style="width: 100%; height: 54px; border-radius: 27px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 600; background: {{t.accent}}; color: {{t.onAccent}}">Sign in</a>
+<p style="margin: 0; font-size: 13px; color: {{t.soft}}; text-align: center">Google or email, same as on the web.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() {
+    return { t: THEMES[this.props.theme] || THEMES['sunroom-light'] };
+  }
+}
+</script>
+</body>
+</html>

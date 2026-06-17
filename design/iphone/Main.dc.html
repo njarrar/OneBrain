@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=IBM+Plex+Sans+Arabic:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
+a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="height: 100%; overflow-y: auto; box-sizing: border-box; padding: 58px 16px 120px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Menu.dc.html" aria-label="Open menu" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+</a>
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Inbox</h1>
+<button type="button" aria-label="Filters" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+</button>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button type="button" onClick="{{c.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 18px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid {{t.line}}; background: {{c.bg}}; color: {{t.ink}}">{{c.label}}</button>
+</sc-for>
+</div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">8 items</div>
+<sc-for list="{{items}}" as="item" hint-placeholder-count="3">
+<a href="Item.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; border-top: 3px solid {{item.color}}; box-shadow: 0 3px 0 {{t.shadow}}">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="width: 36px; height: 36px; border-radius: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 600; background: {{t.chip}}; color: {{item.color}}">{{item.initial}}</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 15px; font-weight: 600">{{item.author}}</div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{t.soft}}">{{item.handle}} · {{item.date}}</div>
+</div>
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{t.soft}}; padding: 2px 6px; border: 1px solid {{t.line}}; border-radius: 5px">{{item.source}}</div>
+</div>
+<div dir="{{item.dir}}" style="font-size: 15px; line-height: 1.45; font-family: {{item.font}}">{{item.text}}</div>
+<sc-if value="{{item.hasMedia}}" hint-placeholder-val="{{true}}">
+<div style="height: 180px; border-radius: 12px; background: {{t.chip}}; border: 1px dashed {{t.line}}; display: flex; align-items: center; justify-content: center; font-size: 13px; color: {{t.soft}}">[Picture from the post]</div>
+</sc-if>
+<div style="font-size: 13px; line-height: 1.4; color: {{t.soft}}; padding: 8px 10px; border-radius: 8px; background: {{t.bg}}">{{item.summary}}</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 12px; background: {{t.chip}}"><span style="width: 7px; height: 7px; border-radius: 4px; background: {{item.color}}"></span>{{item.category}}</span>
+<sc-for list="{{item.tags}}" as="tag" hint-placeholder-count="2">
+<span style="font-size: 12px; color: {{t.soft}}; padding: 4px 8px; border-radius: 12px; background: {{t.chip}}">#{{tag}}</span>
+</sc-for>
+</div>
+</a>
+</sc-for>
+</div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; gap: 10px">
+<label style="flex-grow: 1; height: 50px; border-radius: 25px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 6px 20px rgba(0,0,0,.18)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: {{t.soft}}; flex-shrink: 0"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" placeholder="Search in English or Arabic" aria-label="Search" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; width: 100%; color: {{t.ink}}">
+</label>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+var LATIN = "'Space Grotesk', system-ui, sans-serif";
+var ARABIC = "'IBM Plex Sans Arabic', 'Space Grotesk', sans-serif";
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { chip: 'All' }; }
+  renderVals() {
+    var t = THEMES[this.props.theme] || THEMES['sunroom-light'];
+    var self = this;
+    var chips = ['All', 'X', 'Instagram', 'YouTube', 'Feedly'].map(function (label) {
+      return { label: label, bg: self.state.chip === label ? t.chip : t.card, pick: function () { self.setState({ chip: label }); } };
+    });
+    var items = [
+      { author: 'Lina Haddad', initial: 'L', handle: '@linabuilds', date: 'Sep 27', source: 'X', color: '#0EA5E9', dir: 'ltr', font: LATIN, hasMedia: true,
+        text: "We cut our agent's token bill by 60% in a week. Three changes: cache the long system prompt, batch 20 items per call, and stop sending the full history every turn.",
+        summary: "How one team cut an agent's API bill by 60% with caching and batches.", category: 'AI, Code & Dev Tools', tags: ['agents', 'cost'] },
+      { author: 'Levant Notes', initial: 'L', handle: '@levant_notes', date: 'Sep 26', source: 'X', color: '#F59E0B', dir: 'rtl', font: ARABIC, hasMedia: false,
+        text: 'لماذا المياه هي مركز السياسة الخارجية للأردن: سلسلة عن نهر اليرموك وحوض الديسي.',
+        summary: "Why water sits at the center of Jordan's foreign policy.", category: 'MENA Geopolitics & Society', tags: ['water'] },
+      { author: 'Studio Field', initial: 'S', handle: 'youtube.com', date: 'Sep 24', source: 'YouTube', color: '#EAB308', dir: 'ltr', font: LATIN, hasMedia: true,
+        text: 'A tour of a small Kyoto tailor who still cuts every jacket by hand.',
+        summary: 'Menswear video to watch this weekend.', category: 'Menswear, Design & Travel', tags: ['tailoring'] }
+    ];
+    return { t: t, chips: chips, items: items, true: true };
+  }
+}
+</script>
+</body>
+</html>

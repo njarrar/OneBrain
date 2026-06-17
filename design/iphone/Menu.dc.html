@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
+a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow-y: auto; padding: 58px 16px 40px; display: flex; flex-direction: column; gap: 10px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="display: flex; justify-content: flex-end">
+<a href="Settings.dc.html" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"></path></svg>
+</a>
+</div>
+<h1 style="margin: 0 0 6px 4px; font-size: 34px; font-weight: 700">Brain</h1>
+<nav aria-label="Views" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="5">
+<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}; color: {{v.color}}">
+<span style="width: 8px; height: 8px; border-radius: 4px; background: {{v.dot}}"></span>
+<span style="flex-grow: 1; font-size: 16px">{{v.name}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{v.count}}</span>
+</a>
+</sc-for>
+</nav>
+<h2 style="margin: 14px 0 0 4px; font-size: 14px; font-weight: 600; color: {{t.soft}}">Categories</h2>
+<nav aria-label="Categories" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
+<span style="width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; background: {{c.color}}"></span>
+<span style="flex-grow: 1; font-size: 15px">{{c.name}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{c.count}}</span>
+</a>
+</sc-for>
+</nav>
+<h2 style="margin: 14px 0 0 4px; font-size: 14px; font-weight: 600; color: {{t.soft}}">Sources</h2>
+<nav aria-label="Sources" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
+<sc-for list="{{sources}}" as="s" hint-placeholder-count="4">
+<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
+<span style="flex-grow: 1; font-size: 15px">{{s.name}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{s.count}}</span>
+</a>
+</sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() {
+    var t = THEMES[this.props.theme] || THEMES['sunroom-light'];
+    var views = [['Inbox', 8], ['All', 8], ['Archive', 0], ['With media', 5], ['Sensitive', 0]].map(function (v, i) {
+      return { name: v[0], count: v[1], color: i === 0 ? t.accentText : t.ink, dot: i === 0 ? t.accent : t.line };
+    });
+    var cats = [
+      ['AI, Code & Dev Tools', '#0EA5E9', 2], ['Cinema, Gaming, History & Culture', '#F97316', 1],
+      ['Health, Biotech & Longevity', '#14B8A6', 1], ['MENA Geopolitics & Society', '#F59E0B', 1],
+      ['Markets, Startups & Finance', '#10B981', 1], ['Menswear, Design & Travel', '#EAB308', 1],
+      ['Models, Pop Culture & NSFW', '#F43F5E', 0], ['Viral Threads & Internet Culture', '#8B5CF6', 1]
+    ].map(function (c) { return { name: c[0], color: c[1], count: c[2] }; });
+    var sources = [['X', 4], ['YouTube', 1], ['Instagram', 1], ['Feedly', 1], ['Screenshots', 1]].map(function (s) { return { name: s[0], count: s[1] }; });
+    return { t: t, views: views, cats: cats, sources: sources };
+  }
+}
+</script>
+</body>
+</html>
