@@ -9,6 +9,15 @@ const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"], weigh
 export const metadata: Metadata = {
   title: "Brain",
   description: "Everything you save, in one place.",
+  icons: {
+    icon: [
+      { url: "/icons/favicon.svg", type: "image/svg+xml" },
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
