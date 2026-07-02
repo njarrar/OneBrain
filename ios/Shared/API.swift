@@ -77,18 +77,34 @@ struct API {
         try await send(request("api/app/menu"), as: MenuData.self)
     }
 
+    /// The design and mode, shared with the web.
+    func prefs() async throws -> Prefs {
+        try await send(request("api/app/prefs"), as: Prefs.self)
+    }
+
+    func savePrefs(design: Design?, mode: Mode?) async throws -> Prefs {
+        var req = try request("api/app/prefs", method: "PUT")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var payload: [String: String] = [:]
+        if let design { payload["design"] = design.rawValue }
+        if let mode { payload["mode"] = mode.rawValue }
+        req.httpBody = try JSONEncoder().encode(payload)
+        return try await send(req, as: Prefs.self)
+    }
+
     struct Saved: Decodable {
         let id: String
         let existed: Bool?
     }
 
-    /// A link or a note, from the share sheet.
-    func save(url: String?, text: String?) async throws -> Saved {
+    /// A link or a note, from the share sheet. title is a web page's own title, when the app shares one.
+    func save(url: String?, text: String?, title: String? = nil) async throws -> Saved {
         var req = try request("api/app/save", method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         var payload: [String: String] = [:]
         if let url { payload["url"] = url }
         if let text { payload["text"] = text }
+        if let title { payload["title"] = title }
         req.httpBody = try JSONEncoder().encode(payload)
         return try await send(req, as: Saved.self)
     }

@@ -12,6 +12,7 @@ import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
 import { setAnthropicKey } from "@/lib/secrets";
+import { isDesign, isMode, savePrefs } from "@/lib/theme";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -27,6 +28,15 @@ export async function toggleBlur() {
   const jar = await cookies();
   const off = jar.get("blur")?.value === "off";
   jar.set("blur", off ? "on" : "off", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: true, httpOnly: true });
+  revalidatePath("/", "layout");
+}
+
+// The design (X-Vault or Sunroom) and mode (light, dark, or follow the device). The phone reads the same settings.
+export async function setLook(form: FormData) {
+  await requireUser();
+  const design = form.get("design");
+  const mode = form.get("mode");
+  await savePrefs({ design: isDesign(design) ? design : undefined, mode: isMode(mode) ? mode : undefined });
   revalidatePath("/", "layout");
 }
 

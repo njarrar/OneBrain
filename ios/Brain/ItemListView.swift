@@ -17,7 +17,7 @@ struct ItemListView: View {
     var body: some View {
         List {
             if let error {
-                Text(error).foregroundStyle(.red).listRowBackground(Color.clear)
+                Text(error).foregroundStyle(Theme.bad).listRowBackground(Color.clear)
             }
             if total > 0 {
                 Text("\(total.formatted()) items").font(.caption.monospaced()).foregroundStyle(Theme.soft)
@@ -39,7 +39,7 @@ struct ItemListView: View {
                 }
                 .swipeActions(edge: .leading) {
                     if item.status == "inbox" {
-                        Button { set(item, "read") } label: { Label("Read", systemImage: "checkmark") }.tint(.green)
+                        Button { set(item, "read") } label: { Label("Read", systemImage: "checkmark") }.tint(Theme.ok)
                     }
                 }
                 .onAppear { if item.id == items.last?.id { Task { await loadMore() } } }

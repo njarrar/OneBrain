@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { setCategory } from "@/lib/actions";
+import { catVars } from "@/lib/color";
 
 type Category = { name: string; color: string | null };
 
@@ -16,7 +17,7 @@ export function CategoryPicker({ id, current, color, categories }: {
   const action = setCategory.bind(null, id);
   return (
     <details className="cat-pick" ref={box}>
-      <summary className="cat-pill" style={{ "--cat": color ?? "var(--soft)" } as React.CSSProperties}>
+      <summary className="cat-pill" style={catVars(color, "var(--soft)")}>
         <i className="dot" aria-hidden="true" />
         <span dir="auto">{current ?? "No category"}</span>
       </summary>

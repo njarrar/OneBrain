@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @State private var screenshots = ScreenshotSync.shared
     @AppStorage("blurSensitive") private var blur = true
+    @State private var look = Look.shared
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,33 @@ struct SettingsView: View {
                     Section("From this phone") {
                         Text(status).font(.footnote).foregroundStyle(Theme.soft)
                     }
+                }
+
+                Section {
+                    Picker("Design", selection: Binding(
+                        get: { look.design },
+                        set: { d in Task { await look.set(design: d) } }
+                    )) {
+                        ForEach(Design.allCases) { d in
+                            DesignRow(design: d).tag(d)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                    Picker("Mode", selection: Binding(
+                        get: { look.mode },
+                        set: { m in Task { await look.set(mode: m) } }
+                    )) {
+                        ForEach(Mode.allCases) { m in Text(m.label).tag(m) }
+                    }
+                    .pickerStyle(.segmented)
+                    if let error = look.error {
+                        Text(error).font(.footnote).foregroundStyle(Theme.bad)
+                    }
+                } header: {
+                    Text("Appearance")
+                } footer: {
+                    Text("System follows your phone. The web uses the same choices.")
                 }
 
                 Section("Show") {
@@ -74,6 +102,31 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
+    }
+}
+
+/// A design's name with a small preview of its colours.
+private struct DesignRow: View {
+    let design: Design
+
+    private var swatch: [Color] {
+        switch design {
+        case .vault: return [Color(hex: "#0B0F17"), Color(hex: "#151D2B"), Color(hex: "#F59E0B")]
+        case .sunroom: return [Color(hex: "#FBF8F1"), Color(hex: "#F0E9DC"), Color(hex: "#DC9242")]
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(Array(swatch.enumerated()), id: \.offset) { _, c in
+                    c.frame(width: 12, height: 18)
+                }
+            }
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Theme.lineStrong))
+            Text(design.label)
         }
     }
 }

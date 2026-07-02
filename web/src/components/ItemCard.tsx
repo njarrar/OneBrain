@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ItemRow } from "@/lib/queries";
 import { SOURCE_LABELS, hostOf, shortDate } from "@/lib/links";
 import { CategoryPicker } from "@/components/CategoryPicker";
+import { catVars } from "@/lib/color";
 
 export function displayTitle(item: Pick<ItemRow, "title" | "body" | "url" | "author">) {
   if (item.title) return item.title;
@@ -32,7 +33,7 @@ export function ItemCard({ item, categories }: { item: ItemRow; categories: { na
   const rtl = item.lang === "ar";
 
   return (
-    <li className={item.sensitive ? "card sensitive" : "card"} style={{ "--cat": item.category_color ?? "var(--line)" } as React.CSSProperties}>
+    <li className={item.sensitive ? "card sensitive" : "card"} style={catVars(item.category_color, "var(--line)")}>
       <div className="card-head">
         <span className="avatar" aria-hidden="true">{initials(item.author ?? item.author_handle ?? hostOf(item.url))}</span>
         <div className="card-who">

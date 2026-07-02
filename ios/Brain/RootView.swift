@@ -62,7 +62,7 @@ struct MenuView: View {
             if let menu {
                 Section("Categories") {
                     ForEach(menu.categories) { c in
-                        row(c.name, c.count, nil, .all { $0.category = c.name }, dot: Color(hex: c.color, fallback: Theme.soft))
+                        row(c.name, c.count, nil, .all { $0.category = c.name }, dot: Theme.category(c.color, fallback: Theme.soft))
                     }
                 }
                 Section("Tags") {

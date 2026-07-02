@@ -40,7 +40,7 @@ struct ItemDetailView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 actions
-                if let error { Text(error).foregroundStyle(.red).font(.footnote) }
+                if let error { Text(error).foregroundStyle(Theme.bad).font(.footnote) }
                 panel("Your note") {
                     TextField("Why you saved this, what to do with it…", text: $note, axis: .vertical)
                         .lineLimit(3...8)
@@ -54,7 +54,7 @@ struct ItemDetailView: View {
                         }
                     } label: {
                         HStack {
-                            Circle().fill(Color(hex: item.categoryColor, fallback: Theme.soft)).frame(width: 8, height: 8)
+                            Circle().fill(Theme.category(item.categoryColor, fallback: Theme.soft)).frame(width: 8, height: 8)
                             Text(item.category ?? "Pick a category")
                             Image(systemName: "chevron.up.chevron.down").font(.caption)
                         }
@@ -107,7 +107,7 @@ struct ItemDetailView: View {
         HStack(spacing: 10) {
             if let link = item.url, let url = URL(string: link) {
                 Button { openURL(url) } label: { Label("Open", systemImage: "arrow.up.right.square") }
-                    .buttonStyle(.borderedProminent).foregroundStyle(.black)
+                    .buttonStyle(.borderedProminent).tint(Theme.accentFill).foregroundStyle(Theme.accentInk)
             }
             if item.status == "archived" {
                 Button { Task { await change(.init(status: "inbox")) } } label: { Label("To inbox", systemImage: "tray") }
@@ -133,8 +133,7 @@ struct ItemDetailView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.line))
+        .themedCard(radius: Theme.cardRadius - 2)
     }
 
     private func addTags() {

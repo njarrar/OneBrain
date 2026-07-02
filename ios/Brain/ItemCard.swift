@@ -5,7 +5,7 @@ struct ItemCard: View {
     let item: Item
     var blur: Bool
 
-    private var catColor: Color { Color(hex: item.categoryColor, fallback: Theme.line) }
+    private var catColor: Color { Theme.category(item.categoryColor, fallback: Theme.line) }
     private var hidden: Bool { blur && item.isSensitive }
 
     var body: some View {
@@ -14,7 +14,8 @@ struct ItemCard: View {
                 Text(initial)
                     .font(.subheadline.weight(.semibold))
                     .frame(width: 32, height: 32)
-                    .background(catColor.opacity(0.3), in: Circle())
+                    .foregroundStyle(Theme.palette.sunroom ? Theme.categoryText(item.categoryColor) : Theme.ink)
+                    .background(Theme.categoryFill(item.categoryColor, strength: 0.3), in: Circle())
                 VStack(alignment: .leading, spacing: 1) {
                     Text(item.author ?? Sources.label(item.sources?.first ?? "manual"))
                         .font(.subheadline.weight(.semibold)).lineLimit(1)
@@ -25,7 +26,7 @@ struct ItemCard: View {
                 ForEach(item.sources ?? [], id: \.self) { s in
                     Text(Sources.label(s)).font(.caption2.monospaced()).foregroundStyle(Theme.soft)
                         .padding(.horizontal, 6).padding(.vertical, 2)
-                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(Theme.line))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.palette.sunroom ? 999 : 5).stroke(Theme.line))
                 }
             }
 
@@ -46,7 +47,7 @@ struct ItemCard: View {
             if let summary = item.summary {
                 Text(summary).font(.caption).foregroundStyle(Theme.soft)
                     .padding(8).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.bg, in: RoundedRectangle(cornerRadius: 8))
+                    .background(Theme.bg, in: RoundedRectangle(cornerRadius: Theme.smallRadius))
             }
 
             if !item.pictures.isEmpty {
@@ -56,7 +57,7 @@ struct ItemCard: View {
             if let note = item.note {
                 Text(note).font(.footnote).foregroundStyle(Theme.soft)
                     .padding(.leading, 8)
-                    .overlay(alignment: .leading) { Rectangle().fill(Theme.accent).frame(width: 2) }
+                    .overlay(alignment: .leading) { Rectangle().fill(Theme.accentFill).frame(width: 2) }
             }
 
             HStack(spacing: 6) {
@@ -65,9 +66,9 @@ struct ItemCard: View {
                         Circle().fill(catColor).frame(width: 7, height: 7)
                         Text(category).lineLimit(1)
                     }
-                    .font(.caption.weight(.medium)).foregroundStyle(catColor)
+                    .font(.caption.weight(.medium)).foregroundStyle(Theme.categoryText(item.categoryColor))
                     .padding(.horizontal, 9).padding(.vertical, 4)
-                    .background(catColor.opacity(0.14), in: Capsule())
+                    .background(Theme.categoryFill(item.categoryColor), in: Capsule())
                 }
                 ForEach((item.tags ?? []).prefix(2), id: \.self) { t in
                     Text(t).font(.caption).foregroundStyle(Theme.soft)
@@ -77,11 +78,11 @@ struct ItemCard: View {
             }
         }
         .padding(14)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
         .overlay(alignment: .top) {
-            UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12).fill(catColor).frame(height: 2)
+            UnevenRoundedRectangle(topLeadingRadius: Theme.cardRadius, topTrailingRadius: Theme.cardRadius)
+                .fill(catColor).frame(height: 2)
         }
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+        .themedCard()
     }
 
     private var initial: String {
@@ -106,15 +107,16 @@ struct PictureGrid: View {
                             .frame(height: shown.count == 2 ? 180 : 130)
                             .overlay {
                                 if i == shown.count - 1 && urls.count > shown.count {
+                                    // Photo overlays stay dark in every theme.
                                     Color.black.opacity(0.55)
-                                    Text("+\(urls.count - shown.count)").font(.title3.bold())
+                                    Text("+\(urls.count - shown.count)").font(.title3.bold()).foregroundStyle(.white)
                                 }
                             }
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.smallRadius))
                     }
                 }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.smallRadius + 2))
     }
 }

@@ -19,8 +19,9 @@ struct SignInView: View {
                 Text("Sign in").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 14)
             }
             .buttonStyle(.borderedProminent)
-            .foregroundStyle(.black)
-            if let error { Text(error).font(.footnote).foregroundStyle(.red).multilineTextAlignment(.center) }
+            .tint(Theme.accentFill)
+            .foregroundStyle(Theme.accentInk)
+            if let error { Text(error).font(.footnote).foregroundStyle(Theme.bad).multilineTextAlignment(.center) }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
