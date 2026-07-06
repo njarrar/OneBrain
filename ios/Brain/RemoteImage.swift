@@ -19,14 +19,13 @@ struct RemoteImage: View {
     @State private var failed = false
 
     var body: some View {
-        ZStack {
-            Theme.raised
-            if let image {
-                Image(uiImage: image).resizable().aspectRatio(contentMode: contentMode)
-            } else if failed {
-                Image(systemName: "photo").foregroundStyle(Theme.soft)
+        Group {
+            if contentMode == .fill {
+                // A filled picture must never set its own size: it would push the card wider
+                // than the screen. The background takes the size it is given; the picture sits on top.
+                Theme.raised.overlay { picture }
             } else {
-                ProgressView().tint(Theme.soft)
+                ZStack { Theme.raised; picture }
             }
         }
         .clipped()
@@ -43,6 +42,16 @@ struct RemoteImage: View {
             } catch {
                 failed = true
             }
+        }
+    }
+
+    @ViewBuilder private var picture: some View {
+        if let image {
+            Image(uiImage: image).resizable().aspectRatio(contentMode: contentMode)
+        } else if failed {
+            Image(systemName: "photo").foregroundStyle(Theme.soft)
+        } else {
+            ProgressView().tint(Theme.soft)
         }
     }
 }

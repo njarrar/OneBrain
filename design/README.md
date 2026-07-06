@@ -7,6 +7,7 @@ Every design file for Brain lives here. App code lives in `web/` and `ios/`.
 | `iphone/` | The iPhone screens from the first canvas "Brain iPhone app" |
 | `icons/` | The Pocket app icon masters (SVG), light, dark and tinted |
 | `plan/` | The first plan: what Brain does, its sources and its build steps |
+| `screenshots/` | Screenshots of the built app: each look on the web and the iPhone, and the Inbox cards |
 
 ## iPhone screens
 

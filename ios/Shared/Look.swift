@@ -64,6 +64,11 @@ final class Look {
     init() {
         design = Design(rawValue: defaults.string(forKey: "lookDesign") ?? "") ?? .vault
         mode = Mode(rawValue: defaults.string(forKey: "lookMode") ?? "") ?? .system
+        #if DEBUG
+        // Launch arguments such as `-lookDesign sunroom -lookMode light`, for screenshots.
+        if let d = UserDefaults.standard.string(forKey: "lookDesign").flatMap(Design.init(rawValue:)) { design = d }
+        if let m = UserDefaults.standard.string(forKey: "lookMode").flatMap(Mode.init(rawValue:)) { mode = m }
+        #endif
     }
 
     var prefs: Prefs { Prefs(design: design, mode: mode) }

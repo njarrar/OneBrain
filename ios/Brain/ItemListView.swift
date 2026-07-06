@@ -24,9 +24,9 @@ struct ItemListView: View {
                     .listRowBackground(Color.clear).listRowSeparator(.hidden)
             }
             ForEach(items) { item in
-                NavigationLink(value: item) {
-                    ItemCard(item: item, blur: blur)
-                }
+                // The link sits behind the card, hidden, so the list draws no chevron beside it.
+                ItemCard(item: item, blur: blur)
+                    .background { NavigationLink(value: item) { EmptyView() }.opacity(0) }
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))

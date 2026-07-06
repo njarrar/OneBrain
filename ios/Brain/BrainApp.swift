@@ -43,7 +43,7 @@ struct BrainApp: App {
 /// Whether this phone has a key for Brain.
 @Observable
 final class AppSession {
-    var signedIn = KeyStore.token != nil
+    var signedIn = KeyStore.token != nil || Demo.on
 
     func signIn(token: String) {
         KeyStore.save(token)

@@ -50,6 +50,7 @@ struct API {
     }
 
     func items(_ filter: Filter, page: Int) async throws -> ItemPage {
+        if Demo.on { return try Demo.page() }
         let req = try request("api/app/items", query: filter.queryItems + [URLQueryItem(name: "page", value: String(page))])
         return try await send(req, as: ItemPage.self)
     }
@@ -74,12 +75,14 @@ struct API {
     }
 
     func menu() async throws -> MenuData {
-        try await send(request("api/app/menu"), as: MenuData.self)
+        if Demo.on { return try Demo.menu() }
+        return try await send(request("api/app/menu"), as: MenuData.self)
     }
 
     /// The design and mode, shared with the web.
     func prefs() async throws -> Prefs {
-        try await send(request("api/app/prefs"), as: Prefs.self)
+        if Demo.on { return Look.shared.prefs }
+        return try await send(request("api/app/prefs"), as: Prefs.self)
     }
 
     func savePrefs(design: Design?, mode: Mode?) async throws -> Prefs {
