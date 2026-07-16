@@ -1,3 +1,4 @@
+import { idForKey, identityKey, sha256Hex } from "@/lib/canonical";
 import { db, now } from "@/lib/db";
 
 export type Incoming = {
@@ -7,6 +8,10 @@ export type Incoming = {
   externalId?: string | null;
   // Names the item when one thing can be saved more than once from a source (a video liked and in a playlist).
   itemKey?: string;
+  // The identity key, when the caller knows it (a note's words, a picture's bytes). Otherwise worked out from the link.
+  key?: string | null;
+  // SHA-256 of a picture's bytes.
+  imageHash?: string | null;
   url?: string | null;
   title?: string | null;
   body?: string | null;
@@ -22,8 +27,7 @@ export type Incoming = {
 // Item ids go in page links, so ids like full URLs are hashed.
 async function safeId(external: string) {
   if (/^[\w-]{1,80}$/.test(external)) return external;
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(external));
-  return [...new Uint8Array(hash)].slice(0, 10).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return (await sha256Hex(external)).slice(0, 20);
 }
 
 function iso(v?: string | null) {
@@ -38,47 +42,68 @@ function clean(v?: string | null, max = 20000) {
   return s ? s.slice(0, max) : null;
 }
 
-// Statements that save one item from a source. The same link saved twice becomes one item
-// with two saves; the same save from the same source is skipped.
-export async function saveStatements(x: Incoming): Promise<{ id: string; stmts: D1PreparedStatement[] }> {
-  const d = await db();
+// The item an incoming save belongs to: the one with the same key, then the same id, then the same link.
+// Binds: ?1 key, ?2 id, ?3 url.
+const TARGET = `select i.id from items i
+  where (?1 is not null and i.canon = ?1) or i.id = ?2 or (?3 is not null and i.url = ?3)
+  order by coalesce(i.canon = ?1, 0) desc, i.id = ?2 desc, i.created_at limit 1`;
+
+export type Planned = { id: string; key: string | null; stmts: D1PreparedStatement[] };
+
+// Statements that save one item from a source. Anything already here under the same key (the same post,
+// video, link or picture however it was spelled or wherever it came from) gets one more save instead of
+// a second item: it keeps its own date, note, tags, status and sorting, and only has blanks filled.
+// The same save from the same source is skipped, so retries and re-syncs add nothing.
+export async function saveStatements(x: Incoming, d?: D1Database): Promise<Planned> {
+  d ??= await db();
   const url = clean(x.url, 2000);
-  const key = x.itemKey ?? x.externalId;
-  const id = x.id ?? (key ? `${x.source}-${await safeId(key)}` : crypto.randomUUID());
+  const key = x.key ?? identityKey({ source: x.source, url, externalId: x.externalId, itemKey: x.itemKey, imageHash: x.imageHash });
+  const own = x.itemKey ?? x.externalId;
+  const id = x.id ?? idForKey(key) ?? (own ? `${x.source}-${await safeId(own)}` : crypto.randomUUID());
+  const title = clean(x.title, 500);
+  const body = clean(x.body);
+  const author = clean(x.author, 200);
+  const handle = clean(x.authorHandle, 200);
+  const posted = iso(x.postedAt);
+  const media = JSON.stringify((x.media ?? []).filter(Boolean).slice(0, 8));
   const stmts = [
     d.prepare(
-      `insert into items (id, title, body, url, kind, author, author_handle, posted_at, media)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `insert into items (id, title, body, url, kind, author, author_handle, posted_at, media, canon)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        on conflict do nothing`,
-    ).bind(
-      id, clean(x.title, 500), clean(x.body), url, x.kind ?? "link", clean(x.author, 200), clean(x.authorHandle, 200),
-      iso(x.postedAt), JSON.stringify((x.media ?? []).filter(Boolean).slice(0, 8)),
-    ),
+    ).bind(id, title, body, url, x.kind ?? "link", author, handle, posted, media, key),
+    // Fill what the item is missing. "or ignore" leaves the key alone if another item already has it.
+    d.prepare(
+      `update or ignore items set title = coalesce(title, ?4), body = coalesce(body, ?5), author = coalesce(author, ?6),
+         author_handle = coalesce(author_handle, ?7), posted_at = coalesce(posted_at, ?8),
+         media = case when media = '[]' then ?9 else media end, canon = coalesce(canon, ?1),
+         kind = case when kind in ('link', 'note') and ?10 not in ('link', 'note') then ?10 else kind end
+       where id = (${TARGET})`,
+    ).bind(key, id, url, title, body, author, handle, posted, media, x.kind ?? "link"),
     d.prepare(
       `insert into saves (id, item_id, source_id, external_id, saved_at, original_url, raw)
-       select ?, i.id, ?, ?, ?, ?, ? from items i
-       where i.id = ? or (? is not null and i.url = ?)
-       order by i.id = ? desc limit 1
+       select ?4, (${TARGET}), ?5, ?6, ?7, ?8, ?9
+       where (${TARGET}) is not null
        on conflict do nothing`,
     ).bind(
-      crypto.randomUUID(), x.source, x.externalId ?? null, iso(x.savedAt), url,
-      x.raw === undefined ? null : JSON.stringify(x.raw), id, url, url, id,
+      key, id, url, crypto.randomUUID(), x.source, x.externalId ?? null, iso(x.savedAt), x.url?.trim() || url,
+      x.raw === undefined ? null : JSON.stringify(x.raw),
     ),
   ];
-  return { id, stmts };
+  return { id, key, stmts };
 }
 
-// Saves one item and returns the id it ended up under (an older item with the same link wins).
+// The id an item was saved under (an older item with the same key or link wins).
+export async function resolveId(p: { id: string; key: string | null }, url?: string | null): Promise<string> {
+  const row = await (await db()).prepare(TARGET).bind(p.key, p.id, clean(url, 2000)).first<{ id: string }>();
+  return row?.id ?? p.id;
+}
+
+// Saves one item and returns the id it ended up under.
 export async function saveOne(x: Incoming): Promise<string> {
-  const { id, stmts } = await saveStatements(x);
-  const d = await db();
-  await d.batch(stmts);
-  const url = x.url?.trim() || null;
-  const row = await d
-    .prepare(`select id from items where id = ? or (? is not null and url = ?) order by id = ? desc limit 1`)
-    .bind(id, url, url, id)
-    .first<{ id: string }>();
-  return row?.id ?? id;
+  const planned = await saveStatements(x);
+  await (await db()).batch(planned.stmts);
+  return resolveId(planned, x.url);
 }
 
 export async function markSynced(source: string, added: number, error: string | null = null, status = "connected") {

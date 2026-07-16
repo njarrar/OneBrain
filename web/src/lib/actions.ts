@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { idForKey, noteKey, sha256Hex, urlKey } from "@/lib/canonical";
 import { db, env, first, now, run } from "@/lib/db";
 import { getAuth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
@@ -219,34 +220,50 @@ export async function addItem(_: string | null, form: FormData): Promise<string 
 
   const d = await db();
   const stmts: D1PreparedStatement[] = [];
-  const existing = url ? await first<{ id: string }>(`select id from items where url = ?`, url) : null;
-  const id = existing?.id ?? crypto.randomUUID();
+  // One key per link however it is spelled, per picture by its bytes, or per note by its words,
+  // so adding something that is already here adds to it instead of making a copy.
+  const bytes = hasFile ? await file.arrayBuffer() : null;
+  const hash = bytes ? await sha256Hex(bytes) : null;
+  const key = url ? urlKey(url) : hash ? `img:${hash}` : await noteKey(note ?? title ?? "");
+  const existing = await first<{ id: string }>(
+    `select id from items where (?1 is not null and canon = ?1) or id = ?2 or (?3 is not null and url = ?3)
+     order by coalesce(canon = ?1, 0) desc, created_at limit 1`,
+    key, idForKey(key) ?? "", url,
+  );
+  const id = existing?.id ?? idForKey(key) ?? crypto.randomUUID();
   if (existing) {
     if (note) {
+      // A note already on the item (the same form sent twice) is not added again.
       stmts.push(
-        d.prepare(`update items set note = coalesce(note || char(10) || char(10), '') || ?, updated_at = ? where id = ?`)
-          .bind(note, now(), id),
+        d.prepare(
+          `update items set note = case when instr(coalesce(note, ''), ?1) > 0 then note
+             else coalesce(note || char(10) || char(10), '') || ?1 end, updated_at = ?2 where id = ?3`,
+        ).bind(note, now(), id),
       );
     }
+    if (key) stmts.push(d.prepare(`update or ignore items set canon = coalesce(canon, ?) where id = ?`).bind(key, id));
   } else {
     stmts.push(
-      d.prepare(`insert into items (id, title, body, note, url, kind, media) values (?, ?, ?, ?, ?, ?, ?)`)
-        .bind(id, title, body, note, url, kind, JSON.stringify(media)),
+      d.prepare(`insert into items (id, title, body, note, url, kind, media, canon) values (?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(id, title, body, note, url, kind, JSON.stringify(media), key),
     );
   }
   stmts.push(
     d.prepare(`insert into saves (id, item_id, source_id, original_url) values (?, ?, 'manual', ?)`)
       .bind(crypto.randomUUID(), id, url),
   );
-  if (hasFile) {
+  const hasCopy = existing && hash
+    ? await first(`select 1 from files where item_id = ? and sha256 = ?`, id, hash)
+    : null;
+  if (hasFile && bytes && !hasCopy) {
     const fileId = crypto.randomUUID();
     const key = `files/${fileId}`;
-    await (await env()).FILES.put(key, await file.arrayBuffer(), {
+    await (await env()).FILES.put(key, bytes, {
       httpMetadata: { contentType: file.type || "application/octet-stream" },
     });
     stmts.push(
-      d.prepare(`insert into files (id, item_id, filename, mime, size, r2_key) values (?, ?, ?, ?, ?, ?)`)
-        .bind(fileId, id, file.name, file.type || "application/octet-stream", file.size, key),
+      d.prepare(`insert into files (id, item_id, filename, mime, size, r2_key, sha256) values (?, ?, ?, ?, ?, ?, ?)`)
+        .bind(fileId, id, file.name, file.type || "application/octet-stream", file.size, key, hash),
     );
   }
   stmts.push(...(await tagStatements(id, tags)));

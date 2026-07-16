@@ -5,7 +5,7 @@ import { saveStatements } from "@/lib/ingest";
 import { BATCH, sortItems } from "@/lib/sorter";
 
 // The iPhone app uploads what it saved on the phone, up to 200 items at a time.
-// An item with the same id wins, then one with the same link. Items already here keep what they have:
+// An item with the same key (see lib/canonical.ts) wins, then the same id, then the same link. Items already here keep what they have:
 // the phone only fills blanks, moves an item out of the inbox, and adds tags.
 const MAX_ITEMS = 200;
 const CHUNK = 40;
@@ -58,7 +58,9 @@ export async function POST(req: Request) {
   const knownCategories = new Set(categories.map((c) => c.name));
 
   const items = b.items.filter((x) => x && typeof x === "object");
+  // Where each id, key and link already lives, so a copy under another id or spelling lands on it.
   const byId = new Map<string, string>();
+  const byKey = new Map<string, string>();
   const byUrl = new Map<string, string>();
   let added = 0;
   let updated = 0;
@@ -66,45 +68,54 @@ export async function POST(req: Request) {
 
   for (let i = 0; i < items.length; i += CHUNK) {
     const chunk = items.slice(i, i + CHUNK);
-    const ids = chunk.map((x) => text(x.id, 100)).filter((v): v is string => !!v);
+    const planned = await Promise.all(
+      chunk.map((x) => {
+        const phoneId = text(x.id, 100);
+        const ownId = phoneId && /^[\w-]+$/.test(phoneId) ? phoneId : undefined;
+        const source = x.source && knownSources.has(x.source) ? x.source : "manual";
+        return saveStatements({
+          source,
+          id: ownId,
+          externalId: text(x.externalId, 500),
+          url: text(x.url, 2000),
+          title: text(x.title, 500),
+          body: text(x.body),
+          author: text(x.author, 200),
+          authorHandle: text(x.authorHandle, 200),
+          media: Array.isArray(x.media) ? x.media.filter((m) => typeof m === "string") : [],
+          kind: text(x.kind, 20) ?? undefined,
+          postedAt: isoOrNull(x.postedAt),
+          savedAt: isoOrNull(x.savedAt),
+          raw: { from: "iphone", id: phoneId },
+        });
+      }),
+    );
+    const ids = planned.map((p) => p.id);
+    const keys = planned.map((p) => p.key).filter((v): v is string => !!v);
     const urls = chunk.map((x) => text(x.url, 2000)).filter((v): v is string => !!v);
-    if (ids.length || urls.length) {
-      const found = await all<{ id: string; url: string | null }>(
-        `select id, url from items where id in (${ids.map(() => "?").join(",") || "null"})
-         or url in (${urls.map(() => "?").join(",") || "null"})`,
-        ...ids,
-        ...urls,
-      );
-      for (const r of found) {
-        byId.set(r.id, r.id);
-        if (r.url) byUrl.set(r.url, r.id);
-      }
+    const marks = (n: number) => Array(n).fill("?").join(",") || "null";
+    const found = await all<{ id: string; canon: string | null; url: string | null }>(
+      `select id, canon, url from items where id in (${marks(ids.length)}) or canon in (${marks(keys.length)})
+       or url in (${marks(urls.length)}) order by created_at`,
+      ...ids,
+      ...keys,
+      ...urls,
+    );
+    for (const r of found) {
+      if (!byId.has(r.id)) byId.set(r.id, r.id);
+      if (r.canon && !byKey.has(r.canon)) byKey.set(r.canon, r.id);
+      if (r.url && !byUrl.has(r.url)) byUrl.set(r.url, r.id);
     }
 
     const stmts: D1PreparedStatement[] = [];
-    for (const x of chunk) {
+    for (const [n, x] of chunk.entries()) {
+      const save = planned[n];
       const url = text(x.url, 2000);
-      const phoneId = text(x.id, 100);
-      const ownId = phoneId && /^[\w-]+$/.test(phoneId) ? phoneId : undefined;
-      const source = x.source && knownSources.has(x.source) ? x.source : "manual";
-      const save = await saveStatements({
-        source,
-        id: ownId,
-        externalId: text(x.externalId, 500),
-        url,
-        title: text(x.title, 500),
-        body: text(x.body),
-        author: text(x.author, 200),
-        authorHandle: text(x.authorHandle, 200),
-        media: Array.isArray(x.media) ? x.media.filter((m) => typeof m === "string") : [],
-        kind: text(x.kind, 20) ?? undefined,
-        postedAt: isoOrNull(x.postedAt),
-        savedAt: isoOrNull(x.savedAt),
-        raw: { from: "iphone", id: phoneId },
-      });
-      const existing = (ownId && byId.get(ownId)) || (url && byUrl.get(url)) || null;
+      // Same order as the database uses: key, then id, then link.
+      const existing = (save.key && byKey.get(save.key)) || byId.get(save.id) || (url && byUrl.get(url)) || null;
       const id = existing ?? save.id;
       byId.set(id, id);
+      if (save.key && !byKey.has(save.key)) byKey.set(save.key, id);
       if (url && !byUrl.has(url)) byUrl.set(url, id);
       stmts.push(...save.stmts);
 
@@ -123,7 +134,8 @@ export async function POST(req: Request) {
         ),
       );
       const createdAt = isoOrNull(x.createdAt);
-      if (!existing && createdAt) stmts.push(d.prepare(`update items set created_at = ? where id = ?`).bind(createdAt, id));
+      // The older date wins, so a copy never makes an item look new.
+      if (createdAt) stmts.push(d.prepare(`update items set created_at = min(created_at, ?) where id = ?`).bind(createdAt, id));
 
       const tags = Array.isArray(x.tags) ? x.tags.filter((t) => typeof t === "string") : [];
       for (const name of new Set(tags.map((t) => t.trim().slice(0, 60)).filter(Boolean))) {

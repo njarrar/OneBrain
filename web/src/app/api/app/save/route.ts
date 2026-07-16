@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { allowed, denied } from "@/lib/apptoken";
 import { db, env, run } from "@/lib/db";
+import { noteKey, sha256Hex, urlKey } from "@/lib/canonical";
 import { saveOne } from "@/lib/ingest";
 import { sortItems } from "@/lib/sorter";
 import { unfurl } from "@/lib/unfurl";
@@ -33,17 +34,24 @@ async function saveFile(form: FormData) {
   const takenAt = String(form.get("takenAt") ?? "") || null;
   const note = String(form.get("text") ?? "").trim() || null;
 
-  const id = await saveOne({ source, externalId: external, kind: "image", title: note, postedAt: takenAt, savedAt: takenAt, raw: { filename: file.name } });
+  // The same picture sent twice (a retry, or the same screenshot shared again) is one item.
+  const bytes = await file.arrayBuffer();
+  const hash = await sha256Hex(bytes);
+  const id = await saveOne({
+    source, externalId: external ?? `img:${hash}`, imageHash: hash, kind: "image", title: note,
+    postedAt: takenAt, savedAt: takenAt, raw: { filename: file.name },
+  });
   const d = await db();
   const has = await d.prepare(`select 1 from files where item_id = ?`).bind(id).first();
   if (!has) {
     const fileId = crypto.randomUUID();
     const key = `files/${fileId}`;
     const mime = file.type || "image/jpeg";
-    await (await env()).FILES.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: mime } });
+    await (await env()).FILES.put(key, bytes, { httpMetadata: { contentType: mime } });
     await run(
-      `insert into files (id, item_id, filename, mime, size, r2_key) values (?, ?, ?, ?, ?, ?)`,
-      fileId, id, file.name || "photo.jpg", mime, file.size, key,
+      `insert into files (id, item_id, filename, mime, size, r2_key, sha256) select ?, ?, ?, ?, ?, ?, ?
+       where not exists (select 1 from files where item_id = ? and sha256 = ?)`,
+      fileId, id, file.name || "photo.jpg", mime, file.size, key, hash, id, hash,
     );
   }
   if (source === "photos") {
@@ -67,9 +75,12 @@ export async function POST(req: Request) {
     if (!url && !text) return Response.json({ error: "Nothing to save" }, { status: 400 });
     const found = url ? await unfurl(url) : {};
     const note = text && text !== url ? text.replace(url ?? "", "").trim() || null : null;
+    // One key per link however it is spelled, or per note by its words, so a retried share adds nothing.
+    const key = url ? urlKey(url) : await noteKey(text ?? "");
     id = await saveOne({
       source: sourceOf(url),
-      externalId: url ?? null,
+      externalId: key ?? url ?? null,
+      key,
       url,
       title: b.title?.trim() || found.title || (!url ? note?.split("\n")[0].slice(0, 120) : null),
       body: found.description ?? (url ? null : note),

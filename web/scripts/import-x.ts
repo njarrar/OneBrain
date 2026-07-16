@@ -53,27 +53,30 @@ function postedAt(time?: string): string | null {
 
 function statements(b: Bookmark, status: string): string[] {
   const url = tweetUrl(b);
+  // The same post saved any other way (share sheet, live sync) is the item with key x:<id>.
+  const target = `(select id from items where canon = ${q(`x:${b.id}`)} or id = ${q(`x-${b.id}`)} or url = ${q(url)}
+     order by canon = ${q(`x:${b.id}`)} desc, created_at limit 1)`;
   const out = [
-    `insert into items (id, body, url, kind, status, author, author_handle, posted_at, media)
+    `insert into items (id, body, url, kind, status, author, author_handle, posted_at, media, canon)
      values (${q(`x-${b.id}`)}, ${q(b.text?.trim())}, ${q(url)}, 'post', ${q(status)}, ${q(b.name)},
-             ${q(b.handle)}, ${q(postedAt(b.time))}, ${q(JSON.stringify(b.media ?? []))})
+             ${q(b.handle)}, ${q(postedAt(b.time))}, ${q(JSON.stringify(b.media ?? []))}, ${q(`x:${b.id}`)})
      on conflict do nothing;`,
     `insert into saves (id, item_id, source_id, external_id, original_url, raw)
-     select ${q(`xs-${b.id}`)}, id, 'x', ${q(b.id)}, ${q(b.url ?? url)}, ${q(JSON.stringify(b))}
-     from items where url = ${q(url)}
+     select ${q(`xs-${b.id}`)}, ${target}, 'x', ${q(b.id)}, ${q(b.url ?? url)}, ${q(JSON.stringify(b))}
+     where ${target} is not null
      on conflict do nothing;`,
   ];
   if (b.category) {
     out.push(
       `update items set category = ${q(b.category)}
-       where url = ${q(url)} and category is null and exists (select 1 from categories where name = ${q(b.category)});`,
+       where id = ${target} and category is null and exists (select 1 from categories where name = ${q(b.category)});`,
     );
   }
   for (const tag of b.tags ?? []) {
     out.push(
       `insert or ignore into tags (name) values (${q(tag)});`,
       `insert or ignore into item_tags (item_id, tag_id, added_by)
-       select i.id, t.id, 'import' from items i, tags t where i.url = ${q(url)} and t.name = ${q(tag)};`,
+       select i.id, t.id, 'import' from items i, tags t where i.id = ${target} and t.name = ${q(tag)};`,
     );
   }
   return out;

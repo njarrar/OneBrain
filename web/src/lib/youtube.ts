@@ -165,7 +165,7 @@ export async function syncYouTube(): Promise<number> {
     }
 
     for (let i = 0; i < incoming.length; i += 40) {
-      const stmts = (await Promise.all(incoming.slice(i, i + 40).map(saveStatements))).flatMap((s) => s.stmts);
+      const stmts = (await Promise.all(incoming.slice(i, i + 40).map((x) => saveStatements(x)))).flatMap((s) => s.stmts);
       await d.batch(stmts);
     }
     const after = (await d.prepare(`select count(*) as n from saves where source_id = 'youtube'`).first<{ n: number }>())?.n ?? 0;

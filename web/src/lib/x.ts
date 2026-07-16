@@ -147,7 +147,7 @@ export async function syncX(): Promise<number> {
       const media = new Map((page.includes?.media ?? []).map((m) => [m.media_key, m]));
       const incoming = (page.data ?? []).map((t) => post(t, users, media));
       for (let j = 0; j < incoming.length; j += 40) {
-        const stmts = (await Promise.all(incoming.slice(j, j + 40).map(saveStatements))).flatMap((s) => s.stmts);
+        const stmts = (await Promise.all(incoming.slice(j, j + 40).map((x) => saveStatements(x)))).flatMap((s) => s.stmts);
         await d.batch(stmts);
       }
       const count = await countSaves("x");

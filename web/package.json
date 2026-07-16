@@ -12,7 +12,9 @@
     "migrate:remote": "wrangler d1 migrations apply DB --remote",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "test": "node --import tsx --test src/**/*.test.ts scripts/**/*.test.ts",
+    "dedupe": "tsx scripts/dedupe.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
