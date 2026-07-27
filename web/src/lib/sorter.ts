@@ -97,7 +97,7 @@ export async function sortItems(ids?: string[]): Promise<number> {
         ...ids,
       )
     : await all<Pending>(
-        `select id, title, body, url, author, author_handle, media, kind from items where category is null
+        `select id, title, body, url, author, author_handle, media, kind from items where category is null and deleted_at is null
          order by coalesce(posted_at, created_at) desc limit ?`,
         BATCH,
       );

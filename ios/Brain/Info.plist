@@ -27,8 +27,6 @@
 		<key>UIColorName</key>
 		<string></string>
 	</dict>
-	<key>UIUserInterfaceStyle</key>
-	<string>Dark</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -40,6 +38,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to save it in Brain.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Speak a note or a search, and Brain types it for you.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Brain turns what you say into text for notes and search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Brain saves your screenshots so you can search and sort them.</string>
 </dict>

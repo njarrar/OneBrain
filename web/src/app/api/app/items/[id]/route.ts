@@ -1,6 +1,6 @@
 import { allowed, denied } from "@/lib/apptoken";
 import { db, now } from "@/lib/db";
-import { getItem } from "@/lib/queries";
+import { getItem, purgeItems } from "@/lib/queries";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await allowed(req))) return denied();
@@ -10,13 +10,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 type Change = {
   status?: "inbox" | "read" | "archived";
+  // true marks the item read, false unread.
+  read?: boolean;
+  // true moves the item to Trash, false brings it back.
+  trash?: boolean;
   category?: string | null;
   note?: string | null;
   addTags?: string[];
   removeTags?: string[];
 };
 
-// Changes one item: status, category, note, tags. Send only what changes.
+// Changes one item: status, read, trash, category, note, tags. Send only what changes.
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await allowed(req))) return denied();
   const id = (await params).id;
@@ -26,6 +30,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const t = now();
   if (c.status && ["inbox", "read", "archived"].includes(c.status)) {
     stmts.push(d.prepare(`update items set status = ?, updated_at = ? where id = ?`).bind(c.status, t, id));
+  }
+  if (typeof c.read === "boolean") {
+    stmts.push(d.prepare(`update items set read_at = ? where id = ?`).bind(c.read ? t : null, id));
+  }
+  if (typeof c.trash === "boolean") {
+    stmts.push(d.prepare(`update items set deleted_at = ?, updated_at = ? where id = ?`).bind(c.trash ? t : null, t, id));
   }
   if (c.category !== undefined) {
     stmts.push(d.prepare(`update items set category = ?, updated_at = ? where id = ?`).bind(c.category || null, t, id));
@@ -48,4 +58,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (stmts.length) await d.batch(stmts);
   const data = await getItem(id);
   return data ? Response.json(data) : Response.json({ error: "Not found" }, { status: 404 });
+}
+
+// Deletes an item for good. It must be in Trash first.
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await allowed(req))) return denied();
+  const n = await purgeItems([(await params).id]);
+  return n ? Response.json({ deleted: n }) : Response.json({ error: "Move it to Trash first" }, { status: 409 });
 }

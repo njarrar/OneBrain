@@ -6,9 +6,10 @@ import { saveOne } from "@/lib/ingest";
 import { sortItems } from "@/lib/sorter";
 import { unfurl } from "@/lib/unfurl";
 
-// The share sheet and the Screenshots album post here.
-//   JSON { url?, text?, title? }             a link or a note from any app
-//   form { file, externalId?, takenAt? }     a screenshot or a shared picture
+// The share sheet, the Add sheet and the Screenshots album post here.
+//   JSON { url?, text?, title?, sort?, tags? }             a link or a note from any app
+//   form { file, externalId?, takenAt?, sort?, tags? }     a screenshot or a shared picture
+// sort: false skips Claude's sorting. tags: tags to add now (a list, or one comma-separated string in a form).
 const MAX_FILE = 20 * 1024 * 1024;
 
 function sourceOf(url: string | null) {
@@ -19,6 +20,25 @@ function sourceOf(url: string | null) {
   if (/(^|\.)(x\.com|twitter\.com)$/.test(host)) return "x";
   if (/(^|\.)feedly\.com$/.test(host)) return "feedly";
   return "manual";
+}
+
+function tagList(v: unknown): string[] {
+  const list = Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : [];
+  return [...new Set(list.map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean))].slice(0, 20);
+}
+
+async function addTags(id: string, tags: string[]) {
+  if (!tags.length) return;
+  const d = await db();
+  await d.batch(
+    tags.flatMap((name) => [
+      d.prepare(`insert or ignore into tags (name) values (?)`).bind(name),
+      d.prepare(
+        `insert into item_tags (item_id, tag_id, added_by) select ?, id, 'user' from tags where name = ?
+         on conflict (item_id, tag_id) do update set added_by = 'user'`,
+      ).bind(id, name),
+    ]),
+  );
 }
 
 function firstUrl(text: string | null) {
@@ -64,11 +84,18 @@ export async function POST(req: Request) {
   if (!(await allowed(req))) return denied();
   let res: Response;
   let id: string | null = null;
+  let sort = true;
+  let tags: string[] = [];
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
-    res = await saveFile(await req.formData());
+    const form = await req.formData();
+    sort = form.get("sort") !== "0";
+    tags = tagList(form.get("tags"));
+    res = await saveFile(form);
     if (res.ok) id = ((await res.clone().json()) as { id: string }).id;
   } else {
-    const b = (await req.json()) as { url?: string; text?: string; title?: string };
+    const b = (await req.json()) as { url?: string; text?: string; title?: string; sort?: boolean; tags?: string[] };
+    sort = b.sort !== false;
+    tags = tagList(b.tags);
     const text = b.text?.trim() || null;
     const url = (b.url?.trim() || firstUrl(text)) ?? null;
     if (url && !/^https?:\/\//i.test(url)) return Response.json({ error: "Bad link" }, { status: 400 });
@@ -92,6 +119,7 @@ export async function POST(req: Request) {
     if (url && note) await run(`update items set note = coalesce(note, ?) where id = ?`, note, id);
     res = Response.json({ ok: true, id });
   }
-  if (id) getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
+  if (id) await addTags(id, tags);
+  if (id && sort) getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
   return res;
 }

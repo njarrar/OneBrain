@@ -14,6 +14,8 @@ struct Item: Codable, Identifiable, Hashable {
     var lang: String?
     var sensitive: Int?
     var status: String
+    var deletedAt: String?
+    var readAt: String?
     var author: String?
     var authorHandle: String?
     var postedAt: String?
@@ -24,6 +26,8 @@ struct Item: Codable, Identifiable, Hashable {
     var tags: [String]?
 
     var isSensitive: Bool { (sensitive ?? 0) != 0 }
+    var isUnread: Bool { readAt == nil && deletedAt == nil }
+    var inTrash: Bool { deletedAt != nil }
     var isArabic: Bool { lang == "ar" }
 
     /// Files added to Brain first, then pictures that came with the post.
@@ -39,6 +43,18 @@ struct Item: Codable, Identifiable, Hashable {
     }
 
     var date: Date? { Dates.parse(postedAt ?? createdAt) }
+
+    /// Where it came from, for the row's tile: the first source, or the kind for things added by hand.
+    var sourceKey: String {
+        let s = sources?.first ?? "manual"
+        if s != "manual" { return s }
+        switch kind {
+        case "image": return "image"
+        case "note": return "note"
+        case "video": return "video"
+        default: return url == nil ? "note" : "link"
+        }
+    }
 }
 
 struct ItemPage: Codable {
@@ -78,6 +94,10 @@ struct MenuData: Codable {
         let archived: Int
         let media: Int
         let sensitive: Int
+        // Newer servers only.
+        var trash: Int?
+        var unread: Int?
+        var unsorted: Int?
     }
     struct Category: Codable, Hashable, Identifiable {
         let name: String
@@ -106,7 +126,7 @@ struct MenuData: Codable {
 
 /// What the item list shows. Matches the web app's filters.
 struct Filter: Hashable {
-    enum Scope: String { case inbox, all, archived }
+    enum Scope: String { case inbox, all, archived, trash }
     enum Media: String { case with, without }
 
     var view: Scope = .inbox
@@ -117,6 +137,7 @@ struct Filter: Hashable {
     var media: Media?
     var lang: String?
     var sensitive = false
+    var unread = false
 
     var title: String {
         if let q, !q.isEmpty { return "“\(q)”" }
@@ -129,6 +150,7 @@ struct Filter: Hashable {
         case .inbox: return "Inbox"
         case .all: return "All"
         case .archived: return "Archive"
+        case .trash: return "Trash"
         }
     }
 
@@ -144,6 +166,7 @@ struct Filter: Hashable {
         add("media", media?.rawValue)
         add("lang", lang)
         if sensitive { add("sensitive", "1") }
+        if unread { add("unread", "1") }
         return q
     }
 
@@ -156,7 +179,23 @@ struct Filter: Hashable {
 
 enum Sources {
     static func label(_ id: String) -> String {
-        ["x": "X", "youtube": "YouTube", "instagram": "Instagram", "photos": "Screenshots", "feedly": "Feedly", "manual": "Added by hand"][id] ?? id
+        ["x": "X", "youtube": "YouTube", "instagram": "Instagram", "photos": "Screenshots", "feedly": "RSS",
+         "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos"][id] ?? id
+    }
+
+    /// An SF Symbol for each source. X, YouTube and Instagram have no symbol, so they use a letter mark (see SourceMark).
+    static func symbol(_ id: String) -> String {
+        switch id {
+        case "photos": return "iphone"
+        case "feedly": return "dot.radiowaves.up.forward"
+        case "image": return "photo"
+        case "note": return "note.text"
+        case "video", "youtube": return "play.rectangle"
+        case "instagram": return "camera"
+        case "x": return "xmark"
+        case "audio": return "mic"
+        default: return "link"
+        }
     }
 }
 
@@ -178,5 +217,29 @@ enum Dates {
     static func short(_ d: Date?) -> String {
         guard let d else { return "" }
         return d.formatted(.dateTime.day().month(.abbreviated).year())
+    }
+
+    /// Time today, the weekday this week, else the date: "9:14", "Wed", "Sep 18".
+    static func row(_ d: Date?) -> String {
+        guard let d else { return "" }
+        let cal = Calendar.current
+        if cal.isDateInToday(d) { return d.formatted(.dateTime.hour().minute()) }
+        if let days = cal.dateComponents([.day], from: cal.startOfDay(for: d), to: cal.startOfDay(for: .now)).day, days < 7 {
+            return d.formatted(.dateTime.weekday(.abbreviated))
+        }
+        let sameYear = cal.component(.year, from: d) == cal.component(.year, from: .now)
+        return sameYear ? d.formatted(.dateTime.month(.abbreviated).day()) : d.formatted(.dateTime.month(.abbreviated).day().year())
+    }
+
+    /// The day group a row sits in: Today, Yesterday, Earlier this week, then month and year.
+    static func group(_ d: Date?) -> String {
+        guard let d else { return "Earlier" }
+        let cal = Calendar.current
+        if cal.isDateInToday(d) { return "Today" }
+        if cal.isDateInYesterday(d) { return "Yesterday" }
+        if let days = cal.dateComponents([.day], from: cal.startOfDay(for: d), to: cal.startOfDay(for: .now)).day, days < 7 {
+            return "Earlier this week"
+        }
+        return d.formatted(.dateTime.month(.wide).year())
     }
 }

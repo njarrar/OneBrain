@@ -1,4 +1,3 @@
-import ImageIO
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -42,6 +41,9 @@ final class ShareModel {
     var text: String?
     var images: [Data] = []
     var note = ""
+    var sort = true
+    var tagging = false
+    var tagText = ""
 
     init(context: NSExtensionContext?) {
         self.context = context
@@ -68,7 +70,7 @@ final class ShareModel {
                     if u.isFileURL {
                         // A picture shared as a file, for example from Files.
                         if images.count < Self.maxImages, UTType(filenameExtension: u.pathExtension)?.conforms(to: .image) == true,
-                           let data = Self.downsample(url: u) {
+                           let data = Pictures.jpeg(url: u) {
                             images.append(data)
                         }
                     } else if url == nil, ["http", "https"].contains(u.scheme?.lowercased() ?? "") {
@@ -142,34 +144,10 @@ final class ShareModel {
     private nonisolated static func loadImage(_ p: NSItemProvider) async -> Data? {
         guard let item = try? await p.loadItem(forTypeIdentifier: UTType.image.identifier) else { return nil }
         switch item {
-        case let u as URL: return downsample(url: u)
-        case let d as Data:
-            guard let source = CGImageSourceCreateWithData(d as CFData, nil) else { return nil }
-            return downsample(source)
-        case let i as UIImage:
-            guard let d = i.jpegData(compressionQuality: 0.9), let source = CGImageSourceCreateWithData(d as CFData, nil) else { return nil }
-            return downsample(source)
+        case let u as URL: return Pictures.jpeg(url: u)
+        case let d as Data: return Pictures.jpeg(d)
+        case let i as UIImage: return i.jpegData(compressionQuality: 0.9).flatMap { Pictures.jpeg($0) }
         default: return nil
-        }
-    }
-
-    private nonisolated static func downsample(url: URL) -> Data? {
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
-        return downsample(source)
-    }
-
-    /// A JPEG no longer than 2048 pixels on its long side: small enough to upload fast and to keep
-    /// ten pictures within the share sheet's memory, big enough for Claude to read a screenshot.
-    private nonisolated static func downsample(_ source: CGImageSource) -> Data? {
-        autoreleasepool { () -> Data? in
-            let options: [CFString: Any] = [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceCreateThumbnailWithTransform: true,
-                kCGImageSourceShouldCacheImmediately: true,
-                kCGImageSourceThumbnailMaxPixelSize: 2048,
-            ]
-            guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-            return UIImage(cgImage: cg).jpegData(compressionQuality: 0.8)
         }
     }
 
@@ -177,6 +155,7 @@ final class ShareModel {
 
     func save() async {
         let extra = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let options = API.SaveOptions(sort: sort, tags: tagging ? CaptureChips.tags(tagText) : [])
         do {
             if url == nil, !images.isEmpty {
                 // Each picture becomes its own item, with the note on each.
@@ -184,12 +163,12 @@ final class ShareModel {
                 for (i, image) in images.enumerated() {
                     state = .saving(done: i, of: images.count)
                     _ = try await API.shared.save(image: image, filename: "shared-\(i + 1).jpg", mime: "image/jpeg",
-                                                  externalId: nil, takenAt: nil, text: caption)
+                                                  externalId: nil, takenAt: nil, text: caption, options: options)
                 }
             } else {
                 state = .saving(done: 0, of: 1)
                 let body = [text, extra.isEmpty ? nil : extra].compactMap { $0 }.joined(separator: "\n\n")
-                _ = try await API.shared.save(url: url, text: body.isEmpty ? nil : body, title: url == nil ? nil : title)
+                _ = try await API.shared.save(url: url, text: body.isEmpty ? nil : body, title: url == nil ? nil : title, options: options)
             }
             state = .saved
             try? await Task.sleep(for: .milliseconds(700))
@@ -204,6 +183,7 @@ final class ShareModel {
     }
 }
 
+/// Save to Brain, from the share sheet in any app: what's being saved, a note, and one Save button.
 @MainActor
 struct ShareView: View {
     @Bindable var model: ShareModel
@@ -212,78 +192,126 @@ struct ShareView: View {
         VStack(spacing: 0) {
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Button("Cancel") { model.close() }
+                Capsule().fill(Theme.lineStrong).frame(width: 36, height: 5).frame(maxWidth: .infinity)
+                HStack(spacing: 10) {
+                    Image("Pocket").resizable().frame(width: 32, height: 32).clipShape(RoundedRectangle(cornerRadius: 8))
+                    Text("Save to Brain").font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink)
                     Spacer()
-                    Text("Save to Brain").font(.headline).foregroundStyle(Theme.ink)
-                    Spacer()
-                    Button("Save") { Task { await model.save() } }
-                        .fontWeight(.semibold)
-                        .disabled(!canSave)
+                    Button { model.close() } label: {
+                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.soft)
+                            .frame(width: 32, height: 32).background(Theme.fill, in: Circle())
+                    }
+                    .accessibilityLabel("Close")
                 }
                 switch model.state {
                 case .reading:
-                    ProgressView().frame(maxWidth: .infinity)
+                    ProgressView().frame(maxWidth: .infinity, minHeight: 80)
                 case .failed(let message):
                     Text(message).foregroundStyle(Theme.bad)
+                    if canSave { content }
                 case .saved:
-                    Label(savedLabel, systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok).frame(maxWidth: .infinity)
+                    Label(savedLabel, systemImage: "checkmark.circle.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.ok).frame(maxWidth: .infinity, minHeight: 80)
                 default:
                     content
                 }
             }
-            .padding(18)
-            .themedCard(radius: 20)
-            .padding(12)
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 24)
+            .background(Theme.bg, in: RoundedRectangle(cornerRadius: 34))
+            .shadow(color: .black.opacity(0.18), radius: 15, y: -10)
+            .padding(8)
         }
-        .fontDesign(Theme.palette.fontDesign)
         .tint(Theme.accent)
     }
 
     @ViewBuilder private var content: some View {
+        preview
+        TextField("Add a note (optional)", text: $model.note, axis: .vertical)
+            .font(.system(size: 15))
+            .lineLimit(1...5)
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(minHeight: 46)
+            .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
+        if model.tagging {
+            TextField("Tags, split with commas", text: $model.tagText)
+                .font(.system(size: 15))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 12).frame(height: 40)
+                .background(Theme.fill, in: RoundedRectangle(cornerRadius: 10))
+        }
+        CaptureChips(sort: $model.sort, tagging: $model.tagging)
+        if case .saving(let done, let total) = model.state, total > 1 {
+            ProgressView(value: Double(done), total: Double(total)) {
+                Text("Saving \(done + 1) of \(total)").font(.footnote).foregroundStyle(Theme.soft)
+            }
+        }
+        Button { Task { await model.save() } } label: {
+            Group {
+                if case .saving = model.state { ProgressView().tint(Theme.accentInk) } else { Text("Save to inbox") }
+            }
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(Theme.accentInk)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(Theme.accentFill, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSave)
+    }
+
+    /// The post or page being shared, or the pictures.
+    @ViewBuilder private var preview: some View {
         if model.url == nil, let first = model.images.first, let img = UIImage(data: first) {
-            Image(uiImage: img).resizable().scaledToFit().frame(maxHeight: 180)
-                .clipShape(RoundedRectangle(cornerRadius: Theme.smallRadius))
+            Image(uiImage: img).resizable().scaledToFill()
+                .frame(maxWidth: .infinity).frame(height: 160)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(alignment: .topTrailing) {
                     if model.images.count > 1 {
-                        Text("\(model.images.count) pictures")
-                            .font(.caption.weight(.semibold).monospacedDigit())
+                        Text("\(model.images.count) pictures, each saved on its own")
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Theme.accentInk)
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Theme.accentFill, in: Capsule())
-                            .padding(6)
+                            .padding(8)
                     }
                 }
-                .frame(maxWidth: .infinity)
-            if model.images.count > 1 {
-                Text("Each picture is saved as its own item.").font(.footnote).foregroundStyle(Theme.soft)
-            }
-        } else if !model.preview.isEmpty {
-            Text(model.preview).font(.callout).foregroundStyle(Theme.soft).lineLimit(4)
-        }
-        TextField("Add a note (optional)", text: $model.note, axis: .vertical)
-            .lineLimit(2...5)
-            .padding(10)
-            .background(Theme.bg, in: RoundedRectangle(cornerRadius: Theme.smallRadius))
-            .overlay(RoundedRectangle(cornerRadius: Theme.smallRadius).stroke(Theme.line))
-            .foregroundStyle(Theme.ink)
-        if case .saving(let done, let total) = model.state {
-            if total > 1 {
-                ProgressView(value: Double(done), total: Double(total)) {
-                    Text("Saving \(done + 1) of \(total)").font(.footnote).foregroundStyle(Theme.soft)
+        } else if model.url != nil || model.text != nil || model.title != nil {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    SourceMark(source: source, size: 15).foregroundStyle(Theme.ink2)
+                    Text(model.title ?? Sources.label(source)).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                    if let host {
+                        Text(host).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
+                    }
                 }
-            } else {
-                ProgressView().frame(maxWidth: .infinity)
+                if let body = model.text ?? model.url {
+                    Text(body).font(.system(size: 15)).lineSpacing(3).lineLimit(3).foregroundStyle(Theme.ink2)
+                }
             }
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.line))
         }
     }
 
+    private var source: String { model.url.map(Detected.sourceOf) ?? "note" }
+    private var host: String? { model.url.flatMap { URL(string: $0)?.host?.replacingOccurrences(of: "www.", with: "") } }
+
     private var savedLabel: String {
-        model.url == nil && model.images.count > 1 ? "Saved \(model.images.count) pictures" : "Saved"
+        model.url == nil && model.images.count > 1 ? "Saved \(model.images.count) pictures" : "Saved to your inbox"
     }
 
     private var canSave: Bool {
-        if case .ready = model.state { return true }
-        return false
+        switch model.state {
+        case .ready: return true
+        // After a failed save, try again; not when there's nothing to save or no sign in.
+        case .failed: return KeyStore.token != nil && (!model.images.isEmpty || model.url != nil || model.text != nil)
+        default: return false
+        }
     }
 }

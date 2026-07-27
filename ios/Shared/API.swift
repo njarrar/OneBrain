@@ -50,7 +50,7 @@ struct API {
     }
 
     func items(_ filter: Filter, page: Int) async throws -> ItemPage {
-        if Demo.on { return try Demo.page() }
+        if Demo.on { return try Demo.page(filter) }
         let req = try request("api/app/items", query: filter.queryItems + [URLQueryItem(name: "page", value: String(page))])
         return try await send(req, as: ItemPage.self)
     }
@@ -61,6 +61,10 @@ struct API {
 
     struct Change: Encodable {
         var status: String?
+        /// true marks read, false unread.
+        var read: Bool?
+        /// true moves to Trash, false brings back.
+        var trash: Bool?
         var category: String?
         var note: String?
         var addTags: [String]?
@@ -74,24 +78,44 @@ struct API {
         return try await send(req, as: ItemDetail.self)
     }
 
+    /// Deletes an item for good. It must be in Trash.
+    func purge(_ id: String) async throws {
+        struct Out: Decodable { let deleted: Int }
+        _ = try await send(request("api/app/items/\(id)", method: "DELETE"), as: Out.self)
+    }
+
+    /// Deletes everything in Trash for good.
+    func emptyTrash() async throws {
+        struct Out: Decodable { let deleted: Int }
+        _ = try await send(request("api/app/items", query: [URLQueryItem(name: "view", value: "trash")], method: "DELETE"), as: Out.self)
+    }
+
+    struct LinkPreview: Decodable, Equatable {
+        let title: String?
+        let description: String?
+        let image: String?
+    }
+
+    /// A link's title and picture, for the Add sheet.
+    func unfurl(_ url: String) async throws -> LinkPreview {
+        try await send(request("api/app/unfurl", query: [URLQueryItem(name: "url", value: url)]), as: LinkPreview.self)
+    }
+
     func menu() async throws -> MenuData {
         if Demo.on { return try Demo.menu() }
         return try await send(request("api/app/menu"), as: MenuData.self)
     }
 
-    /// The design and mode, shared with the web.
+    /// Light, dark or system, shared with the web.
     func prefs() async throws -> Prefs {
-        if Demo.on { return Look.shared.prefs }
+        if Demo.on { return Prefs(mode: Look.shared.mode) }
         return try await send(request("api/app/prefs"), as: Prefs.self)
     }
 
-    func savePrefs(design: Design?, mode: Mode?) async throws -> Prefs {
+    func savePrefs(mode: Mode) async throws -> Prefs {
         var req = try request("api/app/prefs", method: "PUT")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        var payload: [String: String] = [:]
-        if let design { payload["design"] = design.rawValue }
-        if let mode { payload["mode"] = mode.rawValue }
-        req.httpBody = try JSONEncoder().encode(payload)
+        req.httpBody = try JSONEncoder().encode(["mode": mode.rawValue])
         return try await send(req, as: Prefs.self)
     }
 
@@ -100,20 +124,30 @@ struct API {
         let existed: Bool?
     }
 
-    /// A link or a note, from the share sheet. title is a web page's own title, when the app shares one.
-    func save(url: String?, text: String?, title: String? = nil) async throws -> Saved {
+    /// How a save is handled: sort false skips Claude's sorting; tags are added at once.
+    struct SaveOptions {
+        var sort = true
+        var tags: [String] = []
+    }
+
+    /// A link or a note, from the share sheet or the Add sheet. title is a web page's own title, when the app shares one.
+    func save(url: String?, text: String?, title: String? = nil, options: SaveOptions = .init()) async throws -> Saved {
+        struct Payload: Encodable {
+            var url: String?
+            var text: String?
+            var title: String?
+            var sort: Bool
+            var tags: [String]
+        }
         var req = try request("api/app/save", method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        var payload: [String: String] = [:]
-        if let url { payload["url"] = url }
-        if let text { payload["text"] = text }
-        if let title { payload["title"] = title }
-        req.httpBody = try JSONEncoder().encode(payload)
+        req.httpBody = try JSONEncoder().encode(Payload(url: url, text: text, title: title, sort: options.sort, tags: options.tags))
         return try await send(req, as: Saved.self)
     }
 
     /// A picture. externalId stops the same screenshot being saved twice.
-    func save(image: Data, filename: String, mime: String, externalId: String?, takenAt: Date?, text: String? = nil) async throws -> Saved {
+    func save(image: Data, filename: String, mime: String, externalId: String?, takenAt: Date?, text: String? = nil,
+              options: SaveOptions = .init()) async throws -> Saved {
         var req = try request("api/app/save", method: "POST")
         let boundary = "brain-\(UUID().uuidString)"
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -125,6 +159,8 @@ struct API {
         field("externalId", externalId)
         field("takenAt", takenAt.map(Dates.iso))
         field("text", text)
+        if !options.sort { field("sort", "0") }
+        if !options.tags.isEmpty { field("tags", options.tags.joined(separator: ",")) }
         body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\nContent-Type: \(mime)\r\n\r\n".data(using: .utf8)!)
         body.append(image)
         body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)

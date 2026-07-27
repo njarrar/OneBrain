@@ -40,7 +40,7 @@ export default async function ListPage({ searchParams }: { searchParams: Params 
     : f.category ?? (f.tag ? `#${f.tag}` : f.source ? SOURCE_LABELS[f.source] ?? f.source
     : f.sensitive ? "Sensitive"
     : f.media === "with" && f.view !== "inbox" ? "With media"
-    : { inbox: "Inbox", all: "All", archived: "Archive" }[f.view]);
+    : { inbox: "Inbox", all: "All", archived: "Archive", trash: "Trash" }[f.view]);
 
   const pill = (label: string, change: Partial<ListFilter>, on: boolean, dir?: "rtl") => (
     <Link href={listHref(f, { ...change, page: 1 })} className={on ? "seg on" : "seg"} dir={dir} aria-current={on ? "true" : undefined}>

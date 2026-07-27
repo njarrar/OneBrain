@@ -11,7 +11,7 @@ struct BrainApp: App {
         WindowGroup {
             Group {
                 if session.signedIn {
-                    RootView()
+                    MainView()
                 } else {
                     SignInView()
                 }

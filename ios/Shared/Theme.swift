@@ -5,14 +5,25 @@ import UIKit
 /// follows the colour scheme the app runs in (see Look for how that is chosen).
 struct Palette {
     let bg: Color
+    /// The page behind grouped rows (Library, Settings).
+    let grouped: Color
     let panel: Color
     let card: Color
     let raised: Color
+    /// Search fields, chips, round buttons and source tiles.
+    let fill: Color
     let line: Color
+    /// Lines between rows.
+    let divider: Color
     let lineStrong: Color
     let ink: Color
+    /// Body text.
+    let ink2: Color
     let soft: Color
     let faint: Color
+    let chevron: Color
+    /// The picked part of a segmented control.
+    let selected: Color
     /// Links and accent text.
     let accent: Color
     /// Filled buttons, switches and the focus colour.
@@ -30,17 +41,62 @@ struct Palette {
     let fontDesign: Font.Design
     let sunroom: Bool
 
+    /// Brain, the default: white and near-black neutrals with a Sky blue accent.
+    /// Values come from design/iphone-final/SPEC.md (oklch turned into sRGB).
+    static let brain = Palette(
+        bg: Color(light: "#FFFFFF", dark: "#0E1013"),
+        grouped: Color(light: "#F4F5F7", dark: "#0E1013"),
+        panel: Color(light: "#F4F5F7", dark: "#0E1013"),
+        card: Color(light: "#FFFFFF", dark: "#15181C"),
+        raised: Color(light: "#F0F2F4", dark: "#15181C"),
+        fill: Color(light: "#F1F3F5", dark: "#1D2127"),
+        line: Color(light: "#E7E9EC", dark: "#23272E"),
+        divider: Color(light: "#EEF0F2", dark: "#23272E"),
+        lineStrong: Color(light: "#CFD4DA", dark: "#23272E"),
+        ink: Color(light: "#16191D", dark: "#E9ECEF"),
+        ink2: Color(light: "#2E343B", dark: "#E9ECEF"),
+        soft: Color(light: "#5C6570", dark: "#9AA3AE"),
+        faint: Color(light: "#6B7480", dark: "#7C8591"),
+        chevron: Color(light: "#9AA0A8", dark: "#7C8591"),
+        selected: Color(light: "#FFFFFF", dark: "#2A2F37"),
+        accent: Color(light: "#0068AD", dark: "#64C4F0"),
+        accentFill: Color(light: "#0077BD", dark: "#64C4F0"),
+        accentInk: Color(light: "#FFFFFF", dark: "#07121A"),
+        accentBG: Color(light: UIColor(hex: "#0077BD").withAlphaComponent(0.12), dark: UIColor(hex: "#64C4F0").withAlphaComponent(0.14)),
+        ok: Color(light: "#047857", dark: "#34D399"),
+        bad: Color(light: "#D73337", dark: "#F47A79"),
+        hard: .clear,
+        cardRadius: 16,
+        smallRadius: 12,
+        shadowOffset: 0,
+        fontDesign: .default,
+        sunroom: false
+    )
+
+    /// Amber, the design's spare accent for Brain. Not offered in Settings yet.
+    static let brainAmber = (
+        accent: Color(light: "#934F00", dark: "#F1AF57"),
+        accentFill: Color(light: "#E7A13C", dark: "#F1AF57"),
+        accentInk: Color(light: "#1A1203", dark: "#1A1203")
+    )
+
     /// X-Vault: obsidian slate with amber in dark, clean off-white with deep amber in light. Same as the web.
     static let vault = Palette(
         bg: Color(light: "#F7F6F2", dark: "#0B0F17"),
+        grouped: Color(light: "#F7F6F2", dark: "#0B0F17"),
         panel: Color(light: "#FFFFFF", dark: "#101622"),
         card: Color(light: "#FFFFFF", dark: "#151D2B"),
         raised: Color(light: "#EFECE5", dark: "#1E293B"),
+        fill: Color(light: "#EFECE5", dark: "#1E293B"),
         line: Color(light: "#E3DFD6", dark: "#232F44"),
+        divider: Color(light: "#E3DFD6", dark: "#232F44"),
         lineStrong: Color(light: "#CFC9BD", dark: "#334155"),
         ink: Color(light: "#15191F", dark: "#F1F5F9"),
+        ink2: Color(light: "#15191F", dark: "#F1F5F9"),
         soft: Color(light: "#5A6270", dark: "#94A3B8"),
         faint: Color(light: "#8A919C", dark: "#64748B"),
+        chevron: Color(light: "#8A919C", dark: "#64748B"),
+        selected: Color(light: "#FFFFFF", dark: "#1E293B"),
         accent: Color(light: "#B45309", dark: "#F59E0B"),
         accentFill: Color(light: "#B45309", dark: "#F59E0B"),
         accentInk: Color(light: "#FFFFFF", dark: "#1A1203"),
@@ -58,14 +114,20 @@ struct Palette {
     /// Sunroom: warm cream paper with a gold accent in light, espresso browns in dark. Same as the web.
     static let sunroom = Palette(
         bg: Color(light: "#FBF8F1", dark: "#1A1712"),
+        grouped: Color(light: "#FBF8F1", dark: "#1A1712"),
         panel: Color(light: "#FFFDF8", dark: "#1F1B15"),
         card: Color(light: "#FFFDF8", dark: "#231F19"),
         raised: Color(light: "#F0E9DC", dark: "#2F2921"),
+        fill: Color(light: "#F0E9DC", dark: "#2F2921"),
         line: Color(light: "#E5DCC8", dark: "#3A3329"),
+        divider: Color(light: "#E5DCC8", dark: "#3A3329"),
         lineStrong: Color(light: "#C9BFA9", dark: "#544A3C"),
         ink: Color(light: "#26221C", dark: "#F3EDE2"),
+        ink2: Color(light: "#26221C", dark: "#F3EDE2"),
         soft: Color(light: "#5C5546", dark: "#B8AD98"),
         faint: Color(light: "#B3A78F", dark: "#7D7362"),
+        chevron: Color(light: "#B3A78F", dark: "#7D7362"),
+        selected: Color(light: "#FFFDF8", dark: "#2F2921"),
         accent: Color(light: "#A45E00", dark: "#F1AF57"),
         accentFill: Color(light: "#DC9242", dark: "#F2A548"),
         accentInk: Color(light: "#26221C", dark: "#1A1712"),
@@ -83,17 +145,29 @@ struct Palette {
 
 /// The colours of the design picked in Settings. Views that read these redraw when the design changes.
 enum Theme {
-    static var palette: Palette { Look.shared.design == .sunroom ? .sunroom : .vault }
+    static var palette: Palette {
+        switch Look.shared.design {
+        case .brain: return .brain
+        case .vault: return .vault
+        case .sunroom: return .sunroom
+        }
+    }
 
     static var bg: Color { palette.bg }
+    static var grouped: Color { palette.grouped }
     static var panel: Color { palette.panel }
     static var card: Color { palette.card }
     static var raised: Color { palette.raised }
+    static var fill: Color { palette.fill }
     static var line: Color { palette.line }
+    static var divider: Color { palette.divider }
     static var lineStrong: Color { palette.lineStrong }
     static var ink: Color { palette.ink }
+    static var ink2: Color { palette.ink2 }
     static var soft: Color { palette.soft }
     static var faint: Color { palette.faint }
+    static var chevron: Color { palette.chevron }
+    static var selected: Color { palette.selected }
     static var accent: Color { palette.accent }
     static var accentFill: Color { palette.accentFill }
     static var accentInk: Color { palette.accentInk }
@@ -108,6 +182,16 @@ enum Theme {
     /// A category's own colour, for dots and the line on top of a card.
     static func category(_ hex: String?, fallback: Color) -> Color {
         Color(hex: hex, fallback: fallback)
+    }
+
+    /// A category's small square: its own hue at one lightness and strength, as in the design.
+    /// Other designs use the category's colour as is.
+    static func swatch(_ hex: String?) -> Color {
+        guard let base = UIColor(hexOrNil: hex) else { return faint }
+        if Look.shared.design == .brain, let h = OKLab.hue(of: base) {
+            return Color(uiColor: OKLab.color(l: 0.62, c: 0.09, h: h))
+        }
+        return Color(uiColor: base)
     }
 
     /// Text in a category chip. Darkened in light mode so pale colours stay readable.
