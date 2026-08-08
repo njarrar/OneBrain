@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: filters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; background: #9E9E9E; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="padding: 16px 20px 36px; display: flex; flex-direction: column; gap: 14px; border-radius: 20px 20px 0 0; background: #FFFFFF">
+<div style="display: flex; justify-content: space-between"><span style="font-size: 16px; font-weight: 500">Filters</span><span>Reset</span></div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<span style="color: #777777">{{g.title}}</span>
+<span style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{g.options}}" as="o" hint-placeholder-count="3"><span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; border: 1px solid #BDBDBD">{{o}}</span></sc-for>
+</span>
+</sc-for>
+<span style="height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-radius: 12px; border: 1px solid #BDBDBD"><span>Blur sensitive</span><span>(on)</span></span>
+<a href="WInbox.dc.html" style="height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 25px; text-decoration: none; color: #FFFFFF; background: #555555">Show 8 items</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { groups: [
+      { title: 'SOURCE', options: ['All', 'X', 'Instagram', 'YouTube', 'Feedly', 'Screenshots', 'Mine'] },
+      { title: 'LANGUAGE', options: ['Any', 'English', 'Arabic'] },
+      { title: 'MEDIA', options: ['Any', 'With media', 'Text only'] },
+      { title: 'ORDER', options: ['Newer', 'Older'] }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

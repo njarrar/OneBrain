@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain side menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<nav aria-label="Main" style="width: 264px; height: 900px; box-sizing: border-box; padding: 24px 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; background: {{t.panel}}; border-right: 1px solid {{t.line}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 0 8px 8px">
+<span style="font-size: 18px; font-weight: 700">Brain</span>
+<a href="Add.dc.html" style="height: 30px; padding: 0 12px; display: flex; align-items: center; border-radius: 15px; font-size: 13px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Add</a>
+</div>
+<input type="search" aria-label="Search" placeholder="Search" style="height: 38px; margin: 0 4px 10px; padding: 0 12px; border-radius: 10px; outline: 0; font: inherit; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">
+<div style="padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">VIEWS</div>
+<sc-for list="{{views}}" as="v" hint-placeholder-count="5">
+<a href="{{v.href}}" style="height: 34px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; border-radius: 8px; text-decoration: none; background: {{v.bg}}; color: {{v.color}}"><span>{{v.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{t.soft}}">{{v.count}}</span></a>
+</sc-for>
+<div style="padding: 14px 8px 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">CATEGORIES</div>
+<sc-for list="{{cats}}" as="c" hint-placeholder-count="6">
+<a href="Main.dc.html" style="height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 8px; border-radius: 8px; text-decoration: none; color: {{t.ink}}"><span style="width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; background: {{c.color}}"></span><span style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{t.soft}}">{{c.count}}</span></a>
+</sc-for>
+<div style="padding: 14px 8px 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">TAGS</div>
+<sc-for list="{{tags}}" as="g" hint-placeholder-count="3">
+<a href="Main.dc.html" style="height: 30px; padding: 0 10px; display: flex; align-items: center; justify-content: space-between; border-radius: 8px; text-decoration: none; color: {{t.ink}}"><span># {{g.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{t.soft}}">{{g.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1"></div>
+<a href="Sources.dc.html" style="height: 34px; padding: 0 10px; display: flex; align-items: center; border-radius: 8px; text-decoration: none; background: {{srcBg}}; color: {{srcColor}}">Sources and settings</a>
+<a href="Login.dc.html" style="height: 34px; padding: 0 10px; display: flex; align-items: center; border-radius: 8px; text-decoration: none; color: {{t.soft}}">Sign out</a>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"active":{"editor":"enum","options":["Inbox","All","Archive","Sources","None"],"default":"Inbox"},"$preview":{"width":264,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() {
+    var t = THEMES[this.props.theme] || THEMES['sunroom-light'];
+    var active = this.props.active || 'Inbox';
+    var views = [['Inbox', 128], ['All', 4210], ['Archive', 312], ['With media', 1904], ['Sensitive', 41]].map(function (v) {
+      var on = v[0] === active;
+      return { name: v[0], count: v[1].toLocaleString('en-US'), href: 'Main.dc.html', bg: on ? t.pick : 'transparent', color: on ? t.accentText : t.ink };
+    });
+    var cats = [
+      ['AI, Code & Dev Tools', '#0EA5E9', 111], ['MENA Geopolitics & Society', '#F59E0B', 148],
+      ['Markets, Startups & Finance', '#10B981', 185], ['Menswear, Design & Travel', '#EAB308', 222],
+      ['Models, Pop Culture & NSFW', '#F43F5E', 259], ['Health, Biotech & Longevity', '#14B8A6', 296],
+      ['Cinema, Gaming, History & Culture', '#F97316', 98], ['Viral Threads & Internet Culture', '#8B5CF6', 77]
+    ].map(function (c) { return { name: c[0], color: c[1], count: c[2] }; });
+    var tags = [['ai', 88], ['design', 41], ['agents', 52]].map(function (g) { return { name: g[0], count: g[1] }; });
+    var src = active === 'Sources';
+    return { t: t, views: views, cats: cats, tags: tags, srcBg: src ? t.pick : 'transparent', srcColor: src ? t.accentText : t.ink };
+  }
+}
+</script>
+</body>
+</html>

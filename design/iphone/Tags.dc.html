@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain tags</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow-y: auto; padding: 58px 16px 40px; display: flex; flex-direction: column; gap: 14px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Menu.dc.html" aria-label="Back to menu" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; text-decoration: none; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.ink}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+</a>
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Tags</h1>
+<span style="width: 44px"></span>
+</div>
+<label style="height: 44px; border-radius: 22px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: {{t.card}}; border: 1px solid {{t.line}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: {{t.soft}}; flex-shrink: 0"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" placeholder="Find a tag" aria-label="Find a tag" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; width: 100%; color: {{t.ink}}">
+</label>
+<div style="display: flex; gap: 8px">
+<button type="button" style="min-height: 36px; padding: 0 14px; border-radius: 18px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid {{t.accent}}; background: {{t.chip}}; color: {{t.ink}}">Most used</button>
+<button type="button" style="min-height: 36px; padding: 0 14px; border-radius: 18px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid {{t.line}}; background: {{t.card}}; color: {{t.ink}}">A to Z</button>
+</div>
+<div style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
+<sc-for list="{{tags}}" as="g" hint-placeholder-count="10">
+<a href="Main.dc.html" style="min-height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid {{t.line}}; color: inherit; text-decoration: none">
+<span style="color: {{t.soft}}">#</span>
+<span style="flex-grow: 1; font-size: 15px">{{g.name}}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{g.count}}</span>
+</a>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() {
+    var tags = [['ai', 88], ['agents', 52], ['design', 41], ['writing', 33], ['water', 21], ['tailoring', 17], ['health', 15], ['strategy', 12], ['cost', 9], ['summer', 6]].map(function (g) { return { name: g[0], count: g[1] }; });
+    return { t: THEMES[this.props.theme] || THEMES['sunroom-light'], tags: tags };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 58px 16px 24px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="display: flex; justify-content: flex-end"><a href="WSettings.dc.html" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #777777; border: 1px solid #BDBDBD">Set</a></div>
+<div style="font-size: 26px; font-weight: 500">Brain</div>
+<div style="color: #777777">VIEWS</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #BDBDBD; border-radius: 12px">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="5">
+<a href="WInbox.dc.html" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid #E3E3E3; text-decoration: none; color: #333333"><span>{{v}}</span><span style="color: #999999">00</span></a>
+</sc-for>
+</div>
+<div style="color: #777777">CATEGORIES (8)</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #BDBDBD; border-radius: 12px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div style="height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid #E3E3E3"><span style="width: 8px; height: 8px; border-radius: 4px; background: #999999"></span><span style="flex-grow: 1; height: 8px; border-radius: 4px; background: #D6D6D6; max-width: {{r}}px"></span></div>
+</sc-for>
+</div>
+<div style="color: #777777">TAGS · SOURCES</div>
+<a href="WTags.dc.html" style="height: 40px; display: flex; align-items: center; padding: 0 14px; border: 1px solid #BDBDBD; border-radius: 12px; text-decoration: none; color: #333333">Show all tags</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { views: ['Inbox', 'All', 'Archive', 'With media', 'Sensitive'], rows: [180, 240, 200, 220, 190] }; }
+}
+</script>
+</body>
+</html>

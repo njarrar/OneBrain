@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain sign in on the web</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="width: 400px; box-sizing: border-box; padding: 36px; display: flex; flex-direction: column; gap: 14px; border-radius: 20px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 4px 0 {{t.shadow}}">
+<img src="/_blob/2c7addecaeb0b813d4332bf7bf1cc525" alt="Brain app icon" style="width: 64px; height: 64px; border-radius: 16px; border: 1px solid {{t.line}}">
+<h1 style="margin: 4px 0 0; font-size: 30px; font-weight: 700">Brain</h1>
+<p style="margin: 0 0 6px; font-size: 15px; color: {{t.soft}}">Everything you save, in one place.</p>
+<div role="tablist" style="display: flex; gap: 8px">
+<button type="button" role="tab" aria-selected="true" style="height: 34px; padding: 0 14px; border-radius: 17px; border: 0; font: inherit; font-size: 14px; cursor: pointer; background: {{t.ink}}; color: {{t.card}}">Sign in</button>
+<button type="button" role="tab" aria-selected="false" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: transparent; border: 1px solid {{t.line}}; color: {{t.ink}}">Create account</button>
+</div>
+<a href="Main.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 23px; font-weight: 600; text-decoration: none; border: 1px solid {{t.accentText}}; color: {{t.accentText}}">Continue with Google</a>
+<div style="text-align: center; font-size: 13px; color: {{t.soft}}">or</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Username or email<input type="text" style="height: 44px; padding: 0 12px; border-radius: 10px; outline: 0; font: inherit; font-size: 15px; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Password<input type="password" style="height: 44px; padding: 0 12px; border-radius: 10px; outline: 0; font: inherit; font-size: 15px; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></label>
+<a href="Main.dc.html" style="height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 24px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Sign in</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":1440,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() { return { t: THEMES[this.props.theme] || THEMES['sunroom-light'] }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain item on the web</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<dc-import name="Sidebar" theme="{{theme}}" active="Inbox" hint-size="264px,900px"></dc-import>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 28px 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 32px; overflow-y: auto">
+<article style="grid-column: span 2; display: flex; flex-direction: column; gap: 16px">
+<a href="Main.dc.html" style="align-self: flex-start; font-size: 14px; text-decoration: none; color: {{t.accentText}}">Back to inbox</a>
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-weight: 600; background: {{t.chip}}; color: #0EA5E9">L</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 18px; font-weight: 600">Lina Haddad</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">@linabuilds · Sep 27, 2026 · X</span></span>
+</div>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.soft}}">How one team cut an agent's API bill by 60% with caching and batches.</p>
+<p style="margin: 0; font-size: 22px; line-height: 1.5">We cut our agent's token bill by 60% in a week. Three changes: cache the long system prompt, batch 20 items per call, and stop sending the full history every turn.</p>
+<div style="height: 320px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: {{t.chip}}; border: 1px dashed {{t.line}}; color: {{t.soft}}">[Picture from the post]</div>
+<div style="display: flex; gap: 10px">
+<a href="https://x.com" style="height: 42px; padding: 0 18px; display: flex; align-items: center; border-radius: 21px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Open original</a>
+<button type="button" onClick="{{archive}}" style="height: 42px; padding: 0 18px; border-radius: 21px; font: inherit; font-size: 15px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">{{archiveLabel}}</button>
+<button type="button" onClick="{{read}}" style="height: 42px; padding: 0 18px; border-radius: 21px; font: inherit; font-size: 15px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">{{readLabel}}</button>
+</div>
+</article>
+<aside style="display: flex; flex-direction: column; gap: 16px; padding-top: 36px">
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}">
+<label for="note" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">YOUR NOTE</label>
+<textarea id="note" rows="4" placeholder="Why you saved this, what to do with it" style="padding: 10px; border-radius: 10px; outline: 0; resize: none; font: inherit; font-size: 15px; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}">Try the batching idea on the sorter.</textarea>
+<button type="button" style="align-self: flex-start; height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}">Save note</button>
+</section>
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}">
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">CATEGORY AND TAGS</div>
+<label style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 4px; background: #0EA5E9"></span><select aria-label="Category" style="flex-grow: 1; height: 38px; padding: 0 8px; border-radius: 10px; font: inherit; font-size: 14px; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}"><option>AI, Code &amp; Dev Tools</option><option>No category</option></select></label>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<span style="padding: 5px 10px; border-radius: 14px; font-size: 13px; background: {{t.chip}}">#agents</span>
+<span style="padding: 5px 10px; border-radius: 14px; font-size: 13px; background: {{t.chip}}">#cost</span>
+<span style="padding: 5px 10px; border-radius: 14px; font-size: 13px; border: 1px dashed {{t.line}}; color: {{t.soft}}">#caching (suggested)</span>
+</div>
+<div style="display: flex; gap: 8px"><input type="text" aria-label="Add tags" placeholder="Add tags, split with commas" style="flex-grow: 1; height: 38px; padding: 0 10px; border-radius: 10px; outline: 0; font: inherit; font-size: 14px; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}"><button type="button" style="height: 38px; padding: 0 14px; border-radius: 10px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.ink}}">Add</button></div>
+</section>
+<section style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 16px; font-size: 14px; background: {{t.card}}; border: 1px solid {{t.line}}">
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">SAVED FROM</div>
+<div style="display: flex; justify-content: space-between"><span style="font-weight: 500; color: {{t.accentText}}">X bookmarks</span><span style="color: {{t.soft}}">Sep 27</span></div>
+</section>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":1440,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { archived: false, read: false }; }
+  renderVals() {
+    var theme = this.props.theme || 'sunroom-light';
+    var self = this;
+    return {
+      t: THEMES[theme] || THEMES['sunroom-light'], theme: theme,
+      archiveLabel: this.state.archived ? 'Move to inbox' : 'Archive',
+      readLabel: this.state.read ? 'Mark unread' : 'Mark read',
+      archive: function () { self.setState({ archived: !self.state.archived }); },
+      read: function () { self.setState({ read: !self.state.read }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

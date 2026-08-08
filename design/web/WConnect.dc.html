@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: connect the app</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+<div style="width: 420px; padding: 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; border-radius: 18px; border: 1px solid #BDBDBD">
+<span style="width: 52px; height: 52px; border-radius: 12px; background: #EDEDED"></span>
+<b style="font-size: 20px">Connect the app</b>
+<span style="color: #777777">Let the app on [device name] read and change your saves.</span>
+<span style="height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 23px; color: #FFFFFF; background: #555555">Connect</span>
+<span style="color: #999999">Remove later on Sources.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

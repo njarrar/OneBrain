@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: web item</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+<nav style="width: 264px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; background: #F5F5F5; border-right: 1px solid #BDBDBD; color: #777777">Side menu (same as inbox)</nav>
+<main style="flex-grow: 1; padding: 28px 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 32px">
+<div style="grid-column: span 2; display: flex; flex-direction: column; gap: 14px">
+<a href="WInbox.dc.html" style="text-decoration: none; color: #333333">Back to inbox</a>
+<span style="display: flex; gap: 12px; align-items: center"><span style="width: 44px; height: 44px; border-radius: 22px; background: #EDEDED"></span><span style="display: flex; flex-direction: column; gap: 6px"><span style="width: 160px; height: 12px; border-radius: 6px; background: #BDBDBD"></span><span style="width: 240px; height: 8px; border-radius: 4px; background: #E3E3E3"></span></span></span>
+<span style="color: #777777">Claude's summary</span>
+<span style="height: 16px; border-radius: 8px; background: #D6D6D6"></span><span style="height: 16px; border-radius: 8px; background: #D6D6D6"></span><span style="height: 16px; border-radius: 8px; background: #D6D6D6; width: 50%"></span>
+<span style="height: 300px; border-radius: 14px; background: #EDEDED; display: flex; align-items: center; justify-content: center; color: #999999">Picture</span>
+<span style="display: flex; gap: 10px"><span style="padding: 10px 16px; border-radius: 20px; color: #FFFFFF; background: #555555">Open original</span><span style="padding: 10px 16px; border-radius: 20px; border: 1px solid #BDBDBD">Archive</span><span style="padding: 10px 16px; border-radius: 20px; border: 1px solid #BDBDBD">Mark read</span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px; padding-top: 34px">
+<span style="height: 170px; padding: 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #BDBDBD; color: #777777">YOUR NOTE + Save note</span>
+<span style="height: 170px; padding: 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #BDBDBD; color: #777777">CATEGORY AND TAGS: picker, tag chips, suggested tags, add field</span>
+<span style="height: 70px; padding: 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #BDBDBD; color: #777777">SAVED FROM</span>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

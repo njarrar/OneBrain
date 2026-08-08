@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain sources and settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<dc-import name="Sidebar" theme="{{theme}}" active="Sources" hint-size="264px,900px"></dc-import>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 32px 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; align-content: start; row-gap: 14px; overflow-y: auto">
+<h1 style="grid-column: span 2; margin: 0 0 6px; font-size: 30px; font-weight: 700">Sources and settings</h1>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 3px 0 {{t.shadow}}">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600">Design</span><span style="display: flex; gap: 8px"><button type="button" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">X-Vault</button><button type="button" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.accent}}; color: {{t.ink}}">Sunroom</button></span></div>
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600">Mode</span><span style="display: flex; gap: 8px"><button type="button" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.accent}}; color: {{t.ink}}">System</button><button type="button" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">Light</button><button type="button" style="height: 34px; padding: 0 14px; border-radius: 17px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">Dark</button></span></div>
+<p style="margin: 0; font-size: 13px; color: {{t.soft}}">System follows your device. The iPhone app uses the same choices.</p>
+</section>
+<section style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 3px 0 {{t.shadow}}">
+<div style="font-weight: 600">Claude key</div>
+<div style="display: flex; gap: 8px"><input type="password" aria-label="Anthropic API key" value="saved" style="flex-grow: 1; height: 40px; padding: 0 12px; border-radius: 10px; outline: 0; font: inherit; background: {{t.bg}}; border: 1px solid {{t.line}}; color: {{t.ink}}"><button type="button" style="height: 40px; padding: 0 14px; border-radius: 10px; font: inherit; font-size: 14px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.ink}}">Replace</button></div>
+<p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">Saved, ends in ••••[LAST 4]</p>
+</section>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{sources}}" as="s" hint-placeholder-count="5">
+<section style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 3px 0 {{t.shadow}}">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="font-weight: 600">{{s.name}}</span><span style="padding: 3px 8px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; background: {{s.badgeBg}}; color: {{s.badgeInk}}">{{s.status}}</span></div>
+<div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: {{t.soft}}"><span>{{s.meta}}</span><button type="button" style="height: 32px; padding: 0 12px; border-radius: 16px; font: inherit; font-size: 13px; cursor: pointer; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.ink}}">{{s.action}}</button></div>
+</section>
+</sc-for>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":1440,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+var BADGES = {
+  ok: { bg: '#D1FAE5', ink: '#065F46' }, file: { bg: '#FEF3C7', ink: '#92400E' },
+  bad: { bg: '#FFE4E6', ink: '#9F1239' }, none: { bg: '#E7E5E4', ink: '#44403C' }
+};
+class Component extends DCLogic {
+  renderVals() {
+    var theme = this.props.theme || 'sunroom-light';
+    var sources = [
+      ['X', 'ok', 'Connected', '3,128 items · synced every six hours', 'Sync now'],
+      ['Instagram', 'file', 'Imported from file', '880 items · last import Sep 26', 'Import file'],
+      ['YouTube', 'bad', 'Needs attention', '312 items · sign in again', 'Reconnect'],
+      ['Feedly', 'none', 'Not set up', 'Saved for later, through IFTTT', 'Set up'],
+      ['Screenshots', 'ok', 'Connected', 'Sent by the iPhone app', 'Open steps']
+    ].map(function (s) {
+      var b = BADGES[s[1]];
+      return { name: s[0], status: s[2], meta: s[3], action: s[4], badgeBg: b.bg, badgeInk: b.ink };
+    });
+    return { t: THEMES[theme] || THEMES['sunroom-light'], theme: theme, sources: sources };
+  }
+}
+</script>
+</body>
+</html>

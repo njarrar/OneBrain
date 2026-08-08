@@ -1,0 +1,27 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-09-28T06:20:00Z"},"title":"Brain web app","launch":{"view":"canvas","page":"design"},"pages":[{"id":"design","name":"Designs"},{"id":"wire","name":"Wireframes"},{"id":"looks","name":"All four looks"}],"boards":{
+"Login.dc.html":{"x":0,"y":0,"w":1440,"h":900,"title":"Sign in","is_interactive":true,"page":"design"},
+"Main.dc.html":{"x":1520,"y":0,"w":1440,"h":900,"title":"Inbox","is_interactive":true,"page":"design"},
+"Item.dc.html":{"x":3040,"y":0,"w":1440,"h":900,"title":"Item","is_interactive":true,"page":"design"},
+"Add.dc.html":{"x":0,"y":1020,"w":1440,"h":900,"title":"Add","is_interactive":true,"page":"design"},
+"Sources.dc.html":{"x":1520,"y":1020,"w":1440,"h":900,"title":"Sources and settings","is_interactive":true,"page":"design"},
+"Connect.dc.html":{"x":3040,"y":1020,"w":1440,"h":900,"title":"Connect the iPhone app","is_interactive":true,"page":"design"},
+"Sidebar.dc.html":{"x":4560,"y":0,"w":264,"h":900,"title":"Side menu (shared part)","is_interactive":true,"page":"design"},
+"WLogin.dc.html":{"x":0,"y":0,"w":1440,"h":900,"title":"Sign in","page":"wire"},
+"WInbox.dc.html":{"x":1520,"y":0,"w":1440,"h":900,"title":"Inbox","is_interactive":true,"page":"wire"},
+"WItem.dc.html":{"x":3040,"y":0,"w":1440,"h":900,"title":"Item","is_interactive":true,"page":"wire"},
+"WAdd.dc.html":{"x":0,"y":1020,"w":1440,"h":900,"title":"Add","page":"wire"},
+"WSources.dc.html":{"x":1520,"y":1020,"w":1440,"h":900,"title":"Sources and settings","page":"wire"},
+"WConnect.dc.html":{"x":3040,"y":1020,"w":1440,"h":900,"title":"Connect the iPhone app","page":"wire"},
+"LLogin.dc.html":{"x":0,"y":0,"w":2960,"h":1960,"title":"Sign in, four looks","page":"looks"},
+"LMain.dc.html":{"x":3040,"y":0,"w":2960,"h":1960,"title":"Inbox, four looks","page":"looks"},
+"LItem.dc.html":{"x":0,"y":2080,"w":2960,"h":1960,"title":"Item, four looks","page":"looks"},
+"LAdd.dc.html":{"x":3040,"y":2080,"w":2960,"h":1960,"title":"Add, four looks","page":"looks"},
+"LSources.dc.html":{"x":0,"y":4160,"w":2960,"h":1960,"title":"Sources, four looks","page":"looks"},
+"LConnect.dc.html":{"x":3040,"y":4160,"w":2960,"h":1960,"title":"Connect, four looks","page":"looks"}
+},"order":["Login.dc.html","Main.dc.html","Item.dc.html","Add.dc.html","Sources.dc.html","Connect.dc.html","Sidebar.dc.html","WLogin.dc.html","WInbox.dc.html","WItem.dc.html","WAdd.dc.html","WSources.dc.html","WConnect.dc.html","LLogin.dc.html","LMain.dc.html","LItem.dc.html","LAdd.dc.html","LSources.dc.html","LConnect.dc.html"],
+"notes":{
+"title":{"x":0,"y":-300,"text":"Brain on the web: full designs","kind":"title1","maxW":4480,"page":"design"},
+"how":{"x":4904,"y":0,"w":320,"maxH":460,"text":"Each screen has a Theme tweak: Sunroom light or dark, X-Vault light or dark. The All four looks page shows them side by side.\n\nPress Play to click through: Sign in, Inbox, Item, Add, Sources.\n\nThe side menu is one shared part: change it once and every screen follows.\n\nComment on any screen and send it to Claude to get it redrawn.","fill":"orange","page":"design"},
+"wtitle":{"x":0,"y":-300,"text":"Brain on the web: wireframes","kind":"title1","maxW":4480,"page":"wire"},
+"ltitle":{"x":0,"y":-300,"text":"Every web screen in all four looks","kind":"title1","maxW":6000,"page":"looks"}
+},"designSystems":[]}

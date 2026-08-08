@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Item in four looks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1680px; height: 904px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 40px; background: #FFFFFF; color: #555555; font-family: 'JetBrains Mono', monospace; font-size: 14px">
+<div style="display: flex; flex-direction: column; gap: 16px"><div>Sunroom light</div><dc-import name="Item" theme="sunroom-light" hint-size="390px,844px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 16px"><div>Sunroom dark</div><dc-import name="Item" theme="sunroom-dark" hint-size="390px,844px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 16px"><div>X-Vault dark</div><dc-import name="Item" theme="vault-dark" hint-size="390px,844px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 16px"><div>X-Vault light</div><dc-import name="Item" theme="vault-light" hint-size="390px,844px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1680,"height":904}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -10,20 +10,19 @@
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=IBM+Plex+Sans+Arabic:wght@400;500&amp;display=swap">
 <style>
-body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
-a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+body{margin:0}
 </style>
 </helmet>
 <div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
 <div style="height: 100%; overflow-y: auto; box-sizing: border-box; padding: 58px 16px 120px; display: flex; flex-direction: column; gap: 14px">
 <div style="display: flex; align-items: center; justify-content: space-between">
-<a href="Menu.dc.html" aria-label="Open menu" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}">
+<a href="Menu.dc.html" aria-label="Open menu" style="color: inherit; text-decoration: none; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
 </a>
 <h1 style="margin: 0; font-size: 20px; font-weight: 600">Inbox</h1>
-<button type="button" aria-label="Filters" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}; cursor: pointer">
+<a href="Filters.dc.html" aria-label="Filters" style="text-decoration: none; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
-</button>
+</a>
 </div>
 <div style="display: flex; gap: 8px; flex-wrap: wrap">
 <sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
@@ -32,7 +31,7 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.92}
 </div>
 <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">8 items</div>
 <sc-for list="{{items}}" as="item" hint-placeholder-count="3">
-<a href="Item.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; border-top: 3px solid {{item.color}}; box-shadow: 0 3px 0 {{t.shadow}}">
+<a href="Item.dc.html" style="color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: {{t.card}}; border: 1px solid {{t.line}}; border-top: 3px solid {{item.color}}; box-shadow: 0 3px 0 {{t.shadow}}">
 <div style="display: flex; align-items: center; gap: 10px">
 <div style="width: 36px; height: 36px; border-radius: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 600; background: {{t.chip}}; color: {{item.color}}">{{item.initial}}</div>
 <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
@@ -56,10 +55,13 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.92}
 </sc-for>
 </div>
 <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; gap: 10px">
-<label style="flex-grow: 1; height: 50px; border-radius: 25px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 6px 20px rgba(0,0,0,.18)">
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color: {{t.soft}}; flex-shrink: 0"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
-<input type="search" placeholder="Search in English or Arabic" aria-label="Search" style="border: 0; outline: 0; background: transparent; font: inherit; font-size: 15px; width: 100%; color: {{t.ink}}">
-</label>
+<a href="Search.dc.html" style="text-decoration: none; flex-grow: 1; height: 50px; border-radius: 25px; display: flex; align-items: center; gap: 10px; padding: 0 16px; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 6px 20px rgba(0,0,0,.18); color: {{t.soft}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink: 0"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+Search in English or Arabic
+</a>
+<a href="Add.dc.html" aria-label="Add to Brain" style="text-decoration: none; width: 50px; height: 50px; flex-shrink: 0; border-radius: 25px; display: flex; align-items: center; justify-content: center; background: {{t.accent}}; color: {{t.onAccent}}; box-shadow: 0 6px 20px rgba(0,0,0,.18)">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+</a>
 </div>
 </div>
 </x-dc>

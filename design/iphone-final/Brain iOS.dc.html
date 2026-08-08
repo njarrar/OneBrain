@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+:root{--acc:oklch(0.55 0.14 245);--acc-text:oklch(0.50 0.14 245);--acc-soft:oklch(0.55 0.14 245 / 0.12);--acc-ink:#ffffff;--acc-dk:oklch(0.78 0.11 230);--acc-dk-ink:#07121a}
+body{margin:0;background:#e9ebee;color:#16191d;font-family:Figtree,'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--acc-text);text-decoration:none}
+a:hover{text-decoration:underline}
+input,textarea,button{font-family:inherit}
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:28px;padding:64px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <h1 style="margin:0;font-size:26px;font-weight:600">Brain for iPhone</h1>
+    <p style="margin:0;font-size:15px;color:#5c6570;max-width:70ch">The web redesign carried to iOS: a tab bar replaces the side menu, swipe replaces the action buttons, Add and Save to Brain share one capture sheet, and deleted items go to Trash until you empty it.</p>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1a</span>Inbox. Swipe left to archive or delete.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#ffffff;display:flex;flex-direction:column">
+          <div style="padding:60px 16px 10px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:32px;font-weight:700;letter-spacing:-0.01em">Inbox</span><span style="font:13px 'JetBrains Mono',monospace;color:#6b7480">12</span></div>
+              <span style="width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-funnel-simple" style="font-size:19px"></i></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;background:#f1f3f5;color:#6b7480;font-size:16px"><i class="ph ph-magnifying-glass" style="font-size:17px"></i><span style="flex:1">Search</span><i class="ph ph-microphone" style="font-size:17px"></i></div>
+            <div style="display:flex;gap:8px;overflow:hidden;margin-right:-16px">
+              <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+                <span style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;flex:none;font-size:14px;font-weight:500;background:{{ c.bg }};color:{{ c.color }}"><i class="ph {{ c.icon }}" style="font-size:15px"></i>{{ c.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding-bottom:110px">
+            <div style="padding:14px 16px 4px;font-size:13px;font-weight:600;color:#5c6570">Yesterday</div>
+            <sc-for list="{{ dayA }}" as="r" hint-placeholder-count="1">
+              <div style="position:relative;display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff">
+                <span style="grid-row:1 / span 2;position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph {{ r.icon }}" style="font-size:18px"></i><sc-if value="{{ r.unread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--acc);border:2px solid #ffffff"></span></sc-if></span>
+                <span dir="auto" style="grid-column:2;font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left">{{ r.author }}</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">{{ r.when }}</span>
+                <div style="grid-column:{{ r.span }};display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div dir="auto" style="font-size:15px;line-height:{{ r.lh }};color:#2e343b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.text }}</div>
+                  <sc-if value="{{ r.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ r.thumb }}" alt="" style="width:100%;aspect-ratio:3/2;border-radius:12px;object-fit:cover;margin:4px 0 2px;background:#f0f2f4;display:block"></sc-if>
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;flex:none;background:{{ r.swatch }}"></span>{{ r.cat }}</div>
+                </div>
+                                <span style="position:absolute;left:64px;right:0;bottom:0;height:1px;background:#eef0f2"></span>
+              </div>
+            </sc-for>
+            <div style="position:relative;overflow:hidden">
+              <div style="position:absolute;top:0;right:0;bottom:0;display:flex">
+                <span style="width:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--acc);color:var(--acc-ink);font-size:12px;font-weight:600"><i class="ph ph-archive" style="font-size:22px"></i>Archive</span>
+                <span style="width:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:oklch(0.58 0.2 25);color:#ffffff;font-size:12px;font-weight:600"><i class="ph ph-trash" style="font-size:22px"></i>Delete</span>
+              </div>
+              <div style="position:relative;transform:translateX(-160px);display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff;box-shadow:8px 0 16px rgba(22,25,29,.08)">
+                <span style="grid-row:1 / span 2;position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-instagram-logo" style="font-size:18px"></i><span style="position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--acc);border:2px solid #ffffff"></span></span>
+                <span style="grid-column:2;font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">savile.notes</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">18:40</span>
+                <div style="grid-column:2 / 4;display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div style="font-size:15px;line-height:1.4;color:#2e343b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Soft-shoulder navy double-breasted jacket, and how to size the lapel to your frame.</div>
+                  <img src="https://picsum.photos/seed/navy-tailoring-jacket/700/467" alt="" style="width:100%;aspect-ratio:3/2;border-radius:12px;object-fit:cover;margin:4px 0 2px;display:block">
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;background:oklch(0.62 0.09 90)"></span>Menswear, Design &amp; Travel</div>
+                </div>
+              </div>
+            </div>
+            <div style="padding:14px 16px 4px;font-size:13px;font-weight:600;color:#5c6570">Earlier this week</div>
+            <sc-for list="{{ dayB }}" as="r" hint-placeholder-count="3">
+              <div style="position:relative;display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff">
+                <span style="grid-row:1 / span 2;position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph {{ r.icon }}" style="font-size:18px"></i><sc-if value="{{ r.unread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--acc);border:2px solid #ffffff"></span></sc-if></span>
+                <span dir="auto" style="grid-column:2;font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left">{{ r.author }}</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">{{ r.when }}</span>
+                <div style="grid-column:{{ r.span }};display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div dir="auto" style="font-size:15px;line-height:{{ r.lh }};color:#2e343b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.text }}</div>
+                  <sc-if value="{{ r.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ r.thumb }}" alt="" style="width:100%;aspect-ratio:3/2;border-radius:12px;object-fit:cover;margin:4px 0 2px;background:#f0f2f4;display:block"></sc-if>
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;flex:none;background:{{ r.swatch }}"></span>{{ r.cat }}</div>
+                </div>
+                                <span style="position:absolute;left:64px;right:0;bottom:0;height:1px;background:#eef0f2"></span>
+              </div>
+            </sc-for>
+            <sc-for list="{{ dayC }}" as="r" hint-placeholder-count="1">
+              <div style="position:relative;display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff">
+                <span style="grid-row:1 / span 2;position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph {{ r.icon }}" style="font-size:18px"></i><sc-if value="{{ r.unread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--acc);border:2px solid #ffffff"></span></sc-if></span>
+                <span dir="auto" style="grid-column:2;font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left">{{ r.author }}</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">{{ r.when }}</span>
+                <div style="grid-column:{{ r.span }};display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div dir="auto" style="font-size:15px;line-height:{{ r.lh }};color:#2e343b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.text }}</div>
+                  <sc-if value="{{ r.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ r.thumb }}" alt="" style="width:100%;aspect-ratio:3/2;border-radius:12px;object-fit:cover;margin:4px 0 2px;background:#f0f2f4;display:block"></sc-if>
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;flex:none;background:{{ r.swatch }}"></span>{{ r.cat }}</div>
+                </div>
+                                <span style="position:absolute;left:64px;right:0;bottom:0;height:1px;background:#eef0f2"></span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute;left:16px;right:92px;bottom:30px;height:62px;border-radius:999px;display:flex;align-items:center;justify-content:space-around;padding:0 6px;background:rgba(255,255,255,.74);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(22,25,29,.16), inset 0 1px 0 rgba(255,255,255,.9)">
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 18px;border-radius:999px;background:rgba(22,25,29,.06);color:var(--acc-text);font-size:11px;font-weight:600"><i class="ph-fill ph-tray" style="font-size:23px"></i>Inbox</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-books" style="font-size:23px"></i>Library</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-magnifying-glass" style="font-size:23px"></i>Search</span>
+          </div>
+          <span style="position:absolute;right:16px;bottom:30px;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);box-shadow:0 10px 28px rgba(22,25,29,.22)"><i class="ph ph-plus" style="font-size:27px"></i></span>
+        </div>
+      </x-import>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1b</span>Item. Actions live in one toolbar at the bottom.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#ffffff;display:flex;flex-direction:column">
+          <div style="padding:58px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+            <span style="height:44px;padding:0 14px 0 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;background:#f1f3f5;color:#2e343b;font-size:15px;font-weight:500"><i class="ph ph-caret-left" style="font-size:20px"></i>Inbox</span>
+            <span style="height:44px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;background:#f1f3f5;color:#2e343b"><span style="width:36px;display:grid;place-items:center"><i class="ph ph-share-network" style="font-size:20px"></i></span><span style="width:36px;display:grid;place-items:center"><i class="ph ph-dots-three" style="font-size:22px"></i></span></span>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:12px 20px 120px;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:center;gap:12px;flex:none">
+              <span style="width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#e9ecef;font-weight:600;font-size:15px;flex:none">أ</span>
+              <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:16px;font-weight:600">أرشيف عمّان</span><span style="font:12px 'JetBrains Mono',monospace;color:#6b7480">@amman_archive  Sep 24</span></div>
+              <i class="ph ph-x-logo" style="font-size:17px;color:#6b7480"></i>
+            </div>
+            <p dir="auto" style="margin:0;font-size:19px;line-height:1.8;flex:none">سلسلة عن تاريخ وسط البلد في عمّان: كيف تغيّرت شوارع الرضا والسلط خلال مئة عام، مع صور قديمة من أرشيف العائلات.</p>
+            <img src="https://picsum.photos/seed/amman-downtown-old/900/560" alt="" style="width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:14px;background:#f0f2f4;display:block;flex:none">
+            <div style="display:flex;flex-direction:column;gap:5px;padding:12px 14px;border-radius:12px;background:#f4f5f7;flex:none">
+              <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#5c6570"><i class="ph ph-sparkle" style="color:var(--acc-text)"></i>Summary</span>
+              <span style="font-size:15px;line-height:1.45;color:#2e343b">A thread on how downtown Amman's streets changed over a hundred years, with old family photos.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0;border-radius:12px;border:1px solid #e7e9ec;font-size:15px;flex:none">
+              <div style="display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border-bottom:1px solid #eef0f2"><i class="ph ph-note-pencil" style="font-size:18px;color:#6b7480"></i><span style="flex:1">Visit Rainbow Street archive shop.</span><span style="font-size:12px;color:#6b7480">Saved</span></div>
+              <div style="display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border-bottom:1px solid #eef0f2"><span style="color:#5c6570;width:78px">Category</span><span style="width:8px;height:8px;border-radius:2px;background:oklch(0.62 0.09 45)"></span><span style="flex:1">MENA Geopolitics &amp; Society</span><i class="ph ph-caret-right" style="color:#9aa0a8"></i></div>
+              <div style="display:flex;align-items:center;gap:6px;min-height:48px;padding:6px 14px;border-bottom:1px solid #eef0f2;flex-wrap:wrap"><span style="color:#5c6570;width:82px">Tags</span><span style="height:28px;padding:0 10px;border-radius:6px;background:#f0f2f4;display:inline-flex;align-items:center;font-size:14px">#amman</span><span style="height:28px;padding:0 10px;border-radius:6px;background:#f0f2f4;display:inline-flex;align-items:center;font-size:14px">#history</span><span style="height:28px;padding:0 10px;border-radius:6px;border:1px dashed #cfd4da;color:#5c6570;display:inline-flex;align-items:center;font-size:14px">#photos</span></div>
+              <div style="display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px"><span style="color:#5c6570;width:78px">Saved from</span><i class="ph ph-x-logo"></i><span>X bookmarks, Sep 24</span></div>
+            </div>
+          </div>
+          <div style="position:absolute;left:16px;right:16px;bottom:30px;height:62px;border-radius:999px;display:flex;align-items:center;justify-content:space-around;background:rgba(255,255,255,.74);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(22,25,29,.16), inset 0 1px 0 rgba(255,255,255,.9);color:#2e343b;font-size:11px;font-weight:500">
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px"><i class="ph ph-arrow-square-out" style="font-size:22px"></i>Open</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px"><i class="ph ph-envelope-simple" style="font-size:22px"></i>Unread</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--acc-text);font-weight:600"><i class="ph ph-archive" style="font-size:22px"></i>Archive</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;color:oklch(0.55 0.2 25)"><i class="ph ph-trash" style="font-size:22px"></i>Delete</span>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <div id="1c" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1c</span>Add. One field for links, notes, photos and voice.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" keyboard="{{ true }}" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#ffffff;overflow:hidden">
+          <div style="padding:60px 16px 0;display:flex;flex-direction:column;gap:12px;opacity:.5">
+            <span style="font-size:32px;font-weight:700">Inbox</span>
+            <div style="height:40px;border-radius:12px;background:#f1f3f5"></div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(22,25,29,.28)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#ffffff;border-radius:28px 28px 0 0;padding:8px 16px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -10px 30px rgba(22,25,29,.12)">
+            <span style="align-self:center;width:36px;height:5px;border-radius:3px;background:#dadde2"></span>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:16px;color:#2e343b">Cancel</span>
+              <span style="font-size:16px;font-weight:600">Add to Brain</span>
+              <span style="height:34px;padding:0 14px;border-radius:999px;display:inline-flex;align-items:center;background:var(--acc);color:var(--acc-ink);font-size:15px;font-weight:600">Save</span>
+            </div>
+            <div style="font-size:17px;line-height:1.4;color:#16191d;padding:4px 2px;word-break:break-all">https://ammanurbanist.net/tram-plan<span style="display:inline-block;width:2px;height:20px;background:var(--acc);vertical-align:-4px;margin-left:1px"></span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #e7e9ec;border-radius:12px">
+              <img src="https://picsum.photos/seed/link-preview-0/160/160" alt="" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex:none">
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:15px;font-weight:600">The slow return of the Amman tram plan</span><span style="font:12px 'JetBrains Mono',monospace;color:#6b7480">ammanurbanist.net</span></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="height:34px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:#f1f3f5;font-size:14px;font-weight:500"><i class="ph ph-sparkle" style="color:var(--acc-text)"></i>Let Claude sort</span>
+              <span style="height:34px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:#f1f3f5;font-size:14px;color:#5c6570"><i class="ph ph-hash"></i>Add tags</span>
+            </div>
+            <div style="display:flex;gap:10px;border-top:1px solid #eef0f2;padding-top:12px">
+              <span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-image" style="font-size:21px"></i></span>
+              <span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-camera" style="font-size:21px"></i></span>
+              <span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-microphone" style="font-size:21px"></i></span>
+              <span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-paperclip" style="font-size:21px"></i></span>
+              <span style="margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;background:#f0f2f4;color:#5c6570;font-size:12.5px;font-weight:500"><i class="ph ph-link"></i>Link</span>
+            </div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <div id="1d" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1d</span>Library. Views, categories and sources in one place.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#f4f5f7;display:flex;flex-direction:column">
+          <div style="flex:1;overflow:hidden;padding:60px 16px 120px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;flex:none"><span style="font-size:32px;font-weight:700">Library</span><span style="width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#ffffff;color:#2e343b"><i class="ph ph-gear-six" style="font-size:20px"></i></span></div>
+            <div style="background:#ffffff;border-radius:16px;overflow:hidden;flex:none">
+              <sc-for list="{{ libViews }}" as="v" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;min-height:48px;padding:0 14px;border-bottom:1px solid #eef0f2;font-size:16px"><i class="ph {{ v.icon }}" style="font-size:19px;color:#2e343b;width:20px"></i><span style="flex:1">{{ v.label }}</span><span style="font:13px 'JetBrains Mono',monospace;color:#6b7480">{{ v.count }}</span><i class="ph ph-caret-right" style="color:#9aa0a8"></i></div>
+              </sc-for>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:#5c6570;padding:10px 4px 0;flex:none">Categories</span>
+            <div style="background:#ffffff;border-radius:16px;overflow:hidden;flex:none">
+              <sc-for list="{{ libCats }}" as="c" hint-placeholder-count="8">
+                <div style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-bottom:1px solid #eef0f2;font-size:15px"><span style="width:10px;height:10px;border-radius:3px;background:{{ c.swatch }};margin:0 5px"></span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span><span style="font:13px 'JetBrains Mono',monospace;color:#6b7480">{{ c.count }}</span></div>
+              </sc-for>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:#5c6570;padding:10px 4px 0;flex:none">Sources</span>
+            <div style="background:#ffffff;border-radius:16px;overflow:hidden;flex:none">
+              <sc-for list="{{ libSrcs }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-bottom:1px solid #eef0f2;font-size:15px"><i class="ph {{ s.icon }}" style="font-size:18px;width:20px;color:#2e343b"></i><span style="flex:1">{{ s.name }}</span><span style="font:13px 'JetBrains Mono',monospace;color:#6b7480">{{ s.count }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="position:absolute;left:16px;right:92px;bottom:30px;height:62px;border-radius:999px;display:flex;align-items:center;justify-content:space-around;padding:0 6px;background:rgba(255,255,255,.74);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(22,25,29,.16), inset 0 1px 0 rgba(255,255,255,.9)">
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-tray" style="font-size:23px"></i>Inbox</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 18px;border-radius:999px;background:rgba(22,25,29,.06);color:var(--acc-text);font-size:11px;font-weight:600"><i class="ph-fill ph-books" style="font-size:23px"></i>Library</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-magnifying-glass" style="font-size:23px"></i>Search</span>
+          </div>
+          <span style="position:absolute;right:16px;bottom:30px;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);box-shadow:0 10px 28px rgba(22,25,29,.22)"><i class="ph ph-plus" style="font-size:27px"></i></span>
+        </div>
+      </x-import>
+    </div>
+
+    <div id="1e" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1e</span>Save to Brain, from the share sheet in any app.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="position:relative;height:100%;overflow:hidden;background:#dfe2e6">
+          <img src="https://picsum.photos/seed/share-host-app-feed/804/1748" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(.3)">
+          <div style="position:absolute;inset:0;background:rgba(22,25,29,.4)"></div>
+          <div style="position:absolute;left:8px;right:8px;bottom:8px;background:#ffffff;border-radius:34px;padding:10px 18px 30px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -10px 30px rgba(22,25,29,.18)">
+            <span style="align-self:center;width:36px;height:5px;border-radius:3px;background:#dadde2"></span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="design/icons/pocket-light.svg" alt="" style="width:32px;height:32px;border-radius:8px">
+              <span style="font-size:17px;font-weight:600;flex:1">Save to Brain</span>
+              <span style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#f1f3f5;color:#5c6570"><i class="ph ph-x"></i></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid #e7e9ec;border-radius:14px">
+              <div style="display:flex;align-items:center;gap:6px"><i class="ph ph-x-logo" style="font-size:14px"></i><span style="font-size:14px;font-weight:600">Lina Haddad</span><span style="font:12px 'JetBrains Mono',monospace;color:#6b7480">@linabuilds</span></div>
+              <div style="font-size:15px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">We cut our agent's token bill by 60% in a week. Three changes: cache the long system prompt, batch 20 items per call, and stop sending the full history every turn.</div>
+            </div>
+            <div style="min-height:46px;padding:12px 14px;border-radius:12px;background:#f4f5f7;font-size:15px;color:#6b7480">Add a note (optional)</div>
+            <div style="display:flex;gap:8px">
+              <span style="height:34px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:#f1f3f5;font-size:14px;font-weight:500"><i class="ph ph-sparkle" style="color:var(--acc-text)"></i>Let Claude sort</span>
+              <span style="height:34px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:#f1f3f5;font-size:14px;color:#5c6570"><i class="ph ph-hash"></i>Add tags</span>
+            </div>
+            <span style="height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--acc);color:var(--acc-ink);font-size:17px;font-weight:600">Save to inbox</span>
+          </div>
+        </div>
+      </x-import>
+    </div>
+
+    <div id="1f" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1f</span>Trash. Deleted items wait here until you empty it.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#ffffff;display:flex;flex-direction:column">
+          <div style="padding:58px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+            <span style="height:44px;padding:0 14px 0 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;background:#f1f3f5;color:#2e343b;font-size:15px;font-weight:500"><i class="ph ph-caret-left" style="font-size:20px"></i>Library</span>
+            <span style="height:44px;padding:0 16px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;background:#f1f3f5;color:oklch(0.55 0.2 25);font-size:15px;font-weight:600"><i class="ph ph-trash" style="font-size:18px"></i>Empty</span>
+          </div>
+          <div style="padding:6px 16px 4px;display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:32px;font-weight:700">Trash</span><span style="font:13px 'JetBrains Mono',monospace;color:#6b7480">2</span></div>
+            <span style="font-size:14px;color:#5c6570">Swipe to restore an item or delete it forever.</span>
+          </div>
+          <div style="flex:1;overflow:hidden;padding-top:8px">
+            <div style="position:relative;overflow:hidden">
+              <div style="position:absolute;top:0;right:0;bottom:0;display:flex">
+                <span style="width:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--acc);color:var(--acc-ink);font-size:12px;font-weight:600"><i class="ph ph-arrow-counter-clockwise" style="font-size:22px"></i>Restore</span>
+                <span style="width:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:oklch(0.58 0.2 25);color:#ffffff;font-size:12px;font-weight:600;text-align:center;line-height:1.15"><i class="ph ph-trash" style="font-size:22px"></i>Delete<br>forever</span>
+              </div>
+              <div style="position:relative;transform:translateX(-160px);display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff;box-shadow:8px 0 16px rgba(22,25,29,.08)">
+                <span style="grid-row:1 / span 2;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph ph-x-logo" style="font-size:18px"></i></span>
+                <span style="grid-column:2;font-size:15px;font-weight:600;line-height:20px">Weird Web</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">Sep 18</span>
+                <div style="grid-column:2 / 4;display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div style="font-size:15px;line-height:1.4;color:#2e343b">Someone rebuilt a 1998 flight simulator inside a spreadsheet, and it runs.</div>
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;background:oklch(0.62 0.09 305)"></span>Deleted from Inbox, today</div>
+                </div>
+              </div>
+            </div>
+            <sc-for list="{{ trashRows }}" as="r" hint-placeholder-count="2">
+              <div style="position:relative;display:grid;grid-template-columns:36px minmax(0,1fr) auto;column-gap:12px;row-gap:3px;padding:12px 16px;background:#ffffff">
+                <span style="grid-row:1 / span 2;position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f3f5;color:#2e343b"><i class="ph {{ r.icon }}" style="font-size:18px"></i><sc-if value="{{ r.unread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--acc);border:2px solid #ffffff"></span></sc-if></span>
+                <span dir="auto" style="grid-column:2;font-size:15px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left">{{ r.author }}</span>
+                <span style="grid-column:3;justify-self:end;font:12px/20px 'JetBrains Mono',monospace;color:#6b7480">{{ r.when }}</span>
+                <div style="grid-column:{{ r.span }};display:flex;flex-direction:column;gap:5px;min-width:0">
+                  <div dir="auto" style="font-size:15px;line-height:{{ r.lh }};color:#2e343b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ r.text }}</div>
+                  <sc-if value="{{ r.hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ r.thumb }}" alt="" style="width:100%;aspect-ratio:3/2;border-radius:12px;object-fit:cover;margin:4px 0 2px;background:#f0f2f4;display:block"></sc-if>
+                  <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#5c6570"><span style="width:7px;height:7px;border-radius:2px;flex:none;background:{{ r.swatch }}"></span>{{ r.cat }}</div>
+                </div>
+                                <span style="position:absolute;left:64px;right:0;bottom:0;height:1px;background:#eef0f2"></span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute;left:16px;right:92px;bottom:30px;height:62px;border-radius:999px;display:flex;align-items:center;justify-content:space-around;padding:0 6px;background:rgba(255,255,255,.74);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(22,25,29,.16), inset 0 1px 0 rgba(255,255,255,.9)">
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-tray" style="font-size:23px"></i>Inbox</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 18px;border-radius:999px;background:rgba(22,25,29,.06);color:var(--acc-text);font-size:11px;font-weight:600"><i class="ph-fill ph-books" style="font-size:23px"></i>Library</span>
+            <span style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;color:#2e343b;font-size:11px;font-weight:500"><i class="ph ph-magnifying-glass" style="font-size:23px"></i>Search</span>
+          </div>
+          <span style="position:absolute;right:16px;bottom:30px;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--acc-ink);box-shadow:0 10px 28px rgba(22,25,29,.22)"><i class="ph ph-plus" style="font-size:27px"></i></span>
+        </div>
+      </x-import>
+    </div>
+    <div id="1g" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:#5c6570"><span style="font:500 12px 'JetBrains Mono',monospace;color:var(--acc-ink);background:var(--acc);padding:3px 7px;border-radius:6px">1g</span>Settings, with the Light and Dark switch. Shown in dark.</div>
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="position:relative;height:100%;background:#0e1013;color:#e9ecef;display:flex;flex-direction:column">
+          <div style="padding:58px 16px 8px;display:flex;align-items:center">
+            <span style="height:44px;padding:0 14px 0 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;background:#1d2127;color:#e9ecef;font-size:15px;font-weight:500"><i class="ph ph-caret-left" style="font-size:20px"></i>Library</span>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:6px 16px 40px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-size:32px;font-weight:700;padding-bottom:6px;flex:none">Settings</span>
+            <span style="font-size:13px;font-weight:500;color:#9aa3ae;padding:6px 4px 0;flex:none">Appearance</span>
+            <div style="flex:none;display:flex;gap:2px;padding:3px;border-radius:12px;background:#15181c;border:1px solid #23272e"><span style="flex:1;height:36px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:15px;font-weight:500;background:transparent;color:#9aa3ae;box-shadow:none"><i class="ph ph-sun" style="font-size:17px"></i>Light</span><span style="flex:1;height:36px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:15px;font-weight:600;background:#2a2f37;color:#e9ecef;box-shadow:0 1px 3px rgba(0,0,0,.4)"><i class="ph ph-moon" style="font-size:17px"></i>Dark</span></div>
+            <span style="font-size:13px;color:#7c8591;padding:0 4px;flex:none">Syncs with the web app.</span>
+            <span style="font-size:13px;font-weight:500;color:#9aa3ae;padding:12px 4px 0;flex:none">Capture</span>
+            <div style="flex:none;background:#15181c;border-radius:16px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;border-bottom:1px solid #23272e;font-size:16px"><i class="ph ph-device-mobile" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Sync Screenshots album</span><span style="width:51px;height:31px;border-radius:999px;background:var(--acc-dk);position:relative;flex:none"><span style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:50%;background:#ffffff"></span></span></div>
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;border-bottom:1px solid #23272e;font-size:16px"><i class="ph ph-sparkle" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Claude sorting</span><span style="font-size:14px;color:#9aa3ae">Up to date</span></div>
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;font-size:16px"><i class="ph ph-eye-slash" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Blur sensitive pictures</span><span style="width:51px;height:31px;border-radius:999px;background:var(--acc-dk);position:relative;flex:none"><span style="position:absolute;top:2px;right:2px;width:27px;height:27px;border-radius:50%;background:#ffffff"></span></span></div>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:#9aa3ae;padding:12px 4px 0;flex:none">Storage</span>
+            <div style="flex:none;background:#15181c;border-radius:16px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;border-bottom:1px solid #23272e;font-size:16px"><i class="ph ph-trash" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Trash</span><span style="font:13px 'JetBrains Mono',monospace;color:#7c8591">2</span><i class="ph ph-caret-right" style="color:#5c6570"></i></div>
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;font-size:16px"><i class="ph ph-plugs" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Sources</span><span style="font-size:14px;color:#9aa3ae">Set up on the web</span></div>
+            </div>
+            <span style="font-size:13px;font-weight:500;color:#9aa3ae;padding:12px 4px 0;flex:none">Account</span>
+            <div style="flex:none;background:#15181c;border-radius:16px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;border-bottom:1px solid #23272e;font-size:16px"><i class="ph ph-user-circle" style="font-size:19px;width:20px;color:#c9ced4"></i><span style="flex:1">Me</span></div>
+              <div style="display:flex;align-items:center;min-height:50px;padding:0 14px;font-size:16px;color:oklch(0.72 0.15 22)">Sign out</div>
+            </div>
+          </div>
+        </div>
+      </x-import>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Sky&quot;,&quot;Amber&quot;],&quot;default&quot;:&quot;Sky&quot;,&quot;tsType&quot;:&quot;'Sky'|'Amber'&quot;}}">
+const HUE = { 'AI, Code & Dev Tools': 235, 'Markets, Startups & Finance': 150, 'MENA Geopolitics & Society': 45, 'Cinema, Gaming, History & Culture': 20, 'Health, Biotech & Longevity': 175, 'Menswear, Design & Travel': 90, 'Viral Threads & Internet Culture': 305, 'Models, Pop Culture & NSFW': 355 };
+const sw = n => `oklch(0.62 0.09 ${HUE[n]})`;
+const CAT_COUNTS = [3, 2, 3, 3, 2, 3, 1, 0];
+const SRCS = [['Screenshots', 'ph-device-mobile', 1], ['Audio notes', 'ph-microphone', 1], ['Videos', 'ph-video-camera', 1], ['YouTube', 'ph-youtube-logo', 1], ['X', 'ph-x-logo', 7], ['Instagram', 'ph-instagram-logo', 2], ['RSS', 'ph-rss', 1], ['Notes', 'ph-note-pencil', 1], ['Text', 'ph-text-aa', 1], ['Links', 'ph-link', 1]];
+const row = (author, when, icon, cat, text, img, unread, ar) => ({ author, when, icon, cat, text, unread, swatch: sw(cat), hasImg: !!img, thumb: img ? `https://picsum.photos/seed/${img}/700/467` : '', span: '2 / 4', lh: ar ? '1.65' : '1.4' });
+
+class Component extends DCLogic {
+  componentDidMount() { this.applyAccent(); }
+  componentDidUpdate() { this.applyAccent(); }
+  applyAccent() {
+    const amber = (this.props.accent ?? 'Sky') === 'Amber';
+    const r = document.documentElement.style;
+    const A = amber ? { acc: 'oklch(0.76 0.14 72)', text: 'oklch(0.50 0.12 60)', ink: '#1a1203' } : { acc: 'oklch(0.55 0.14 245)', text: 'oklch(0.50 0.14 245)', ink: '#ffffff' };
+    r.setProperty('--acc', A.acc); r.setProperty('--acc-text', A.text); r.setProperty('--acc-ink', A.ink);
+    r.setProperty('--acc-dk', amber ? 'oklch(0.80 0.13 72)' : 'oklch(0.78 0.11 230)'); r.setProperty('--acc-dk-ink', amber ? '#1a1203' : '#07121a');
+    r.setProperty('--acc-soft', `color-mix(in oklch, ${A.acc} 12%, transparent)`);
+  }
+  renderVals() {
+    const chips = [['All', 'ph-stack', true], ['Screenshots', 'ph-device-mobile'], ['Audio', 'ph-microphone'], ['Videos', 'ph-video-camera'], ['YouTube', 'ph-youtube-logo'], ['X', 'ph-x-logo'], ['Instagram', 'ph-instagram-logo']]
+      .map(([label, icon, on]) => ({ label, icon, bg: on ? 'var(--acc-soft)' : '#f1f3f5', color: on ? 'var(--acc-text)' : '#2e343b' }));
+    return {
+      chips,
+      dayA: [
+        row('Lina Haddad', '9:14', 'ph-x-logo', 'AI, Code & Dev Tools', "We cut our agent's token bill by 60% in a week. Three changes: cache the long system prompt, batch 20 items per call.", null, true),
+      ],
+      dayB: [
+        row('أرشيف عمّان', 'Wed', 'ph-x-logo', 'MENA Geopolitics & Society', 'سلسلة عن تاريخ وسط البلد في عمّان: كيف تغيّرت شوارع الرضا والسلط خلال مئة عام.', 'amman-downtown-old', false, true),
+        row('Levant Notes', 'Fri', 'ph-x-logo', 'MENA Geopolitics & Society', 'لماذا تقع المياه في قلب السياسة الخارجية الأردنية: خيط عن اليرموك وحوض الديسي وصفقات الماء مقابل الكهرباء.', null, false, true),
+        row('Voice memo', 'Thu', 'ph-microphone', 'AI, Code & Dev Tools', 'Idea for the sorter: group saves by the week they came in, then have Claude write a short Sunday digest.', null, true),
+      ],
+      dayC: [
+        row('Screenshot', 'Tue', 'ph-device-mobile', 'Health, Biotech & Longevity', 'Sleep tracker: 7h 12m average over 30 days, deep sleep up 18%.', 'night-sleep-bedroom', false),
+      ],
+      trashRows: [
+        row('Monocle', 'Sep 15', 'ph-link', 'Menswear, Design & Travel', 'The quiet revival of the unstructured linen jacket.', 'linen-jacket-summer', false),
+      ],
+      libViews: [{ label: 'Inbox', icon: 'ph-tray', count: 12 }, { label: 'All saves', icon: 'ph-stack', count: 16 }, { label: 'Archive', icon: 'ph-archive', count: 4 }, { label: 'Trash', icon: 'ph-trash', count: 2 }],
+      libCats: Object.keys(HUE).map((name, i) => ({ name, swatch: sw(name), count: CAT_COUNTS[i] })),
+      libSrcs: SRCS.map(([name, icon, count]) => ({ name, icon, count })),
+    };
+  }
+}
+</script>
+</body>
+</html>

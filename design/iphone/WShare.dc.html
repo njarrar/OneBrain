@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: save to Brain</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; background: #9E9E9E; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 12px; border-radius: 20px 20px 0 0; background: #FFFFFF">
+<div style="display: flex; align-items: center; justify-content: space-between"><span>Cancel</span><span style="font-size: 14px; font-weight: 500">Save to Brain</span><span style="height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; color: #FFFFFF; background: #555555">Save</span></div>
+<div style="display: flex; gap: 12px; padding: 12px; border-radius: 12px; border: 1px solid #BDBDBD"><span style="width: 56px; height: 56px; border-radius: 8px; background: #EDEDED"></span><span style="display: flex; flex-direction: column; gap: 8px; justify-content: center"><span style="width: 150px; height: 10px; border-radius: 5px; background: #BDBDBD"></span><span style="width: 110px; height: 8px; border-radius: 4px; background: #E3E3E3"></span></span></div>
+<div style="height: 80px; padding: 12px; box-sizing: border-box; border-radius: 12px; border: 1px solid #BDBDBD; color: #999999">Note (optional)</div>
+<div style="height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #F5F5F5; color: #777777">After save: "Saved" check</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

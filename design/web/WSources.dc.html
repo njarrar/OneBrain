@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: web sources</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+<nav style="width: 264px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; background: #F5F5F5; border-right: 1px solid #BDBDBD; color: #777777">Side menu</nav>
+<main style="flex-grow: 1; padding: 32px 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; row-gap: 12px; align-content: start">
+<b style="grid-column: span 2; font-size: 22px">Sources and settings</b>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<span style="height: 130px; padding: 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #BDBDBD; color: #777777">LOOK: Design [X-Vault|Sunroom], Mode [System|Light|Dark]</span>
+<span style="height: 110px; padding: 14px; box-sizing: border-box; border-radius: 14px; border: 1px solid #BDBDBD; color: #777777">CLAUDE KEY: hidden field, Replace, last 4 shown</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<span style="height: 72px; padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; border-radius: 14px; border: 1px solid #BDBDBD"><span style="display: flex; justify-content: space-between"><b>{{r}}</b><span style="padding: 2px 8px; border-radius: 8px; background: #EDEDED">status</span></span><span style="display: flex; justify-content: space-between; color: #999999"><span>count · last sync</span><span>[action]</span></span></span>
+</sc-for>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { rows: ['X', 'Instagram', 'YouTube', 'Feedly', 'Screenshots'] }; }
+}
+</script>
+</body>
+</html>

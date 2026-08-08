@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: search</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 58px 16px 24px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="flex-grow: 1; height: 46px; display: flex; align-items: center; padding: 0 14px; border-radius: 23px; border: 2px solid #555555">water|</span><a href="WInbox.dc.html" style="text-decoration: none; color: #333333">Cancel</a></div>
+<div style="display: flex; gap: 8px"><span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; background: #EDEDED; border: 1px solid #999999">Everything</span><span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; border: 1px solid #BDBDBD">Inbox</span><span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; border: 1px solid #BDBDBD">Notes</span><span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; border: 1px solid #BDBDBD">Archive</span></div>
+<span style="color: #777777">3 results</span>
+<div style="display: flex; flex-direction: column; border: 1px solid #BDBDBD; border-radius: 12px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<a href="WItem.dc.html" style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-bottom: 1px solid #E3E3E3; text-decoration: none; color: #333333"><span style="display: flex; justify-content: space-between"><span style="width: 120px; height: 10px; border-radius: 5px; background: #BDBDBD"></span><span style="color: #999999">SRC · date</span></span><span>text with <b style="background: #E3E3E3">match</b> shown</span></a>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { rows: [1, 2, 3] }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add to Brain</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow-y: auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 14px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Main.dc.html" style="min-height: 44px; display: flex; align-items: center; font-size: 16px; text-decoration: none; color: {{t.accentText}}">Cancel</a>
+<h1 style="margin: 0; font-size: 17px; font-weight: 600">Add to Brain</h1>
+<a href="Main.dc.html" style="min-height: 40px; padding: 0 16px; border-radius: 20px; display: flex; align-items: center; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Save</a>
+</div>
+<div style="display: flex; padding: 3px; border-radius: 12px; background: {{t.chip}}" role="radiogroup" aria-label="Kind">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{k.on}}" onClick="{{k.pick}}" style="flex-grow: 1; height: 36px; border-radius: 9px; border: 0; font: inherit; font-size: 14px; cursor: pointer; background: {{k.bg}}; color: {{k.color}}">{{k.label}}</button>
+</sc-for>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Link
+<input type="url" placeholder="https://" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Title (optional, filled in from the link)
+<input type="text" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Note
+<textarea rows="4" placeholder="A thought, a quote, why this matters" style="padding: 12px 14px; border-radius: 12px; outline: 0; resize: none; font: inherit; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></textarea>
+</label>
+<button type="button" style="min-height: 88px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 14px; cursor: pointer; background: transparent; border: 1px dashed {{t.line}}; color: {{t.soft}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="11" r="2"></circle><path d="M21 17l-5-5-8 7"></path></svg>
+Add a photo or file (up to 10 MB)
+</button>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{t.soft}}">Tags (split with commas)
+<input type="text" placeholder="reading, weekend" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}">
+</label>
+<p style="margin: 0; font-size: 12px; line-height: 1.4; color: {{t.soft}}">Claude picks a category and tags after you save. You can change them on the item.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { kind: 'Link' }; }
+  renderVals() {
+    var t = THEMES[this.props.theme] || THEMES['sunroom-light'];
+    var self = this;
+    var kinds = ['Link', 'Note', 'Photo'].map(function (label) {
+      var on = self.state.kind === label;
+      return { label: label, on: on ? 'true' : 'false', bg: on ? t.card : 'transparent', color: on ? t.ink : t.soft, pick: function () { self.setState({ kind: label }); } };
+    });
+    return { t: t, kinds: kinds };
+  }
+}
+</script>
+</body>
+</html>

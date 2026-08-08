@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: web sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+<div style="width: 400px; padding: 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; border-radius: 18px; border: 1px solid #BDBDBD">
+<span style="width: 56px; height: 56px; border-radius: 14px; background: #EDEDED"></span>
+<b style="font-size: 22px">Brain</b>
+<span style="width: 240px; height: 8px; border-radius: 4px; background: #E3E3E3"></span>
+<span style="display: flex; gap: 8px"><span style="padding: 6px 12px; border-radius: 14px; color: #FFFFFF; background: #555555">Sign in</span><span style="padding: 6px 12px; border-radius: 14px; border: 1px solid #BDBDBD">Create account</span></span>
+<span style="height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; border: 1px solid #555555">Continue with Google</span>
+<span style="text-align: center; color: #999999">or</span>
+<span style="height: 42px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; border: 1px solid #BDBDBD; color: #999999">Username or email</span>
+<span style="height: 42px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; border: 1px solid #BDBDBD; color: #999999">Password</span>
+<span style="height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 23px; color: #FFFFFF; background: #555555">Sign in</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

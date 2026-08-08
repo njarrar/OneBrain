@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: web add</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 13px">
+<nav style="width: 264px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; background: #F5F5F5; border-right: 1px solid #BDBDBD; color: #777777">Side menu</nav>
+<main style="padding: 36px 48px; width: 640px; display: flex; flex-direction: column; gap: 12px">
+<b style="font-size: 22px">Add to Brain</b>
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="5">
+<span style="color: #777777">{{f.label}}</span>
+<span style="height: {{f.h}}px; border-radius: 10px; border: {{f.border}}"></span>
+</sc-for>
+<span style="display: flex; gap: 12px; align-items: center"><span style="padding: 12px 24px; border-radius: 22px; color: #FFFFFF; background: #555555">Save</span><span style="color: #999999">Claude sorts it after save</span></span>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var solid = '1px solid #BDBDBD';
+    return { fields: [{ label: 'Link', h: 44, border: solid }, { label: 'Title (optional)', h: 44, border: solid }, { label: 'Note', h: 120, border: solid }, { label: 'Photo or file', h: 64, border: '1px dashed #999999' }, { label: 'Tags', h: 44, border: solid }] };
+  }
+}
+</script>
+</body>
+</html>

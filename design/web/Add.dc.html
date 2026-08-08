@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add to Brain on the web</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; overflow: hidden; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<dc-import name="Sidebar" theme="{{theme}}" active="None" hint-size="264px,900px"></dc-import>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 36px 48px; overflow-y: auto">
+<form style="width: 640px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="margin: 0; font-size: 30px; font-weight: 700">Add to Brain</h1>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Link<input type="url" placeholder="https://" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-weight: 400; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Title <span style="font-weight: 400; color: {{t.soft}}">(optional, filled in from the link)</span><input type="text" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-weight: 400; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Note<textarea rows="5" placeholder="A thought, a quote, why this matters" style="padding: 12px 14px; border-radius: 12px; outline: 0; resize: vertical; font: inherit; font-weight: 400; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></textarea></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Photo or file <span style="font-weight: 400; color: {{t.soft}}">(up to 10 MB)</span><input type="file" style="padding: 18px 14px; border-radius: 12px; font: inherit; font-weight: 400; font-size: 14px; border: 1px dashed {{t.line}}; color: {{t.soft}}"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Tags <span style="font-weight: 400; color: {{t.soft}}">(split with commas)</span><input type="text" style="height: 46px; padding: 0 14px; border-radius: 12px; outline: 0; font: inherit; font-weight: 400; font-size: 15px; background: {{t.card}}; border: 1px solid {{t.line}}; color: {{t.ink}}"></label>
+<div style="display: flex; align-items: center; gap: 14px">
+<a href="Main.dc.html" style="height: 48px; padding: 0 26px; display: flex; align-items: center; border-radius: 24px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Save</a>
+<span style="font-size: 13px; color: {{t.soft}}">Claude picks a category and tags after you save.</span>
+</div>
+</form>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":1440,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() { var theme = this.props.theme || 'sunroom-light'; return { t: THEMES[theme] || THEMES['sunroom-light'], theme: theme }; }
+}
+</script>
+</body>
+</html>

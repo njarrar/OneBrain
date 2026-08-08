@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Connect the iPhone app</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; display: flex; align-items: center; justify-content: center; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="width: 440px; box-sizing: border-box; padding: 36px; display: flex; flex-direction: column; gap: 14px; border-radius: 20px; background: {{t.card}}; border: 1px solid {{t.line}}; box-shadow: 0 4px 0 {{t.shadow}}">
+<img src="/_blob/2c7addecaeb0b813d4332bf7bf1cc525" alt="Brain app icon" style="width: 56px; height: 56px; border-radius: 14px; border: 1px solid {{t.line}}">
+<h1 style="margin: 0; font-size: 26px; font-weight: 700">Connect the app</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: {{t.soft}}">Let the Brain app on <b style="color: {{t.ink}}">My iPhone</b> read and change your saves.</p>
+<a href="Main.dc.html" style="height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 24px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Connect</a>
+<p style="margin: 0; font-size: 13px; color: {{t.soft}}">You can remove this phone later on the Sources page.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":1440,"height":900}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', panel: '#F5F0E6', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', pick: '#FBE3C8', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', panel: '#211F1A', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', pick: '#3A2F20', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', panel: '#101622', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', pick: '#2A2413', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', panel: '#EDF1F6', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', pick: '#FDEBD3', shadow: '#DDE3EB' }
+};
+class Component extends DCLogic {
+  renderVals() { return { t: THEMES[this.props.theme] || THEMES['sunroom-light'] }; }
+}
+</script>
+</body>
+</html>

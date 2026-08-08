@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Web sign in in four looks</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 2960px; height: 1960px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 80px; row-gap: 80px; background: #FFFFFF; color: #555555; font-family: 'JetBrains Mono', monospace; font-size: 20px">
+<div style="display: flex; flex-direction: column; gap: 10px"><div>Sunroom light</div><dc-import name="Login" theme="sunroom-light" hint-size="1440px,900px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><div>Sunroom dark</div><dc-import name="Login" theme="sunroom-dark" hint-size="1440px,900px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><div>X-Vault dark</div><dc-import name="Login" theme="vault-dark" hint-size="1440px,900px"></dc-import></div>
+<div style="display: flex; flex-direction: column; gap: 10px"><div>X-Vault light</div><dc-import name="Login" theme="vault-light" hint-size="1440px,900px"></dc-import></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2960,"height":1960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

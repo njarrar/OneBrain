@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: add</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 24px 16px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><a href="WInbox.dc.html" style="text-decoration: none; color: #333333">Cancel</a><span style="font-size: 15px; font-weight: 500">Add to Brain</span><span style="height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 18px; color: #FFFFFF; background: #555555">Save</span></div>
+<div style="display: flex; border: 1px solid #BDBDBD; border-radius: 10px; overflow: hidden"><span style="flex-grow: 1; height: 34px; display: flex; align-items: center; justify-content: center; background: #EDEDED">Link</span><span style="flex-grow: 1; height: 34px; display: flex; align-items: center; justify-content: center">Note</span><span style="flex-grow: 1; height: 34px; display: flex; align-items: center; justify-content: center">Photo</span></div>
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="3">
+<span style="color: #777777">{{f.label}}</span>
+<span style="height: {{f.h}}px; border-radius: 10px; border: 1px solid #BDBDBD"></span>
+</sc-for>
+<span style="height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px dashed #999999; color: #777777">Photo or file</span>
+<span style="color: #999999">Claude picks a category after save.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { fields: [{ label: 'Link', h: 44 }, { label: 'Title (optional)', h: 44 }, { label: 'Note', h: 96 }, { label: 'Tags', h: 44 }] }; }
+}
+</script>
+</body>
+</html>

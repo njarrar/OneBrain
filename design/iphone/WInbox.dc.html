@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="padding: 58px 16px 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="WMenu.dc.html" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #777777; border: 1px solid #BDBDBD">Menu</a>
+<span style="font-size: 16px; font-weight: 500">Inbox</span>
+<a href="WFilters.dc.html" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #777777; border: 1px solid #BDBDBD">Filt</a>
+</div>
+<div style="display: flex; gap: 8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<span style="height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: 16px; border: 1px solid #BDBDBD">{{c}}</span>
+</sc-for>
+</div>
+<div style="color: #777777">8 items</div>
+<sc-for list="{{cards}}" as="card" hint-placeholder-count="2">
+<a href="WItem.dc.html" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; border: 1px solid #BDBDBD; text-decoration: none; color: #333333">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 36px; height: 36px; border-radius: 18px; background: #EDEDED"></span><span style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1"><span style="width: 120px; height: 10px; border-radius: 5px; background: #BDBDBD"></span><span style="width: 160px; height: 8px; border-radius: 4px; background: #E3E3E3"></span></span><span style="padding: 2px 6px; border: 1px solid #BDBDBD; border-radius: 4px; color: #777777">SRC</span></div>
+<span style="height: 10px; border-radius: 5px; background: #D6D6D6"></span>
+<span style="height: 10px; border-radius: 5px; background: #D6D6D6; width: 80%"></span>
+<sc-if value="{{card.media}}" hint-placeholder-val="{{card.media}}"><span style="height: 150px; border-radius: 10px; background: #EDEDED; display: flex; align-items: center; justify-content: center; color: #999999">Picture</span></sc-if>
+<span style="padding: 8px; border-radius: 8px; background: #F5F5F5; color: #777777">Claude's summary</span>
+<span style="display: flex; gap: 6px"><span style="padding: 4px 10px; border-radius: 12px; background: #EDEDED">Category</span><span style="padding: 4px 10px; border-radius: 12px; background: #F5F5F5">#tag</span></span>
+</a>
+</sc-for>
+</div>
+<div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; gap: 10px">
+<a href="WSearch.dc.html" style="flex-grow: 1; height: 50px; border-radius: 25px; display: flex; align-items: center; padding: 0 16px; text-decoration: none; color: #777777; background: #FFFFFF; border: 1px solid #999999">Search</a>
+<a href="WAdd.dc.html" style="width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 22px; text-decoration: none; color: #FFFFFF; background: #555555">+</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { chips: ['All', 'X', 'IG', 'YT', 'Feedly'], cards: [{ media: true }, { media: false }] }; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wireframe: settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; color: #333333; font-family: 'JetBrains Mono', monospace; font-size: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><span style="width: 56px"></span><span style="font-size: 15px; font-weight: 500">Settings</span><a href="WMenu.dc.html" style="width: 56px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #333333; border: 1px solid #BDBDBD">Done</a></div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+<div style="margin-top: 10px; color: #777777">{{g.title}}</div>
+<div style="display: flex; flex-direction: column; border: 1px solid #BDBDBD; border-radius: 12px">
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+<div style="height: 42px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid #E3E3E3"><span>{{r.label}}</span><span style="color: #999999">{{r.control}}</span></div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { groups: [
+      { title: 'LOOK', rows: [{ label: 'Design', control: '[Sunroom|X-Vault]' }, { label: 'Mode', control: '[Light|Dark|Auto]' }] },
+      { title: 'SCREENSHOTS', rows: [{ label: 'Send new screenshots', control: '(on)' }, { label: 'Send older screenshots', control: '>' }] },
+      { title: 'SHOW', rows: [{ label: 'Blur sensitive items', control: '(on)' }] },
+      { title: 'SOURCES', rows: [{ label: 'X', control: '00' }, { label: 'YouTube', control: '00' }, { label: 'Instagram', control: '00' }, { label: 'Connect on the web', control: '>' }] },
+      { title: 'ACCOUNT', rows: [{ label: 'Sign out', control: '' }] }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

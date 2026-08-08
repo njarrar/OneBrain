@@ -10,15 +10,14 @@
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <style>
-body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
-a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+body{margin:0}
 </style>
 </helmet>
 <div style="width: 390px; height: 844px; box-sizing: border-box; overflow-y: auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 8px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px">
 <span style="width: 64px"></span>
 <h1 style="margin: 0; font-size: 17px; font-weight: 600">Settings</h1>
-<a href="Menu.dc.html" style="width: 64px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 600; background: {{t.chip}}; color: {{t.accentText}}">Done</a>
+<a href="Menu.dc.html" style="color: inherit; text-decoration: none; width: 64px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: 600; background: {{t.chip}}; color: {{t.accentText}}">Done</a>
 </div>
 <h2 style="margin: 8px 0 0 4px; font-size: 13px; font-weight: 600; color: {{t.soft}}">Look</h2>
 <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: {{t.card}}; border: 1px solid {{t.line}}">
@@ -49,11 +48,11 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.92}
 <sc-for list="{{sources}}" as="s" hint-placeholder-count="5">
 <div style="min-height: 44px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid {{t.line}}"><span>{{s.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: {{t.soft}}">{{s.count}}</span></div>
 </sc-for>
-<a href="https://brain.example.workers.dev/sources" style="min-height: 44px; display: flex; align-items: center; color: {{t.accentText}}">Connect sources on the web</a>
+<a href="https://brain.example.workers.dev/sources" style="color: inherit; text-decoration: none; min-height: 44px; display: flex; align-items: center; color: {{t.accentText}}">Connect sources on the web</a>
 </div>
 <p style="margin: 0 4px; font-size: 12px; line-height: 1.4; color: {{t.soft}}">Sources and your Claude key are set once on the web. To save from any app, tap Share, then Save to Brain.</p>
 <div style="margin-top: 12px; padding: 4px 16px; border-radius: 14px; background: {{t.card}}; border: 1px solid {{t.line}}">
-<a href="SignIn.dc.html" style="min-height: 44px; display: flex; align-items: center; color: #DC2626">Sign out</a>
+<a href="SignIn.dc.html" style="color: inherit; text-decoration: none; min-height: 44px; display: flex; align-items: center; color: #DC2626">Sign out</a>
 </div>
 </div>
 </x-dc>

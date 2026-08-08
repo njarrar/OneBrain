@@ -10,20 +10,19 @@
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <style>
-body{margin:0;font-family:'Space Grotesk',system-ui,sans-serif}
-a{color:inherit;text-decoration:none}a:hover{opacity:.92}
+body{margin:0}
 </style>
 </helmet>
 <div style="width: 390px; height: 844px; box-sizing: border-box; overflow-y: auto; padding: 58px 16px 40px; display: flex; flex-direction: column; gap: 10px; background: {{t.bg}}; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
 <div style="display: flex; justify-content: flex-end">
-<a href="Settings.dc.html" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}">
+<a href="Settings.dc.html" aria-label="Settings" style="color: inherit; text-decoration: none; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; background: {{t.chip}}; border: 1px solid {{t.line}}; color: {{t.accentText}}">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"></path></svg>
 </a>
 </div>
 <h1 style="margin: 0 0 6px 4px; font-size: 34px; font-weight: 700">Brain</h1>
 <nav aria-label="Views" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
 <sc-for list="{{views}}" as="v" hint-placeholder-count="5">
-<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}; color: {{v.color}}">
+<a href="Main.dc.html" style="color: inherit; text-decoration: none; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}; color: {{v.color}}">
 <span style="width: 8px; height: 8px; border-radius: 4px; background: {{v.dot}}"></span>
 <span style="flex-grow: 1; font-size: 16px">{{v.name}}</span>
 <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{v.count}}</span>
@@ -33,17 +32,23 @@ a{color:inherit;text-decoration:none}a:hover{opacity:.92}
 <h2 style="margin: 14px 0 0 4px; font-size: 14px; font-weight: 600; color: {{t.soft}}">Categories</h2>
 <nav aria-label="Categories" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
 <sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
-<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
+<a href="Main.dc.html" style="color: inherit; text-decoration: none; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
 <span style="width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; background: {{c.color}}"></span>
 <span style="flex-grow: 1; font-size: 15px">{{c.name}}</span>
 <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{c.count}}</span>
 </a>
 </sc-for>
 </nav>
+<h2 style="margin: 14px 0 0 4px; font-size: 14px; font-weight: 600; color: {{t.soft}}">Tags</h2>
+<nav aria-label="Tags" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
+<a href="Main.dc.html" style="color: inherit; text-decoration: none; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid {{t.line}}"><span style="color: {{t.soft}}">#</span><span style="flex-grow: 1; font-size: 15px">ai</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">88</span></a>
+<a href="Main.dc.html" style="color: inherit; text-decoration: none; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid {{t.line}}"><span style="color: {{t.soft}}">#</span><span style="flex-grow: 1; font-size: 15px">agents</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">52</span></a>
+<a href="Tags.dc.html" style="color: {{t.accentText}}; text-decoration: none; min-height: 48px; display: flex; align-items: center; padding: 0 16px; font-size: 15px">Show all tags</a>
+</nav>
 <h2 style="margin: 14px 0 0 4px; font-size: 14px; font-weight: 600; color: {{t.soft}}">Sources</h2>
 <nav aria-label="Sources" style="display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: {{t.card}}; border: 1px solid {{t.line}}">
 <sc-for list="{{sources}}" as="s" hint-placeholder-count="4">
-<a href="Main.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
+<a href="Main.dc.html" style="color: inherit; text-decoration: none; min-height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid {{t.line}}">
 <span style="flex-grow: 1; font-size: 15px">{{s.name}}</span>
 <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.soft}}">{{s.count}}</span>
 </a>

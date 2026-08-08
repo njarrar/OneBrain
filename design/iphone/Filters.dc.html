@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brain filters</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; background: #6B6558; color: {{t.ink}}; font-family: 'Space Grotesk', system-ui, sans-serif">
+<div style="display: flex; flex-direction: column; gap: 16px; padding: 10px 20px 36px; border-radius: 22px 22px 0 0; background: {{t.bg}}">
+<div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: {{t.line}}"></div>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 20px; font-weight: 600">Filters</h1>
+<button type="button" onClick="{{reset}}" style="min-height: 44px; border: 0; background: transparent; font: inherit; font-size: 15px; cursor: pointer; color: {{t.accentText}}">Reset</button>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 1px; color: {{t.soft}}">{{g.title}}</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<sc-for list="{{g.options}}" as="o" hint-placeholder-count="3">
+<button type="button" onClick="{{o.pick}}" style="min-height: 36px; padding: 0 14px; border-radius: 18px; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid {{o.border}}; background: {{o.bg}}; color: {{t.ink}}">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<label style="min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-radius: 14px; cursor: pointer; background: {{t.card}}; border: 1px solid {{t.line}}"><span>Blur sensitive</span><input type="checkbox" checked onChange="{{noop}}" style="width: 22px; height: 22px; accent-color: {{t.accent}}"></label>
+<a href="Main.dc.html" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; text-decoration: none; background: {{t.accent}}; color: {{t.onAccent}}">Show 8 items</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["sunroom-light","sunroom-dark","vault-dark","vault-light"],"default":"sunroom-light"},"$preview":{"width":390,"height":844}}'>
+var THEMES = {
+  'sunroom-light': { bg: '#FAF7F0', card: '#FFFDF8', line: '#E6DCC8', ink: '#2A2620', soft: '#6F6656', accent: '#D98F3F', accentText: '#A15F16', onAccent: '#2A2620', chip: '#F2ECE0', shadow: '#E8DFCE' },
+  'sunroom-dark': { bg: '#1C1A16', card: '#26231E', line: '#3A342B', ink: '#F3EDE2', soft: '#AAA08F', accent: '#E3A459', accentText: '#E3A459', onAccent: '#1C1A16', chip: '#302C25', shadow: '#12110E' },
+  'vault-dark': { bg: '#0B0F17', card: '#151D2B', line: '#232F44', ink: '#F1F5F9', soft: '#94A3B8', accent: '#F59E0B', accentText: '#F59E0B', onAccent: '#0B0F17', chip: '#1E293B', shadow: '#05070B' },
+  'vault-light': { bg: '#F4F6F9', card: '#FFFFFF', line: '#DDE3EB', ink: '#0F172A', soft: '#5B6778', accent: '#D97706', accentText: '#B45309', onAccent: '#0F172A', chip: '#EBEFF5', shadow: '#DDE3EB' }
+};
+var START = { SOURCE: 'All', LANGUAGE: 'Any', MEDIA: 'Any', ORDER: 'Newer first' };
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { picked: Object.assign({}, START) }; }
+  renderVals() {
+    var t = THEMES[this.props.theme] || THEMES['sunroom-light'];
+    var self = this;
+    var defs = [
+      ['SOURCE', ['All', 'X', 'Instagram', 'YouTube', 'Feedly', 'Screenshots', 'Added by me']],
+      ['LANGUAGE', ['Any', 'English', 'العربية']],
+      ['MEDIA', ['Any', 'With media', 'Text only']],
+      ['ORDER', ['Newer first', 'Older first']]
+    ];
+    var groups = defs.map(function (d) {
+      return { title: d[0], options: d[1].map(function (label) {
+        var on = self.state.picked[d[0]] === label;
+        return { label: label, bg: on ? t.chip : t.card, border: on ? t.accent : t.line, pick: function () {
+          var next = Object.assign({}, self.state.picked); next[d[0]] = label; self.setState({ picked: next });
+        } };
+      }) };
+    });
+    return { t: t, groups: groups, noop: function () {}, reset: function () { self.setState({ picked: Object.assign({}, START) }); } };
+  }
+}
+</script>
+</body>
+</html>

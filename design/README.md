@@ -4,20 +4,35 @@ Every design file for Brain lives here. App code lives in `web/` and `ios/`.
 
 | Folder | What it holds |
 | --- | --- |
-| `iphone/` | The iPhone screens from the first canvas "Brain iPhone app" |
+| `iphone-final/` | **The final iPhone design to build.** the owner's the design tool file "Brain iOS.dc.html", its spec (`SPEC.md`) and the matching web redesign |
+| `iphone/` | The first iPhone screens from the first canvas "Brain iPhone app" (replaced by `iphone-final/`) |
+| `web/` | The web screens from the first canvas "Brain web app" |
 | `icons/` | The Pocket app icon masters (SVG), light, dark and tinted |
 | `plan/` | The first plan: what Brain does, its sources and its build steps |
 | `screenshots/` | Screenshots of the built app: each look on the web and the iPhone, and the Inbox cards |
 
-## iPhone screens
+## The final iPhone design
 
+`iphone-final/SPEC.md` lists the colors, type, icons, each of the seven screens (Inbox, Item, Add, Library, Save to Brain, Trash, Settings) and what changes from the current app. The new design uses one neutral look with Light and Dark and a Sky accent, Figtree type, and a tab bar. It replaces Sunroom and X-Vault, so the colors below apply only to the first canvases.
 
-Edit the screens there. `iphone/` is a copy of the canvas files, kept in sync each time a design is settled:
+## The two first canvases
 
-- `canvas.json` places the screens on the canvas.
-- One `.dc.html` file per screen: Sign in, Menu, Inbox (`Main.dc.html`), Item, Settings, and Save to Brain (the share menu).
+The folders here are copies of the canvas files.
 
-Each screen has a Theme switch with four looks: Sunroom light, Sunroom dark, X-Vault dark and X-Vault light. The files run only inside the canvas, and the sign in screen's icon points at an image stored on the canvas, so open the canvas link to view them.
+| Canvas | Screens |
+| --- | --- |
+| Brain iPhone app | Sign in, Menu, Inbox, Item, Settings, Save to Brain, Search, Filters, Add, Tags |
+| Brain web app | Sign in, Inbox, Item, Add, Sources and settings, Connect the iPhone app |
+
+Each canvas has three pages:
+
+- **Designs**: one full screen per file (`Main.dc.html` is the inbox). Each has a Theme switch: Sunroom light, Sunroom dark, X-Vault dark, X-Vault light.
+- **Wireframes**: the same screens in gray, layout only. Files start with `W`.
+- **All four looks**: each screen shown in all four looks side by side. Files start with `L`.
+
+`canvas.json` places the screens on each canvas. On the web canvas, `Sidebar.dc.html` is the side menu that every screen shares.
+
+The files run only inside a canvas, and the app icon on the sign in screens points at an image stored on the canvas, so open the canvas links to view them.
 
 ## Colors
 
