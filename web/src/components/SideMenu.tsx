@@ -16,7 +16,7 @@ export function SideMenu({
   tags,
   userName,
 }: {
-  views: { inbox: number; all: number; archived: number; media: number; sensitive: number };
+  views: { inbox: number; all: number; archived: number; media: number; sensitive: number; trash: number };
   categories: CategoryCount[];
   tags: Count[];
   userName: string;
@@ -76,6 +76,7 @@ export function SideMenu({
           {row("/?view=archived", "Archive", views.archived, isView("archived"))}
           {row("/?view=all&media=with", "With media", views.media, only("media") && media === "with")}
           {row("/?view=all&sensitive=1", "Sensitive", views.sensitive, only("sensitive") && sensitive)}
+          {row("/?view=trash", "Trash", views.trash, isView("trash"))}
         </div>
 
         <div className="menu-group">

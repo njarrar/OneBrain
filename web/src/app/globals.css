@@ -489,3 +489,9 @@ a.chip:hover { color: var(--ink); text-decoration: none; }
 .look button { font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .swatch { display: inline-flex; border-radius: 99px; overflow: hidden; border: 1px solid var(--line-strong); }
 .swatch i { width: 10px; height: 14px; display: block; }
+
+/* Delete, Delete forever and Empty Trash. */
+.btn.danger { color: var(--bad); }
+.btn.danger:hover { background: var(--bad-bg); }
+.trash-note { align-items: center; padding: 10px 12px; border-radius: 10px; background: var(--bad-bg); }
+.trash-note span { margin-right: auto; }

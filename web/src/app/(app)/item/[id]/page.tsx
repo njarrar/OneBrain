@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { displayTitle } from "@/components/ItemCard";
 import { getItem, listCategoryNames } from "@/lib/queries";
-import { addTags, removeTag, saveNote, setCategory, setStatus } from "@/lib/actions";
+import { addTags, purgeItem, removeTag, restoreItem, saveNote, setCategory, setStatus, trashItem } from "@/lib/actions";
 import { SOURCE_LABELS, shortDate } from "@/lib/links";
 
 export default async function ItemPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,6 +16,13 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
 
   return (
     <article className="item">
+      {item.deleted_at && (
+        <div className="item-actions trash-note">
+          <span>In Trash since {shortDate(item.deleted_at)}.</span>
+          <form action={restoreItem.bind(null, item.id)}><button className="btn">Restore</button></form>
+          <form action={purgeItem.bind(null, item.id)}><button className="btn quiet danger">Delete forever</button></form>
+        </div>
+      )}
       <div className="item-actions">
         {item.url && (
           <a className="btn" href={item.url} target="_blank" rel="noreferrer">Open original</a>
@@ -30,6 +37,9 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
         )}
         {item.status === "read" && (
           <form action={setStatus.bind(null, item.id, "inbox")}><button className="btn quiet">Back to inbox</button></form>
+        )}
+        {!item.deleted_at && (
+          <form action={trashItem.bind(null, item.id)}><button className="btn quiet danger">Delete</button></form>
         )}
       </div>
 

@@ -9,6 +9,7 @@ import { getAuth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
 import { unfurl } from "@/lib/unfurl";
 import { sortItems, unsortedCount } from "@/lib/sorter";
+import { purgeItems } from "@/lib/queries";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
@@ -151,6 +152,33 @@ export async function setStatus(id: string, status: "inbox" | "read" | "archived
   await requireUser();
   await run(`update items set status = ?, updated_at = ? where id = ?`, status, now(), id);
   done(id);
+}
+
+// Delete moves an item to Trash, same as on the iPhone. Trash can restore it or delete it for good.
+export async function trashItem(id: string) {
+  await requireUser();
+  await run(`update items set deleted_at = ?, updated_at = ? where id = ?`, now(), now(), id);
+  done(id);
+}
+
+export async function restoreItem(id: string) {
+  await requireUser();
+  await run(`update items set deleted_at = null, updated_at = ? where id = ?`, now(), id);
+  done(id);
+}
+
+export async function purgeItem(id: string) {
+  await requireUser();
+  await purgeItems([id]);
+  revalidatePath("/", "layout");
+  redirect("/?view=trash");
+}
+
+export async function emptyTrash() {
+  await requireUser();
+  await purgeItems();
+  revalidatePath("/", "layout");
+  redirect("/?view=trash");
 }
 
 export async function setCategory(id: string, form: FormData) {

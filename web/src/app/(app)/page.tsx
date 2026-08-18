@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { ItemCard } from "@/components/ItemCard";
 import { listCategories, listItems, PAGE_SIZE, type Lang, type Layout, type ListFilter, type MediaFilter, type View } from "@/lib/queries";
 import { SOURCE_LABELS, listHref } from "@/lib/links";
-import { toggleBlur } from "@/lib/actions";
+import { emptyTrash, toggleBlur } from "@/lib/actions";
 
 type Params = Promise<Record<string, string | string[] | undefined>>;
 
@@ -17,7 +17,7 @@ function pick<T extends string>(v: string | undefined, allowed: readonly T[]): T
 
 export default async function ListPage({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams;
-  const view = pick<View>(one(sp.view), ["inbox", "all", "archived"]);
+  const view = pick<View>(one(sp.view), ["inbox", "all", "archived", "trash"]);
   const narrowed = one(sp.q) || one(sp.category) || one(sp.tag) || one(sp.source) || one(sp.media) || one(sp.lang) || one(sp.sensitive);
   const f: ListFilter = {
     view: view ?? (narrowed ? "all" : "inbox"),
@@ -84,6 +84,11 @@ export default async function ListPage({ searchParams }: { searchParams: Params 
       <header className="page-head">
         <h1 dir="auto">{heading}</h1>
         <span className="muted mono">{total.toLocaleString()} {total === 1 ? "item" : "items"}</span>
+        {f.view === "trash" && total > 0 && (
+          <form action={emptyTrash}>
+            <button className="btn quiet danger">Empty Trash</button>
+          </form>
+        )}
         {(f.category || f.tag || f.source || f.sensitive || f.media || f.lang || f.q) && (
           <div className="seg-group">
             {pill("Active", { view: "all" }, f.view === "all")}
@@ -92,8 +97,13 @@ export default async function ListPage({ searchParams }: { searchParams: Params 
         )}
       </header>
 
+      {f.view === "trash" && items.length > 0 && (
+        <p className="muted small">Deleted saves wait here until you empty Trash. Open one to restore it or delete it for good.</p>
+      )}
       {items.length === 0 ? (
-        <p className="empty">{f.view === "inbox" && !narrowed ? "Your inbox is empty." : "Nothing here yet."}</p>
+        <p className="empty">
+          {f.view === "trash" ? "Trash is empty." : f.view === "inbox" && !narrowed ? "Your inbox is empty." : "Nothing here yet."}
+        </p>
       ) : (
         <ul className={blur ? "cards blur" : "cards"}>
           {items.map((item) => (
