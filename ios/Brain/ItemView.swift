@@ -19,6 +19,9 @@ struct ItemView: View {
     @State private var reveal = false
     @State private var error: String?
     @State private var confirmPurge = false
+    @State private var related: [Item] = []
+    @State private var pickingDate = false
+    @State private var remindDate = Calendar.current.date(byAdding: .day, value: 7, to: .now) ?? .now
     @FocusState private var noteFocus: Bool
 
     private var item: Item { detail?.item ?? preview }
@@ -33,6 +36,7 @@ struct ItemView: View {
                 if let summary = item.summary, !summary.isEmpty { summaryCard(summary) }
                 if let error { Text(error).font(.footnote).foregroundStyle(Theme.bad) }
                 details
+                if !related.isEmpty { relatedList }
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
@@ -46,6 +50,7 @@ struct ItemView: View {
                 if let link = item.url, let url = URL(string: link) {
                     ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }
                 }
+                if !item.inTrash { remindMenu }
                 Menu {
                     if let link = item.url {
                         Button { UIPasteboard.general.string = link } label: { Label("Copy link", systemImage: "link") }
@@ -60,6 +65,25 @@ struct ItemView: View {
         .overlay(alignment: .bottom) { toolbar }
         .confirmationDialog("Delete this for good?", isPresented: $confirmPurge, titleVisibility: .visible) {
             Button("Delete forever", role: .destructive) { Task { await purge() } }
+        }
+        .sheet(isPresented: $pickingDate) {
+            NavigationStack {
+                DatePicker("Remind me on", selection: $remindDate, in: Date.now..., displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .padding()
+                    .navigationTitle("Remind me")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { pickingDate = false } }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Set") {
+                                pickingDate = false
+                                Task { await change(.init(remindAt: Self.morning(of: remindDate))) }
+                            }
+                        }
+                    }
+            }
+            .presentationDetents([.medium, .large])
         }
         .alert("Add a tag", isPresented: $addingTag) {
             TextField("Tag", text: $newTag).textInputAutocapitalization(.never)
@@ -283,6 +307,58 @@ struct ItemView: View {
         .frame(minHeight: 48)
     }
 
+    // MARK: Remind me and Related
+
+    /// 9 in the morning, local time, on the given day.
+    private static func morning(of day: Date) -> Date {
+        Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: day) ?? day
+    }
+
+    private static func inDays(_ n: Int) -> Date {
+        morning(of: Calendar.current.date(byAdding: .day, value: n, to: .now) ?? .now)
+    }
+
+    private static var weekend: Date {
+        let cal = Calendar.current
+        let next = cal.nextDate(after: .now, matching: DateComponents(weekday: 7), matchingPolicy: .nextTime) ?? inDays(5)
+        return morning(of: next)
+    }
+
+    /// The bell: when this save should come back in Resurface.
+    private var remindMenu: some View {
+        let due = Dates.parse(item.remindAt)
+        return Menu {
+            if let due {
+                Text("Comes back \(due.formatted(.dateTime.weekday(.wide).month().day()))")
+            }
+            Button { Task { await change(.init(remindAt: Self.inDays(1))) } } label: { Label("Tomorrow", systemImage: "sunrise") }
+            Button { Task { await change(.init(remindAt: Self.weekend)) } } label: { Label("This weekend", systemImage: "sofa") }
+            Button { Task { await change(.init(remindAt: Self.inDays(7))) } } label: { Label("Next week", systemImage: "calendar") }
+            Button { Task { await change(.init(remindAt: Self.inDays(30))) } } label: { Label("Next month", systemImage: "calendar.badge.clock") }
+            Button { pickingDate = true } label: { Label("Pick a day…", systemImage: "calendar.day.timeline.left") }
+            if due != nil {
+                Button(role: .destructive) { Task { await change(.init(clearReminder: true)) } } label: {
+                    Label("Don't remind me", systemImage: "bell.slash")
+                }
+            }
+        } label: {
+            Image(systemName: due == nil ? "bell" : "bell.fill")
+                .foregroundStyle(due == nil ? Theme.ink2 : Theme.accent)
+        }
+        .accessibilityLabel(due == nil ? "Remind me" : "Reminder set")
+    }
+
+    private var relatedList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            GroupCaption("Related in your Brain")
+            VStack(spacing: 0) {
+                ForEach(related) { MiniItemRow(item: $0) }
+            }
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+            .padding(.top, 6)
+        }
+    }
+
     // MARK: Toolbar
 
     private var toolbar: some View {
@@ -358,6 +434,7 @@ struct ItemView: View {
             note = detail?.item.note ?? ""
             // Opening a save reads it.
             if item.isUnread && !Demo.on { await change(.init(read: true)) }
+            if !item.inTrash { related = (try? await API.shared.related(preview.id)) ?? [] }
         } catch APIError.signedOut {
             session.signOut()
         } catch {

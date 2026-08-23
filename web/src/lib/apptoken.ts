@@ -17,20 +17,28 @@ export async function createAppToken(name: string): Promise<string> {
   return token;
 }
 
+// last_used_at only says whether a key is still in use, so it is written at most once an hour
+// instead of on every request.
+const TOUCH_EVERY_MS = 60 * 60 * 1000;
+
 export async function tokenOk(req: Request): Promise<boolean> {
   const m = req.headers.get("authorization")?.match(/^Bearer\s+(brn_[0-9a-f]{64})$/);
   if (!m) return false;
-  const h = await hash(m[1]);
-  const row = await first<{ id: string }>(`select id from app_tokens where token_hash = ?`, h);
+  const row = await first<{ id: string; last_used_at: string | null }>(
+    `select id, last_used_at from app_tokens where token_hash = ?`,
+    await hash(m[1]),
+  );
   if (!row) return false;
-  await run(`update app_tokens set last_used_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where id = ?`, row.id);
+  const last = row.last_used_at ? Date.parse(row.last_used_at) : 0;
+  if (!(Date.now() - last < TOUCH_EVERY_MS)) {
+    await run(`update app_tokens set last_used_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where id = ?`, row.id);
+  }
   return true;
 }
 
 // Either the app's key or a signed-in browser.
-export async function allowed(req: Request): Promise<boolean> {
+export async function authorized(req: Request): Promise<boolean> {
   if (await tokenOk(req)) return true;
   return !!(await (await getAuth()).api.getSession({ headers: await headers() }));
 }
 
-export const denied = () => Response.json({ error: "Sign in again" }, { status: 401 });

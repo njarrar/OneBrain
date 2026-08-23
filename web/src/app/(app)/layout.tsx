@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { SideMenu } from "@/components/SideMenu";
+import { CommandPalette } from "@/components/CommandPalette";
 import { menuCounts } from "@/lib/queries";
 import { requireUser } from "@/lib/session";
 
@@ -14,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SideMenu {...counts} userName={user.displayUsername || user.name || user.email} />
       </Suspense>
       <main className="main">{children}</main>
+      <CommandPalette />
     </div>
   );
 }

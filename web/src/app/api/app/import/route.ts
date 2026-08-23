@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { allowed, denied } from "@/lib/apptoken";
+import { authorized } from "@/lib/apptoken";
+import { denied } from "@/lib/http";
 import { all, db, now } from "@/lib/db";
 import { saveStatements } from "@/lib/ingest";
 import { BATCH, sortItems } from "@/lib/sorter";
@@ -44,7 +45,7 @@ function isoOrNull(v: unknown) {
 }
 
 export async function POST(req: Request) {
-  if (!(await allowed(req))) return denied();
+  if (!(await authorized(req))) return denied();
   const b = (await req.json().catch(() => null)) as { items?: PhoneItem[] } | null;
   if (!b || !Array.isArray(b.items)) return Response.json({ error: "Send {items: [...]}" }, { status: 400 });
   if (b.items.length > MAX_ITEMS) return Response.json({ error: `At most ${MAX_ITEMS} items at a time` }, { status: 413 });

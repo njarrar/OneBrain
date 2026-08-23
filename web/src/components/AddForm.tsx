@@ -15,7 +15,7 @@ export function AddForm() {
       <textarea id="note" name="note" rows={4} dir="auto" placeholder="A thought, a quote, why this matters…" />
       <label htmlFor="tags">Tags <span className="muted">(split with commas)</span></label>
       <input id="tags" name="tags" dir="auto" />
-      <label htmlFor="file">Photo or file <span className="muted">(up to 10 MB)</span></label>
+      <label htmlFor="file">Photo or file <span className="muted">(up to 20 MB)</span></label>
       <input id="file" name="file" type="file" />
       {error && <p className="error" role="alert">{error}</p>}
       <button className="btn" disabled={pending}>{pending ? "Saving…" : "Save"}</button>

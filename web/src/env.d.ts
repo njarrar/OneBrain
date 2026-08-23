@@ -9,4 +9,7 @@ interface CloudflareEnv {
   APPLE_CLIENT_ID?: string;
   APPLE_CLIENT_SECRET?: string;
   APPLE_APP_BUNDLE_ID?: string;
+  // Meaning search, Related and Ask. Missing in local runs and on deploys made before they were added.
+  AI?: Ai;
+  VECTORS?: Vectorize;
 }

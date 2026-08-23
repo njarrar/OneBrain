@@ -49,10 +49,11 @@ struct API {
         return try decoder.decode(T.self, from: data)
     }
 
-    func items(_ filter: Filter, page: Int) async throws -> ItemPage {
+    /// The first page, or the one after `cursor` (nextCursor from the page before).
+    func items(_ filter: Filter, cursor: String? = nil) async throws -> ItemPage {
         if Demo.on { return try Demo.page(filter) }
-        let req = try request("api/app/items", query: filter.queryItems + [URLQueryItem(name: "page", value: String(page))])
-        return try await send(req, as: ItemPage.self)
+        let more = cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []
+        return try await send(request("api/app/items", query: filter.queryItems + more), as: ItemPage.self)
     }
 
     func item(_ id: String) async throws -> ItemDetail {
@@ -69,6 +70,29 @@ struct API {
         var note: String?
         var addTags: [String]?
         var removeTags: [String]?
+        /// When the item comes back in Resurface.
+        var remindAt: Date?
+        /// true sends remindAt: null, which clears the reminder.
+        var clearReminder = false
+
+        private enum Keys: String, CodingKey { case status, read, trash, category, note, addTags, removeTags, remindAt }
+
+        // Only the fields that change go out; the server refuses unknown ones.
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: Keys.self)
+            try c.encodeIfPresent(status, forKey: .status)
+            try c.encodeIfPresent(read, forKey: .read)
+            try c.encodeIfPresent(trash, forKey: .trash)
+            try c.encodeIfPresent(category, forKey: .category)
+            try c.encodeIfPresent(note, forKey: .note)
+            try c.encodeIfPresent(addTags, forKey: .addTags)
+            try c.encodeIfPresent(removeTags, forKey: .removeTags)
+            if clearReminder {
+                try c.encodeNil(forKey: .remindAt)
+            } else if let remindAt {
+                try c.encode(Dates.iso(remindAt), forKey: .remindAt)
+            }
+        }
     }
 
     func change(_ id: String, _ change: Change) async throws -> ItemDetail {
@@ -88,6 +112,59 @@ struct API {
     func emptyTrash() async throws {
         struct Out: Decodable { let deleted: Int }
         _ = try await send(request("api/app/items", query: [URLQueryItem(name: "view", value: "trash")], method: "DELETE"), as: Out.self)
+    }
+
+    // MARK: Memory
+
+    private func post<Body: Encodable, T: Decodable>(_ path: String, _ body: Body, as: T.Type) async throws -> T {
+        var req = try request(path, method: "POST")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(body)
+        return try await send(req, as: T.self)
+    }
+
+    /// Today's Resurface cards.
+    func resurface() async throws -> [ResurfaceCard] {
+        struct Out: Decodable { let cards: [ResurfaceCard] }
+        if Demo.on { return [] }
+        return try await send(request("api/app/resurface"), as: Out.self).cards
+    }
+
+    /// Answers a card: keep (comes back later, then less often), later (tomorrow) or done.
+    func review(_ id: String, how: String) async throws {
+        struct Out: Decodable { let nextAt: String? }
+        _ = try await post("api/app/resurface", ["id": id, "how": how], as: Out.self)
+    }
+
+    /// Asks a question of your own saves.
+    func ask(_ question: String) async throws -> Answer {
+        try await post("api/app/ask", ["q": question], as: Answer.self)
+    }
+
+    /// Saves about the same thing as this one. Empty until the server has read it.
+    func related(_ id: String) async throws -> [Item] {
+        struct Out: Decodable { let items: [Item] }
+        if Demo.on { return [] }
+        return try await send(request("api/app/items/\(id)/related"), as: Out.self).items
+    }
+
+    struct Digests: Decodable {
+        var made: Bool?
+        var reason: String?
+        let digests: [Digest]
+    }
+
+    /// The latest weekly digests. Reading never makes a new one.
+    func digests() async throws -> [Digest] {
+        if Demo.on { return [] }
+        return try await send(request("api/app/digest"), as: Digests.self).digests
+    }
+
+    /// Asks Claude for this week's digest now.
+    func makeDigest() async throws -> Digests {
+        var req = try request("api/app/digest", method: "POST")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        return try await send(req, as: Digests.self)
     }
 
     struct LinkPreview: Decodable, Equatable {

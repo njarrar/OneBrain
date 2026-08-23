@@ -21,7 +21,7 @@ enum Demo {
             i.deletedAt = ago(3)
             return i
         }
-        return ItemPage(items: trashed, total: trashed.count, page: 1, pageSize: 50)
+        return ItemPage(items: trashed, total: trashed.count, nextCursor: nil, page: 1, pageSize: 50)
     }
     static func menu() throws -> MenuData { try decode(menuJSON) }
 

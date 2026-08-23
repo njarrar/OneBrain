@@ -15,7 +15,7 @@ struct ItemList: View {
     @AppStorage("blurSensitive") private var blur = true
     @State private var items: [Item] = []
     @State private var total = 0
-    @State private var page = 1
+    @State private var cursor: String?
     @State private var loading = false
     @State private var done = false
     @State private var error: String?
@@ -260,15 +260,14 @@ struct ItemList: View {
     }
 
     private func reload() async {
-        page = 1
+        cursor = nil
         done = false
         items = []
         await load()
     }
 
     private func loadMore() async {
-        guard !loading, !done else { return }
-        page += 1
+        guard !loading, !done, cursor != nil else { return }
         await load()
     }
 
@@ -277,12 +276,13 @@ struct ItemList: View {
         loading = true
         defer { loading = false }
         do {
-            let result = try await API.shared.items(filter, page: page)
+            let result = try await API.shared.items(filter, cursor: cursor)
             error = nil
-            total = result.total
+            if let t = result.total { total = t }
             let known = Set(items.map(\.id))
             items += result.items.filter { !known.contains($0.id) }
-            done = items.count >= result.total || result.items.isEmpty
+            cursor = result.nextCursor
+            done = cursor == nil || result.items.isEmpty
         } catch APIError.signedOut {
             session.signOut()
         } catch is CancellationError {

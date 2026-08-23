@@ -25,4 +25,6 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npx wrangler d1 migrations apply DB --remote
+      # The search-by-meaning index. Made once; later runs find it and move on.
+      - run: npx wrangler vectorize get digital-brain-items || npx wrangler vectorize create digital-brain-items --dimensions=1024 --metric=cosine
       - run: npm run deploy

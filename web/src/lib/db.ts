@@ -31,3 +31,21 @@ export function ftsQuery(input: string): string | null {
     .filter(Boolean);
   return words.length ? words.map((w) => `"${w}"*`).join(" ") : null;
 }
+
+// Small words that say nothing about a question's subject, in English and Arabic.
+const STOP = new Set(
+  ("a an and are about any did do does for from have how i in is it me my of on or save saved say said show that the " +
+    "this to was what when where which who why with you your ما ماذا عن في من على هل الذي التي كيف لماذا متى أين").split(" "),
+);
+
+// For a question in plain words: any subject word may match, and the best matches rank first.
+export function questionFtsQuery(input: string): string | null {
+  const words = [...new Set(
+    input
+      .toLowerCase()
+      .split(/[^\p{L}\p{M}\p{N}_@#-]+/u)
+      .map((w) => w.replace(/^[#@-]+|-+$/g, ""))
+      .filter((w) => w.length > 1 && !STOP.has(w)),
+  )].slice(0, 12);
+  return words.length ? words.map((w) => `"${w}"*`).join(" OR ") : null;
+}

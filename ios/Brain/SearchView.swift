@@ -16,7 +16,7 @@ struct SearchView: View {
                 Text("Search").font(.system(size: 32, weight: .bold)).tracking(-0.3)
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").font(.system(size: 16)).foregroundStyle(Theme.faint)
-                    TextField("Search in English or Arabic", text: $text)
+                    TextField("Search or ask, in English or Arabic", text: $text)
                         .font(.system(size: 16))
                         .focused($focused)
                         .submitLabel(.search)
@@ -49,6 +49,22 @@ struct SearchView: View {
             .padding(.top, 8)
             .padding(.bottom, 8)
 
+            let typed = text.trimmingCharacters(in: .whitespaces)
+            if !typed.isEmpty {
+                NavigationLink(value: Route.ask(typed)) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "sparkles").foregroundStyle(Theme.accent)
+                        Text("Ask Brain: “\(typed)”").lineLimit(1).foregroundStyle(Theme.ink)
+                        Spacer(minLength: 4)
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.chevron)
+                    }
+                    .font(.system(size: 15))
+                    .padding(.horizontal, 14).frame(height: 44)
+                    .background(Theme.accentBG, in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 16).padding(.bottom, 8)
+                }
+                .buttonStyle(.plain)
+            }
             if query.isEmpty {
                 suggestions
             } else {

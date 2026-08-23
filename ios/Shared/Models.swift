@@ -24,6 +24,8 @@ struct Item: Codable, Identifiable, Hashable {
     var images: [String]?
     var sources: [String]?
     var tags: [String]?
+    /// When it comes back in Resurface. Newer servers only.
+    var remindAt: String?
 
     var isSensitive: Bool { (sensitive ?? 0) != 0 }
     var isUnread: Bool { readAt == nil && deletedAt == nil }
@@ -59,7 +61,10 @@ struct Item: Codable, Identifiable, Hashable {
 
 struct ItemPage: Codable {
     let items: [Item]
-    let total: Int
+    /// Counted on the first page only.
+    let total: Int?
+    /// Pass back for the next page; nil on the last one. Older servers send none.
+    var nextCursor: String?
     let page: Int
     let pageSize: Int
 }
@@ -98,6 +103,8 @@ struct MenuData: Codable {
         var trash: Int?
         var unread: Int?
         var unsorted: Int?
+        /// Resurface cards waiting today.
+        var resurface: Int?
     }
     struct Category: Codable, Hashable, Identifiable {
         let name: String
@@ -138,14 +145,17 @@ struct Filter: Hashable {
     var lang: String?
     var sensitive = false
     var unread = false
+    var subtopic: String?
 
     var title: String {
         if let q, !q.isEmpty { return "“\(q)”" }
+        if let subtopic { return subtopic }
         if let category { return category }
         if let tag { return "#\(tag)" }
         if let source { return Sources.label(source) }
         if sensitive { return "Sensitive" }
         if media == .with, view != .inbox { return "With media" }
+        if unread, view == .inbox { return "Unread" }
         switch view {
         case .inbox: return "Inbox"
         case .all: return "All"
@@ -160,6 +170,7 @@ struct Filter: Hashable {
             if let value, !value.isEmpty { q.append(URLQueryItem(name: name, value: value)) }
         }
         add("category", category)
+        add("subtopic", subtopic)
         add("tag", tag)
         add("source", source)
         add("q", self.q)
@@ -241,5 +252,52 @@ enum Dates {
             return "Earlier this week"
         }
         return d.formatted(.dateTime.month(.wide).year())
+    }
+}
+
+/// A Resurface card: a save coming back today, and why.
+struct ResurfaceCard: Codable, Identifiable, Hashable {
+    let item: Item
+    /// "reminder" or "on_this_day".
+    let reason: String
+    var id: String { item.id }
+
+    init(from decoder: Decoder) throws {
+        item = try Item(from: decoder)
+        reason = try decoder.container(keyedBy: Keys.self).decode(String.self, forKey: .reason)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        try item.encode(to: encoder)
+        var c = encoder.container(keyedBy: Keys.self)
+        try c.encode(reason, forKey: .reason)
+    }
+
+    private enum Keys: String, CodingKey { case reason }
+
+    var why: String {
+        reason == "reminder" ? "You asked to see this again" : "From this day, \(Dates.short(item.date))"
+    }
+}
+
+/// An answer from your own saves, citing them as [1], [2] …
+struct Answer: Codable {
+    /// nil without a Claude key; the sources are still worth showing then.
+    let answer: String?
+    let sources: [Item]
+}
+
+/// One week's write-up of what was saved, with [n] pointing at items[n-1].
+struct Digest: Codable, Identifiable, Hashable {
+    let weekStart: String
+    let body: String
+    let saved: Int
+    let createdAt: String
+    let items: [Item]
+    var id: String { weekStart }
+
+    var title: String {
+        guard let d = Dates.parse(weekStart + "T00:00:00Z") else { return "Week of \(weekStart)" }
+        return "Week of " + d.formatted(.dateTime.month(.wide).day())
     }
 }

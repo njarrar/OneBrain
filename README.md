@@ -77,15 +77,29 @@ OpenNext.
 
 What you can do in it:
 
-- **Inbox, All, Archive:** new items land in the inbox. Mark them read or archive them.
+- **Inbox, Unread, All, Archive, Trash:** new items land in the inbox with an unread dot.
+  Opening one reads it; Mark unread brings the dot back.
 - **Search** by word, @handle or topic, in English or Arabic.
-- **Filter** by category, tag or source, by language (English or Arabic), by media (with
+- **⌘K** (or `/`) opens one box for everything: word matches, then things about the same
+  idea (search by meaning), then **Ask Brain**, which answers a question from your own
+  saves and cites them as [1], [2].
+- **Resurface:** a few saves each day. Ones you asked to see again with **Remind me**
+  (Tomorrow, This weekend, Next week, Next month or a day you pick), then ones from this
+  day in past years. Keep brings a card back later and then less often; Tomorrow brings it
+  back tomorrow; Done lets it go. Keys 1, 2 and 3 answer.
+- **Weekly digest:** every Sunday evening Claude writes a short note on what you saved
+  that week, grouped by theme, with links to the items. "Write this week's now" makes one
+  at once.
+- **Related:** each item page lists saves about the same thing.
+- **Reading pane:** in the List layout a card opens beside the list. `j` and `k` move,
+  `e` archives, `u` marks unread, `Esc` closes.
+- **Filter** by category and sub-topic, tag or source, by language (English or Arabic), by media (with
   pictures or text only) and by the sensitive flag. Sensitive pictures are blurred until
   you turn the blur off.
 - **Grid or list** layout.
 - **Item page:** read the full text and pictures, see where and when you saved it, write a
   note, set the category, add or remove tags. Tags you add look different from the ones
-  Claude suggests.
+  Claude suggests; press ✓ to keep a suggestion.
 - **Add by hand** at `/add`: a link (the title and picture are filled in from the page), a
   note, tags, and a photo or file up to 10 MB.
 
@@ -126,11 +140,39 @@ stay tidy, and it never overwrites a category, sub-topic or summary you already 
 - New items from Feedly, the `/add` page, the share sheet and screenshots are sorted as
   they arrive.
 - **Sort now** on the Sources page sorts everything still unsorted and shows progress.
-- A timer in `web/worker.ts` runs every six hours. It syncs YouTube, then sorts up to 10
-  batches of unsorted items.
+- A timer in `web/worker.ts` runs every six hours. It syncs YouTube, sorts up to 10
+  batches of unsorted items, reads new and changed items for search by meaning, and on
+  Sunday's 18:00 UTC run writes the weekly digest.
 
 Sorting needs the `ANTHROPIC_API_KEY` Worker secret. Without it, items still save, and
 the Sources page says "Needs API key".
+
+## Search by meaning
+
+Search by meaning, Related and Ask Brain use Workers AI (`@cf/baai/bge-m3`, which reads
+English and Arabic) and a Vectorize index called `digital-brain-items`. Each item is read
+once after it is saved or sorted, and again when its text changes. The deploy makes the
+index the first time. Without the index (for example in `npm run dev`), these fall back to
+word search.
+
+## The app API
+
+The iPhone app talks to `/api/app/*` with a `Bearer brn_…` key from `/connect-app`. The
+same routes work from a signed-in browser. Every route checks its input with zod
+(`web/src/lib/items/schema.ts`) and answers mistakes with a 400 and a plain message.
+Unknown fields are refused.
+
+| Route | What it does |
+| --- | --- |
+| `GET /items` | The list. Same filters as the web page. Page with `cursor` (from `nextCursor`); `page` still works. |
+| `GET /items/:id`, `PATCH /items/:id` | One item. PATCH takes `status`, `read`, `trash`, `category`, `note`, `addTags`, `removeTags`, `remindAt` (null clears). |
+| `DELETE /items/:id`, `DELETE /items?view=trash` | Delete for good, from Trash only. |
+| `GET /items/:id/related` | Saves about the same thing. |
+| `GET /resurface`, `POST /resurface` | Today's cards; answer one with `{ id, how: keep, later or done }`. |
+| `POST /ask` | `{ q }`, answers from your saves with the items it used. |
+| `GET /digest`, `POST /digest` | The latest weekly digests; POST writes this week's now. |
+| `POST /save` | A link, a note or a file. |
+| `GET /menu`, `GET/PUT /prefs`, `GET /sources`, `GET /unfurl`, `POST /import` | Counts, look, sources, link previews, bulk import. |
 
 ## The iPhone app
 
@@ -140,7 +182,9 @@ called **Save to Brain** that saves a link, text or picture from any app.
 It reads and writes the same cloud data as the web app, so a note, tag or archive on one
 shows up on the other. You sign in with the same account as the web, Google included.
 Sources and the Claude key are set once on the web and shared. Screenshots from the
-Screenshots album and anything shared to Save to Brain go straight to the cloud. See
+Screenshots album and anything shared to Save to Brain go straight to the cloud.
+Library opens Resurface and the weekly digest, Search can Ask Brain, and each item has a
+bell for Remind me and a list of related saves. See
 [ios/README.md](ios/README.md) to build it.
 
 <p>
@@ -160,8 +204,9 @@ GitHub is the source of truth. Merge to `main` and it goes live.
 - `.github/workflows/deploy.yml` runs on every push to `main`. It applies new D1
   migrations to the real database, then builds and deploys the Worker. It needs a
   `CLOUDFLARE_API_TOKEN` repository secret (Edit Cloudflare Workers template, plus D1
-  Edit).
-- `.github/workflows/web.yml` runs lint, a typecheck and a build on every pull request.
+  Edit and Vectorize Edit). It also makes the Vectorize index the first time.
+- `.github/workflows/web.yml` runs lint, a typecheck, the unit tests and a build on every
+  pull request.
 
 Set Worker secrets once from `web/`:
 
@@ -198,6 +243,9 @@ npm run migrate                  # makes the tables in the local D1 copy
 npm run dev                      # http://localhost:3000
 ```
 
+Workers AI and Vectorize only run on Cloudflare, so `npm run dev` leaves them off. Run
+`BRAIN_REMOTE=1 npm run dev` after `npx wrangler login` to use the real ones.
+
 Open http://localhost:3000, sign up with an email from `ALLOWED_EMAILS`, and add items at
 `/add`. Add `ANTHROPIC_API_KEY` to `.dev.vars` to try sorting. Never commit `.dev.vars`.
 
@@ -207,6 +255,7 @@ Other scripts:
 | --- | --- |
 | `npm run preview` | Builds the real Worker and runs it at http://localhost:8787 |
 | `npm run lint` | ESLint |
+| `npm test` | Unit tests (input checks, paging, Resurface schedule, digest week, links) |
 | `npm run build` | Next.js build |
 | `npm run migrate:remote` | Applies migrations to the real D1 database |
 | `npm run deploy` | Builds and deploys by hand (the GitHub workflow does this for you) |
@@ -221,6 +270,8 @@ Other scripts:
 │   ├── src/app/api/         Sign in, ingest hook, timer, YouTube, iPhone app API
 │   ├── src/components/      Cards, side menu, forms
 │   ├── src/lib/             Database, sorter, sources, auth
+│   ├── src/lib/items/       Input checks, item SQL and the one item service
+│   ├── src/lib/memory/      Resurface, search by meaning, Ask Brain, weekly digest
 │   ├── scripts/import-x.ts  X export import
 │   ├── worker.ts            Worker entry and six-hourly timer
 │   └── wrangler.jsonc       D1, R2 and timer settings

@@ -45,7 +45,7 @@ export async function sorterReady() {
 }
 
 export async function unsortedCount() {
-  return (await first<{ n: number }>(`select count(*) as n from items where category is null`))?.n ?? 0;
+  return (await first<{ n: number }>(`select count(*) as n from items where category is null and deleted_at is null`))?.n ?? 0;
 }
 
 async function taxonomy() {
@@ -148,7 +148,7 @@ For every item give:
     stmts.push(
       d.prepare(
         `update items set category = coalesce(category, ?), subtopic = coalesce(subtopic, ?), summary = coalesce(summary, ?),
-           lang = ?, sensitive = max(sensitive, ?), updated_at = ? where id = ?`,
+           lang = ?, sensitive = max(sensitive, ?), embedded_at = null, updated_at = ? where id = ?`,
       ).bind(r.category, r.subtopic.trim(), r.summary.trim(), r.lang, r.sensitive ? 1 : 0, now(), r.id),
     );
     for (const tag of [...new Set(r.tags.map((t) => t.trim()).filter(Boolean))].slice(0, 4)) {

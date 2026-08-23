@@ -7,6 +7,9 @@ enum Route: Hashable {
     case trash
     case tags
     case settings
+    case resurface
+    case digest
+    case ask(String)
 }
 
 enum Tab: Hashable { case inbox, library, search }
@@ -200,6 +203,9 @@ extension View {
             case .trash: ItemList(filter: Filter(view: .trash), mode: .trash)
             case .tags: TagsView()
             case .settings: SettingsView()
+            case .resurface: ResurfaceView()
+            case .digest: DigestView()
+            case .ask(let question): AskView(question: question)
             }
         }
     }

@@ -1,125 +1,35 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { allowed, denied } from "@/lib/apptoken";
-import { db, env, run } from "@/lib/db";
-import { noteKey, sha256Hex, urlKey } from "@/lib/canonical";
-import { saveOne } from "@/lib/ingest";
-import { sortItems } from "@/lib/sorter";
-import { unfurl } from "@/lib/unfurl";
+import { appRoute, issues, jsonError } from "@/lib/http";
+import { SaveJson, tagList } from "@/lib/items/schema";
+import { captureItem, type CaptureInput } from "@/lib/items/service";
 
 // The share sheet, the Add sheet and the Screenshots album post here.
-//   JSON { url?, text?, title?, sort?, tags? }             a link or a note from any app
-//   form { file, externalId?, takenAt?, sort?, tags? }     a screenshot or a shared picture
-// sort: false skips Claude's sorting. tags: tags to add now (a list, or one comma-separated string in a form).
-const MAX_FILE = 20 * 1024 * 1024;
-
-function sourceOf(url: string | null) {
-  if (!url) return "manual";
-  const host = new URL(url).hostname.replace(/^www\./, "");
-  if (/(^|\.)instagram\.com$/.test(host)) return "instagram";
-  if (/(^|\.)(youtube\.com|youtu\.be)$/.test(host)) return "youtube";
-  if (/(^|\.)(x\.com|twitter\.com)$/.test(host)) return "x";
-  if (/(^|\.)feedly\.com$/.test(host)) return "feedly";
-  return "manual";
-}
-
-function tagList(v: unknown): string[] {
-  const list = Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : [];
-  return [...new Set(list.map((t) => String(t).trim().replace(/^#/, "")).filter(Boolean))].slice(0, 20);
-}
-
-async function addTags(id: string, tags: string[]) {
-  if (!tags.length) return;
-  const d = await db();
-  await d.batch(
-    tags.flatMap((name) => [
-      d.prepare(`insert or ignore into tags (name) values (?)`).bind(name),
-      d.prepare(
-        `insert into item_tags (item_id, tag_id, added_by) select ?, id, 'user' from tags where name = ?
-         on conflict (item_id, tag_id) do update set added_by = 'user'`,
-      ).bind(id, name),
-    ]),
-  );
-}
-
-function firstUrl(text: string | null) {
-  return text?.match(/https?:\/\/[^\s<>"']+/)?.[0] ?? null;
-}
-
-async function saveFile(form: FormData) {
-  const file = form.get("file");
-  if (!(file instanceof File) || !file.size) return Response.json({ error: "No file" }, { status: 400 });
-  if (file.size > MAX_FILE) return Response.json({ error: "File over 20 MB" }, { status: 413 });
-  const external = String(form.get("externalId") ?? "") || null;
-  const source = external ? "photos" : "manual";
-  const takenAt = String(form.get("takenAt") ?? "") || null;
-  const note = String(form.get("text") ?? "").trim() || null;
-
-  // The same picture sent twice (a retry, or the same screenshot shared again) is one item.
-  const bytes = await file.arrayBuffer();
-  const hash = await sha256Hex(bytes);
-  const id = await saveOne({
-    source, externalId: external ?? `img:${hash}`, imageHash: hash, kind: "image", title: note,
-    postedAt: takenAt, savedAt: takenAt, raw: { filename: file.name },
-  });
-  const d = await db();
-  const has = await d.prepare(`select 1 from files where item_id = ?`).bind(id).first();
-  if (!has) {
-    const fileId = crypto.randomUUID();
-    const key = `files/${fileId}`;
-    const mime = file.type || "image/jpeg";
-    await (await env()).FILES.put(key, bytes, { httpMetadata: { contentType: mime } });
-    await run(
-      `insert into files (id, item_id, filename, mime, size, r2_key, sha256) select ?, ?, ?, ?, ?, ?, ?
-       where not exists (select 1 from files where item_id = ? and sha256 = ?)`,
-      fileId, id, file.name || "photo.jpg", mime, file.size, key, hash, id, hash,
-    );
-  }
-  if (source === "photos") {
-    await run(`update sources set status = 'connected', last_sync_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') where id = 'photos'`);
-  }
-  return Response.json({ ok: true, id, existed: !!has });
-}
-
-export async function POST(req: Request) {
-  if (!(await allowed(req))) return denied();
-  let res: Response;
-  let id: string | null = null;
-  let sort = true;
-  let tags: string[] = [];
+//   JSON { url?, text?, title?, sort?, tags?, remindAt? }         a link or a note from any app
+//   form { file, text?, externalId?, takenAt?, sort?, tags? }     a screenshot or a shared picture
+// sort: false skips Claude's sorting. tags: a list, or one comma-separated string.
+export const POST = appRoute(async (req) => {
+  let input: CaptureInput;
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
-    const form = await req.formData();
-    sort = form.get("sort") !== "0";
-    tags = tagList(form.get("tags"));
-    res = await saveFile(form);
-    if (res.ok) id = ((await res.clone().json()) as { id: string }).id;
+    const form = await req.formData().catch(() => null);
+    const file = form?.get("file");
+    if (!form || !(file instanceof File) || !file.size) return jsonError("No file");
+    const str = (k: string, max = 20000) => String(form.get(k) ?? "").trim().slice(0, max) || null;
+    const takenAt = str("takenAt", 64);
+    input = {
+      file,
+      text: str("text"),
+      externalId: str("externalId", 500),
+      takenAt: takenAt && !isNaN(Date.parse(takenAt)) ? new Date(takenAt).toISOString() : null,
+      sort: form.get("sort") !== "0",
+      tags: tagList(form.get("tags")),
+    };
   } else {
-    const b = (await req.json()) as { url?: string; text?: string; title?: string; sort?: boolean; tags?: string[] };
-    sort = b.sort !== false;
-    tags = tagList(b.tags);
-    const text = b.text?.trim() || null;
-    const url = (b.url?.trim() || firstUrl(text)) ?? null;
-    if (url && !/^https?:\/\//i.test(url)) return Response.json({ error: "Bad link" }, { status: 400 });
-    if (!url && !text) return Response.json({ error: "Nothing to save" }, { status: 400 });
-    const found = url ? await unfurl(url) : {};
-    const note = text && text !== url ? text.replace(url ?? "", "").trim() || null : null;
-    // One key per link however it is spelled, or per note by its words, so a retried share adds nothing.
-    const key = url ? urlKey(url) : await noteKey(text ?? "");
-    id = await saveOne({
-      source: sourceOf(url),
-      externalId: key ?? url ?? null,
-      key,
-      url,
-      title: b.title?.trim() || found.title || (!url ? note?.split("\n")[0].slice(0, 120) : null),
-      body: found.description ?? (url ? null : note),
-      media: found.image ? [found.image] : [],
-      kind: url ? "link" : "note",
-      savedAt: new Date().toISOString(),
-      raw: b,
-    });
-    if (url && note) await run(`update items set note = coalesce(note, ?) where id = ?`, note, id);
-    res = Response.json({ ok: true, id });
+    const json = await req.json().catch(() => jsonError);
+    if (json === jsonError) return jsonError("Send a JSON body.");
+    const parsed = SaveJson.safeParse(json);
+    if (!parsed.success) return jsonError(issues(parsed.error));
+    const b = parsed.data;
+    input = { url: b.url, text: b.text, title: b.title, sort: b.sort, tags: tagList(b.tags), remindAt: b.remindAt };
   }
-  if (id) await addTags(id, tags);
-  if (id && sort) getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
-  return res;
-}
+  const { id, existed } = await captureItem(input);
+  return { ok: true, id, existed };
+});

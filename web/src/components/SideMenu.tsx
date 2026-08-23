@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/lib/actions";
+import { PaletteButton } from "@/components/CommandPalette";
 
 type Count = { name: string; count: number };
 type CategoryCount = Count & { color: string | null };
@@ -16,7 +17,7 @@ export function SideMenu({
   tags,
   userName,
 }: {
-  views: { inbox: number; all: number; archived: number; media: number; sensitive: number; trash: number };
+  views: { inbox: number; all: number; archived: number; media: number; sensitive: number; trash: number; unread: number; resurface: number };
   categories: CategoryCount[];
   tags: Count[];
   userName: string;
@@ -34,13 +35,14 @@ export function SideMenu({
   const tag = params.get("tag");
   const media = params.get("media");
   const sensitive = params.get("sensitive") === "1";
-  const filtered = !!(category || tag || media || sensitive || params.get("lang") || params.get("source") || params.get("q"));
+  const unread = params.get("unread") === "1";
+  const filtered = !!(category || tag || media || sensitive || unread || params.get("subtopic") || params.get("lang") || params.get("source") || params.get("q"));
   const only = (key: string) => onList && [...params.keys()].every((k) => k === key || k === "view" || k === "layout");
   const isView = (v: string) => onList && !filtered && view === v;
   const shownTags = allTags ? tags : tags.slice(0, TOP_TAGS);
 
   const row = (href: string, label: string, count: number | null, active: boolean, color?: string | null) => (
-    <Link href={href} className={active ? "menu-row active" : "menu-row"} aria-current={active ? "page" : undefined}>
+    <Link key={href} href={href} className={active ? "menu-row active" : "menu-row"} aria-current={active ? "page" : undefined}>
       <span dir="auto">
         {color !== undefined && <i className="dot" style={{ background: color ?? "var(--soft)" }} aria-hidden="true" />}
         {label}
@@ -66,12 +68,21 @@ export function SideMenu({
           <Link href="/" className="brand">Brain</Link>
           <Link href="/add" className="btn small">Add</Link>
         </div>
-        <form action="/" className="menu-search">
-          <input id="menu-q" name="q" type="search" placeholder="Search" defaultValue={params.get("q") ?? ""} dir="auto" />
-        </form>
+        <div className="menu-search">
+          <PaletteButton />
+        </div>
+
+        <div className="menu-group">
+          <Link href="/resurface" className={pathname === "/resurface" ? "menu-row resurface active" : "menu-row resurface"} aria-current={pathname === "/resurface" ? "page" : undefined}>
+            <span>✦ Resurface</span>
+            {views.resurface > 0 && <span className="memory-count">{views.resurface}</span>}
+          </Link>
+          {row("/digest", "Weekly digest", null, pathname === "/digest")}
+        </div>
 
         <div className="menu-group">
           {row("/", "Inbox", views.inbox, isView("inbox"))}
+          {row("/?unread=1", "Unread", views.unread, only("unread") && unread && view === "inbox")}
           {row("/?view=all", "All", views.all, isView("all"))}
           {row("/?view=archived", "Archive", views.archived, isView("archived"))}
           {row("/?view=all&media=with", "With media", views.media, only("media") && media === "with")}

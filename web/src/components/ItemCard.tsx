@@ -23,21 +23,44 @@ function initials(name: string | null) {
   return [...s][0]?.toUpperCase() ?? "?";
 }
 
-export function ItemCard({ item, categories }: { item: ItemRow; categories: { name: string; color: string | null }[] }) {
+export function ItemCard({
+  item,
+  categories,
+  href: openHref,
+  selected = false,
+}: {
+  item: ItemRow;
+  categories: { name: string; color: string | null }[];
+  // Where the card opens: the reading pane in the list layout, else the item page.
+  href?: string;
+  selected?: boolean;
+}) {
   const pics = pictures(item);
   const shown = pics.slice(0, MAX_PICS);
   const extra = pics.length - shown.length;
-  const href = `/item/${item.id}`;
+  const href = openHref ?? `/item/${item.id}`;
+  const unread = !item.read_at && !item.deleted_at && item.status === "inbox";
   const text = item.title ?? item.body?.trim() ?? item.url ?? "Untitled";
   const host = item.title && item.url ? hostOf(item.url) : null;
   const rtl = item.lang === "ar";
 
   return (
-    <li className={item.sensitive ? "card sensitive" : "card"} style={catVars(item.category_color, "var(--line)")}>
+    <li
+      className={["card", item.sensitive && "sensitive", selected && "selected"].filter(Boolean).join(" ")}
+      style={catVars(item.category_color, "var(--line)")}
+      data-id={item.id}
+      data-href={href}
+      data-archived={item.status === "archived" ? "1" : undefined}
+      data-unread={unread ? "1" : undefined}
+      aria-current={selected ? "true" : undefined}
+    >
       <div className="card-head">
         <span className="avatar" aria-hidden="true">{initials(item.author ?? item.author_handle ?? hostOf(item.url))}</span>
         <div className="card-who">
-          <span className="who" dir="auto">{item.author ?? host ?? SOURCE_LABELS[item.sources[0]] ?? "Saved"}</span>
+          <span className="who" dir="auto">
+            {unread && <i className="unread-dot" title="Unread" aria-label="Unread" />}
+            {item.author ?? host ?? SOURCE_LABELS[item.sources[0]] ?? "Saved"}
+          </span>
           <span className="meta">
             {item.author_handle && <>{item.author_handle} · </>}
             {shortDate(item.posted_at ?? item.created_at)}
@@ -73,6 +96,11 @@ export function ItemCard({ item, categories }: { item: ItemRow; categories: { na
           <Link key={t} href={`/?view=all&tag=${encodeURIComponent(t)}`} className="chip" dir="auto">{t}</Link>
         ))}
         {item.status === "archived" && <span className="chip muted-chip">Archived</span>}
+        {item.remind_at && (
+          <span className="chip memory-chip" title="Comes back in Resurface">
+            Remind {new Date(item.remind_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+          </span>
+        )}
         {item.url && (
           <a href={item.url} target="_blank" rel="noreferrer" className="open" aria-label="Open original">
             <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v10h10v-3M9 2h5v5M14 2 7 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>

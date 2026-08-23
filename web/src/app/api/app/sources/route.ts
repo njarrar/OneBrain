@@ -1,4 +1,4 @@
-import { allowed, denied } from "@/lib/apptoken";
+import { appRoute } from "@/lib/http";
 import { env } from "@/lib/db";
 import { listSources } from "@/lib/queries";
 import { sorterReady } from "@/lib/sorter";
@@ -6,8 +6,7 @@ import { xConnected } from "@/lib/x";
 import { youtubeConnected } from "@/lib/youtube";
 
 // What the Sources page shows, for the app. Connecting and setting keys happen on the web page.
-export async function GET(req: Request) {
-  if (!(await allowed(req))) return denied();
+export const GET = appRoute(async (req) => {
   const [sources, x, youtube, claude, e] = await Promise.all([
     listSources(), xConnected(), youtubeConnected(), sorterReady(), env(),
   ]);
@@ -23,4 +22,4 @@ export async function GET(req: Request) {
     connected: { x, youtube, claude },
     sourcesUrl: `${e.BETTER_AUTH_URL ?? new URL(req.url).origin}/sources`,
   });
-}
+});

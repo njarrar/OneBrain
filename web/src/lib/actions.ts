@@ -3,21 +3,22 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { idForKey, noteKey, sha256Hex, urlKey } from "@/lib/canonical";
-import { db, env, first, now, run } from "@/lib/db";
 import { getAuth } from "@/lib/auth";
 import { requireUser } from "@/lib/session";
-import { unfurl } from "@/lib/unfurl";
 import { sortItems, unsortedCount } from "@/lib/sorter";
-import { purgeItems } from "@/lib/queries";
+import { captureItem, listItems, markOpened, purgeItems, updateItem, type ItemRow } from "@/lib/items/service";
+import { ItemChange, Question, Review, tagList } from "@/lib/items/schema";
+import { InputError, errorMessage } from "@/lib/http";
+import { review } from "@/lib/memory/reminders";
+import { searchByMeaning } from "@/lib/memory/embed";
+import { ask } from "@/lib/memory/ask";
+import { makeDigest } from "@/lib/memory/digest";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
 import { setAnthropicKey } from "@/lib/secrets";
 import { isDesign, isMode, savePrefs } from "@/lib/theme";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export async function logout() {
   await (await getAuth()).api.signOut({ headers: await headers() });
@@ -141,35 +142,47 @@ function done(id: string) {
   revalidatePath(`/item/${id}`);
 }
 
-export async function saveNote(id: string, form: FormData) {
+// Every change to an item from the web goes through the same checks and code as the iPhone app.
+async function change(id: string, raw: unknown) {
   await requireUser();
-  const note = String(form.get("note") ?? "").trim() || null;
-  await run(`update items set note = ?, updated_at = ? where id = ?`, note, now(), id);
+  const c = ItemChange.safeParse(raw);
+  if (!c.success || typeof id !== "string" || !id) throw new Error("That change isn't allowed.");
+  await updateItem(id, c.data);
   done(id);
 }
 
+export async function saveNote(id: string, form: FormData) {
+  await change(id, { note: String(form.get("note") ?? "") });
+}
+
 export async function setStatus(id: string, status: "inbox" | "read" | "archived") {
+  await change(id, { status });
+}
+
+export async function setRead(id: string, read: boolean) {
+  await change(id, { read });
+}
+
+// Opening an item marks it read, once. Marking it unread afterwards sticks.
+export async function markOpenedAction(id: string) {
   await requireUser();
-  await run(`update items set status = ?, updated_at = ? where id = ?`, status, now(), id);
-  done(id);
+  if (typeof id !== "string" || !id) return;
+  await markOpened(id);
+  revalidatePath("/", "layout");
 }
 
 // Delete moves an item to Trash, same as on the iPhone. Trash can restore it or delete it for good.
 export async function trashItem(id: string) {
-  await requireUser();
-  await run(`update items set deleted_at = ?, updated_at = ? where id = ?`, now(), now(), id);
-  done(id);
+  await change(id, { trash: true });
 }
 
 export async function restoreItem(id: string) {
-  await requireUser();
-  await run(`update items set deleted_at = null, updated_at = ? where id = ?`, now(), id);
-  done(id);
+  await change(id, { trash: false });
 }
 
 export async function purgeItem(id: string) {
   await requireUser();
-  await purgeItems([id]);
+  await purgeItems([String(id)]);
   revalidatePath("/", "layout");
   redirect("/?view=trash");
 }
@@ -182,124 +195,110 @@ export async function emptyTrash() {
 }
 
 export async function setCategory(id: string, form: FormData) {
-  await requireUser();
-  const category = String(form.get("category") ?? "") || null;
-  await run(`update items set category = ?, updated_at = ? where id = ?`, category, now(), id);
-  done(id);
-}
-
-// A tag you add is yours, even if Claude or an import added it first.
-async function tagStatements(id: string, names: string[]): Promise<D1PreparedStatement[]> {
-  const d = await db();
-  return names.flatMap((name) => [
-    d.prepare(`insert or ignore into tags (name) values (?)`).bind(name),
-    d.prepare(
-      `insert into item_tags (item_id, tag_id, added_by)
-       select ?, id, 'user' from tags where name = ?
-       on conflict (item_id, tag_id) do update set added_by = 'user'`,
-    ).bind(id, name),
-  ]);
-}
-
-function splitTags(raw: FormDataEntryValue | null): string[] {
-  return [...new Set(String(raw ?? "").split(",").map((t) => t.trim()).filter(Boolean))];
+  await change(id, { category: String(form.get("category") ?? "") || null });
 }
 
 export async function addTags(id: string, form: FormData) {
-  await requireUser();
-  const stmts = await tagStatements(id, splitTags(form.get("tags")));
-  if (stmts.length) await (await db()).batch(stmts);
-  done(id);
+  const tags = tagList(form.get("tags"));
+  if (tags.length) await change(id, { addTags: tags });
+}
+
+// Keeps a tag Claude suggested, so it counts as yours.
+export async function acceptTag(id: string, name: string) {
+  await change(id, { addTags: [name] });
 }
 
 export async function removeTag(id: string, name: string) {
-  await requireUser();
-  await run(
-    `delete from item_tags where item_id = ? and tag_id in (select id from tags where name = ?)`,
-    id,
-    name,
-  );
-  done(id);
+  await change(id, { removeTags: [name] });
 }
 
+// When an item should come back in Resurface; null removes the reminder.
+export async function remindItem(id: string, remindAt: string | null) {
+  await change(id, { remindAt });
+}
+
+export async function reviewCard(id: string, how: "keep" | "later" | "done") {
+  await requireUser();
+  const r = Review.safeParse({ id, how });
+  if (!r.success) throw new Error("That answer isn't allowed.");
+  const out = await review(r.data.id, r.data.how);
+  revalidatePath("/", "layout");
+  return out;
+}
+
+// The Add page: a link, a note, tags and an optional picture. Opens the item when saved.
 export async function addItem(_: string | null, form: FormData): Promise<string | null> {
   await requireUser();
-  const url = String(form.get("url") ?? "").trim() || null;
-  const note = String(form.get("note") ?? "").trim() || null;
-  let title = String(form.get("title") ?? "").trim() || null;
-  const tags = splitTags(form.get("tags"));
   const file = form.get("file");
-  const hasFile = file instanceof File && file.size > 0;
-
-  if (url && !/^https?:\/\//i.test(url)) return "Links need to start with http:// or https://";
-  if (!url && !note && !hasFile && !title) return "Add a link, a note, or a photo.";
-  if (hasFile && file.size > MAX_FILE_BYTES) return "That file is over 10 MB.";
-
-  let body: string | null = null;
-  const media: string[] = [];
-  if (url) {
-    const found = await unfurl(url);
-    title ??= found.title ?? null;
-    body = found.description ?? null;
-    if (found.image) media.push(found.image);
+  let id: string;
+  try {
+    ({ id } = await captureItem({
+      url: String(form.get("url") ?? "").slice(0, 2000),
+      text: String(form.get("note") ?? "").slice(0, 20000),
+      title: String(form.get("title") ?? "").slice(0, 500),
+      tags: tagList(form.get("tags")),
+      file: file instanceof File ? file : null,
+      source: "manual",
+    }));
+  } catch (err) {
+    if (err instanceof InputError) return err.message;
+    throw err;
   }
-  const kind = url ? "link" : hasFile ? "image" : "note";
-  if (!title && !url && note) title = note.split("\n")[0].slice(0, 120);
-
-  const d = await db();
-  const stmts: D1PreparedStatement[] = [];
-  // One key per link however it is spelled, per picture by its bytes, or per note by its words,
-  // so adding something that is already here adds to it instead of making a copy.
-  const bytes = hasFile ? await file.arrayBuffer() : null;
-  const hash = bytes ? await sha256Hex(bytes) : null;
-  const key = url ? urlKey(url) : hash ? `img:${hash}` : await noteKey(note ?? title ?? "");
-  const existing = await first<{ id: string }>(
-    `select id from items where (?1 is not null and canon = ?1) or id = ?2 or (?3 is not null and url = ?3)
-     order by coalesce(canon = ?1, 0) desc, created_at limit 1`,
-    key, idForKey(key) ?? "", url,
-  );
-  const id = existing?.id ?? idForKey(key) ?? crypto.randomUUID();
-  if (existing) {
-    if (note) {
-      // A note already on the item (the same form sent twice) is not added again.
-      stmts.push(
-        d.prepare(
-          `update items set note = case when instr(coalesce(note, ''), ?1) > 0 then note
-             else coalesce(note || char(10) || char(10), '') || ?1 end, updated_at = ?2 where id = ?3`,
-        ).bind(note, now(), id),
-      );
-    }
-    if (key) stmts.push(d.prepare(`update or ignore items set canon = coalesce(canon, ?) where id = ?`).bind(key, id));
-  } else {
-    stmts.push(
-      d.prepare(`insert into items (id, title, body, note, url, kind, media, canon) values (?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(id, title, body, note, url, kind, JSON.stringify(media), key),
-    );
-  }
-  stmts.push(
-    d.prepare(`insert into saves (id, item_id, source_id, original_url) values (?, ?, 'manual', ?)`)
-      .bind(crypto.randomUUID(), id, url),
-  );
-  const hasCopy = existing && hash
-    ? await first(`select 1 from files where item_id = ? and sha256 = ?`, id, hash)
-    : null;
-  if (hasFile && bytes && !hasCopy) {
-    const fileId = crypto.randomUUID();
-    const key = `files/${fileId}`;
-    await (await env()).FILES.put(key, bytes, {
-      httpMetadata: { contentType: file.type || "application/octet-stream" },
-    });
-    stmts.push(
-      d.prepare(`insert into files (id, item_id, filename, mime, size, r2_key, sha256) values (?, ?, ?, ?, ?, ?, ?)`)
-        .bind(fileId, id, file.name, file.type || "application/octet-stream", file.size, key, hash),
-    );
-  }
-  stmts.push(...(await tagStatements(id, tags)));
-  await d.batch(stmts);
-
-  // Claude sorts the new item in the background, so saving stays quick.
-  if (!existing) getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
-
   revalidatePath("/", "layout");
   redirect(`/item/${id}`);
+}
+
+// ───────────── ⌘K box and Ask ─────────────
+
+export type Hit = { id: string; title: string; category: string | null; color: string | null; date: string; rtl: boolean };
+
+function hit(i: ItemRow): Hit {
+  const text = i.title ?? i.body?.trim() ?? i.url ?? "Untitled";
+  return {
+    id: i.id,
+    title: text.length > 120 ? text.slice(0, 120).trimEnd() + "…" : text,
+    category: i.category,
+    color: i.category_color,
+    date: (i.posted_at ?? i.created_at).slice(0, 10),
+    rtl: i.lang === "ar",
+  };
+}
+
+// Word matches first (exact names, handles), then things that are about the same idea.
+export async function paletteSearch(q: string): Promise<{ words: Hit[]; meaning: Hit[] }> {
+  await requireUser();
+  const text = String(q ?? "").trim().slice(0, 200);
+  if (!text) return { words: [], meaning: [] };
+  const [page, close] = await Promise.all([
+    listItems({ view: "all", q: text, page: 1 }),
+    searchByMeaning(text, 6).catch(() => []),
+  ]);
+  const words = page.items.slice(0, 6).map(hit);
+  const seen = new Set(words.map((w) => w.id));
+  return { words, meaning: close.filter((c) => !seen.has(c.id)).slice(0, 4).map(hit) };
+}
+
+export async function askBrain(q: string): Promise<{ answer: string | null; sources: Hit[]; error?: string }> {
+  await requireUser();
+  const parsed = Question.safeParse({ q });
+  if (!parsed.success) return { answer: null, sources: [], error: "Ask in 500 characters or fewer." };
+  try {
+    const r = await ask(parsed.data.q);
+    return { answer: r.answer, sources: r.sources.map(hit) };
+  } catch (err) {
+    return { answer: null, sources: [], error: `Claude couldn't answer: ${errorMessage(err)}` };
+  }
+}
+
+// ───────────── Weekly digest ─────────────
+
+export async function makeDigestNow(): Promise<string | null> {
+  await requireUser();
+  try {
+    const r = await makeDigest();
+    revalidatePath("/digest");
+    return r.made ? null : (r.reason ?? "No digest this time.");
+  } catch (err) {
+    return `Claude couldn't write it: ${errorMessage(err)}`;
+  }
 }
