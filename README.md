@@ -16,6 +16,12 @@ Claude Haiku reads each new item and gives it:
 You can then search, filter, read, archive, change the category or tags, add a note, and
 add items by hand. Arabic text shows right to left.
 
+Brain then brings things back: **Remind me** and a daily **Resurface**, search by meaning,
+**Ask Brain** for answers from your own saves, **Related** saves on each item, and a
+**weekly digest**.
+
+**Version 0.2.0 "Memory".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+
 The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
 
 ## What it looks like
@@ -23,8 +29,25 @@ The full design is in [design/plan/second-brain-plan.html](design/plan/second-br
 The screenshots below use sample data on a local copy of the app.
 
 ![The inbox as a card grid, with the side menu on the left](docs/images/grid.png)
-*The inbox. Each card shows who posted it, the sub-topic, the text, Claude's summary,
-pictures, your note, the category and tags. The colored top edge is the category.*
+*The inbox. The menu starts with Resurface (with today's count) and the weekly digest,
+then Inbox, Unread, All, Archive and Trash. Each card shows who posted it, the sub-topic,
+the text, Claude's summary, the category, tags and any reminder.*
+
+![The List layout with an item open in the reading pane](docs/images/reading-pane.png)
+*The List layout. A card opens in the reading pane beside the list; j and k move through
+it.*
+
+![The ⌘K box with word matches and Ask Brain](docs/images/palette.png)
+*⌘K: word matches and things about the same idea, and Ask Brain for a written answer.*
+
+![A Resurface card with Done, Tomorrow and Keep](docs/images/resurface.png)
+*Resurface: a few saves a day. Keys 1, 2 and 3 answer.*
+
+![The Remind me menu on an item page](docs/images/remind.png)
+*Remind me on an item page: pick when it comes back.*
+
+![A weekly digest with numbered links to the saves](docs/images/digest.png)
+*The weekly digest, written by Claude, with numbered links to the saves.*
 
 ![One category opened from the side menu](docs/images/category.png)
 *One category, picked from the side menu. Arabic posts read right to left.*
@@ -38,8 +61,9 @@ remove tags.*
 setup steps.*
 
 <p>
-  <img src="docs/images/mobile-grid.png" width="300" alt="The inbox on a phone">
-  <img src="docs/images/mobile-menu.png" width="300" alt="The side menu open on a phone">
+  <img src="docs/images/mobile-grid.png" width="260" alt="The inbox on a phone">
+  <img src="docs/images/mobile-resurface.png" width="260" alt="Resurface on a phone">
+  <img src="docs/images/mobile-menu.png" width="260" alt="The side menu open on a phone">
 </p>
 
 *On a phone the side menu slides in from the left.*
@@ -189,13 +213,13 @@ bell for Remind me and a list of related saves. See
 
 <p>
   <img src="docs/images/iphone-signin.png" width="180" alt="Sign in with Apple or Google">
-  <img src="docs/images/iphone-list.png" width="180" alt="Inbox with cards and pictures">
-  <img src="docs/images/iphone-menu.png" width="180" alt="Side menu with views and categories">
-  <img src="docs/images/iphone-item.png" width="180" alt="Item page with note and actions">
+  <img src="docs/images/iphone-list.png" width="180" alt="Inbox grouped by day">
+  <img src="docs/images/iphone-library.png" width="180" alt="Library with Resurface, the weekly digest and Unread">
+  <img src="docs/images/iphone-item.png" width="180" alt="Item page with the Remind me bell">
   <img src="docs/images/iphone-settings.png" width="180" alt="Settings with sources">
 </p>
 
-Sign in, the inbox, the side menu, an item and Settings, with made-up sample data.
+Sign in, the inbox, Library, an item and Settings, with made-up sample data.
 
 ## Deploys
 
@@ -278,5 +302,6 @@ Other scripts:
 ├── db/migrations/           D1 schema, applied in name order
 ├── ios/                     iPhone app and "Save to Brain" share extension
 ├── docs/                    Design doc and README screenshots
+├── CHANGELOG.md             What changed in each version
 └── .github/workflows/       Deploy on merge, checks on pull requests
 ```
