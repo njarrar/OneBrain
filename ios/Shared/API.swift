@@ -167,6 +167,18 @@ struct API {
         return try await send(req, as: Digests.self)
     }
 
+    /// Which web build is live.
+    struct ServerBuild: Decodable {
+        let version: String
+        let commit: String
+        let builtAt: String?
+    }
+
+    func serverBuild() async throws -> ServerBuild {
+        if Demo.on { return ServerBuild(version: "0.2.0", commit: "demo", builtAt: nil) }
+        return try await send(request("api/app/version"), as: ServerBuild.self)
+    }
+
     struct LinkPreview: Decodable, Equatable {
         let title: String?
         let description: String?

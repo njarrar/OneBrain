@@ -7,8 +7,8 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    MARKETING_VERSION: "0.1"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.2.1"
+    CURRENT_PROJECT_VERSION: "3"
     SWIFT_VERSION: "5.10"
     CODE_SIGN_STYLE: Automatic
 targets:
@@ -24,6 +24,20 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Brain/Brain.entitlements
         INFOPLIST_FILE: Brain/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
+        # The build script below writes into the built Info.plist and reads git.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      # Stamps the git commit and build time into the app, for the bottom of Settings.
+      # It runs after Xcode writes Info.plist (a post-compile step would be overwritten).
+      - name: Stamp build info
+        basedOnDependencyAnalysis: false
+        script: |
+          plist="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          commit=$(git -C "$SRCROOT" rev-parse --short HEAD 2>/dev/null || echo dev)
+          built=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          for key in BrainCommit BrainBuiltAt; do /usr/libexec/PlistBuddy -c "Delete :$key" "$plist" 2>/dev/null || true; done
+          /usr/libexec/PlistBuddy -c "Add :BrainCommit string $commit" "$plist"
+          /usr/libexec/PlistBuddy -c "Add :BrainBuiltAt string $built" "$plist"
     dependencies:
       - target: BrainShare
   BrainShare:

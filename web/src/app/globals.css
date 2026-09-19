@@ -645,3 +645,6 @@ kbd {
   display: inline-block; min-width: 18px; padding: 0 5px; margin: 0 1px; border-radius: 99px; text-align: center;
   font: 600 11px/18px var(--mono); color: var(--memory); background: var(--memory-bg); vertical-align: 2px; text-decoration: none;
 }
+
+/* Version, commit and deploy time, to say which build is live when something goes wrong. */
+.build-info { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--line); font: 12px var(--mono); color: var(--faint); }

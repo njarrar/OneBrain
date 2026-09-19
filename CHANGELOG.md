@@ -3,6 +3,14 @@
 Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.2.1 (2026-09-28)
+
+- **Which build is live:** the web app shows its version, commit and deploy time at the
+  bottom of every page, in your own time zone. The iPhone shows its own version, build,
+  commit and build time at the bottom of Settings, with the live web app's line under it,
+  so a mismatch is easy to spot when reporting a problem.
+- New route `GET /api/app/version` returns the web app's version, commit and build time.
+
 ## 0.2.0 "Memory" (2026-09-28)
 
 Brain now brings saves back instead of only storing them. Ideas came from the two test

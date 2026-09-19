@@ -20,7 +20,7 @@ Brain then brings things back: **Remind me** and a daily **Resurface**, search b
 **Ask Brain** for answers from your own saves, **Related** saves on each item, and a
 **weekly digest**.
 
-**Version 0.2.0 "Memory".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.2.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
 
@@ -196,6 +196,7 @@ Unknown fields are refused.
 | `POST /ask` | `{ q }`, answers from your saves with the items it used. |
 | `GET /digest`, `POST /digest` | The latest weekly digests; POST writes this week's now. |
 | `POST /save` | A link, a note or a file. |
+| `GET /version` | The live web build: version, commit and build time. |
 | `GET /menu`, `GET/PUT /prefs`, `GET /sources`, `GET /unfurl`, `POST /import` | Counts, look, sources, link previews, bulk import. |
 
 ## The iPhone app

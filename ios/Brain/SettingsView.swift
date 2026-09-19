@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var screenshots = ScreenshotSync.shared
     @AppStorage("blurSensitive") private var blur = true
     @State private var look = Look.shared
+    @State private var server: API.ServerBuild?
 
     var body: some View {
         ScrollView {
@@ -81,6 +82,8 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
                 .groupBox()
+
+                about
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 16)
@@ -88,6 +91,38 @@ struct SettingsView: View {
         }
         .background(Theme.grouped)
         .navigationBarTitleDisplayMode(.inline)
+        .task { server = try? await API.shared.serverBuild() }
+    }
+
+    // MARK: About
+
+    /// This app's version and build time, and the live web app's, to say which builds were in use
+    /// when something went wrong.
+    private var about: some View {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info["CFBundleVersion"] as? String ?? "?"
+        let commit = info["BrainCommit"] as? String
+        let app = ["iPhone app \(version) (\(build))", commit, Self.when(info["BrainBuiltAt"] as? String).map { "built \($0)" }]
+            .compactMap { $0 }.joined(separator: " · ")
+        let web = server.map { s in
+            ["Web app \(s.version)", s.commit, Self.when(s.builtAt).map { "deployed \($0)" }].compactMap { $0 }.joined(separator: " · ")
+        }
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(app)
+            Text(web ?? "Web app: checking…")
+        }
+        .font(.system(size: 12, design: .monospaced))
+        .foregroundStyle(Theme.faint)
+        .textSelection(.enabled)
+        .padding(.horizontal, 4)
+        .padding(.top, 18)
+    }
+
+    /// An ISO time in this phone's time zone, such as "28 Sep 2026, 21:24".
+    private static func when(_ iso: String?) -> String? {
+        guard let d = Dates.parse(iso) else { return nil }
+        return d.formatted(.dateTime.day().month(.abbreviated).year().hour().minute())
     }
 
     /// System, Light and Dark. The design shows only Light and Dark; System stays so the phone can follow itself.
