@@ -1,5 +1,6 @@
 import { all, db, env, now } from "@/lib/db";
 import { ITEM_COLUMNS, parseItem, type ItemRow, type RawItem } from "@/lib/items/sql";
+import { factsText, parseFacts } from "@/lib/memory/read";
 
 // Meaning search: every item's text becomes a vector in Vectorize, so Brain can find things by
 // what they are about, not only by their words (and across English and Arabic). Used by Related
@@ -20,6 +21,8 @@ type Source = {
   category: string | null;
   author: string | null;
   url: string | null;
+  transcript: string | null;
+  facts: string | null;
 };
 
 async function bindings(): Promise<{ ai: Ai; index: Vectorize } | null> {
@@ -34,7 +37,7 @@ export async function memoryReady(): Promise<boolean> {
 
 // The text that stands for an item: what it is about first, then its own words.
 export function textOf(s: Source): string {
-  return [s.title, s.summary, s.subtopic, s.category, s.note, s.body, s.author, s.url]
+  return [s.title, s.summary, factsText(parseFacts(s.facts)), s.subtopic, s.category, s.note, s.transcript, s.body, s.author, s.url]
     .filter((x): x is string => !!x?.trim())
     .join("\n")
     .slice(0, MAX_CHARS);
@@ -56,7 +59,7 @@ async function embed(ai: Ai, texts: string[]): Promise<number[][]> {
 export async function embedItems(ids?: string[], limit = 200): Promise<number> {
   const b = await bindings();
   if (!b) return 0;
-  const cols = `id, title, body, summary, note, subtopic, category, author, url`;
+  const cols = `id, title, body, summary, note, subtopic, category, author, url, transcript, facts`;
   const rows = ids?.length
     ? await all<Source>(`select ${cols} from items where deleted_at is null and id in (${ids.map(() => "?").join(",")})`, ...ids)
     : await all<Source>(

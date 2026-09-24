@@ -3,6 +3,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { all, db, env, first, now } from "@/lib/db";
 import { getAnthropicKey } from "@/lib/secrets";
+import { base64 } from "@/lib/memory/read";
 
 // Claude sorts items the way x-bookmarks-review did: one of the categories, a sub-topic,
 // a one-line summary, a few tags, the language, and whether it is sensitive.
@@ -20,6 +21,7 @@ type Pending = {
   author_handle: string | null;
   media: string;
   kind: string;
+  transcript: string | null;
 };
 
 const MAX_IMAGE = 4 * 1024 * 1024;
@@ -34,10 +36,8 @@ async function pictureBlock(itemId: string): Promise<Anthropic.ImageBlockParam |
   if (!f || f.size > MAX_IMAGE || !IMAGE_TYPES.has(f.mime)) return null;
   const obj = await (await env()).FILES.get(f.r2_key);
   if (!obj) return null;
-  const bytes = new Uint8Array(await obj.arrayBuffer());
-  let bin = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { type: "image", source: { type: "base64", media_type: f.mime as "image/jpeg", data: btoa(bin) } };
+  const data = base64(new Uint8Array(await obj.arrayBuffer()));
+  return { type: "image", source: { type: "base64", media_type: f.mime as "image/jpeg", data } };
 }
 
 export async function sorterReady() {
@@ -62,7 +62,7 @@ async function taxonomy() {
 }
 
 function describe(p: Pending) {
-  const text = [p.title, p.body].filter(Boolean).join("\n").slice(0, MAX_TEXT);
+  const text = [p.title, p.body, p.transcript && `Heard or read in it: ${p.transcript}`].filter(Boolean).join("\n").slice(0, MAX_TEXT);
   const pics = JSON.parse(p.media || "[]").length;
   return [
     `<item id="${p.id}">`,
@@ -93,11 +93,11 @@ export async function sortItems(ids?: string[]): Promise<number> {
 
   const pending = ids?.length
     ? await all<Pending>(
-        `select id, title, body, url, author, author_handle, media, kind from items where id in (${ids.map(() => "?").join(",")})`,
+        `select id, title, body, url, author, author_handle, media, kind, transcript from items where id in (${ids.map(() => "?").join(",")})`,
         ...ids,
       )
     : await all<Pending>(
-        `select id, title, body, url, author, author_handle, media, kind from items where category is null and deleted_at is null
+        `select id, title, body, url, author, author_handle, media, kind, transcript from items where category is null and deleted_at is null
          order by coalesce(posted_at, created_at) desc limit ?`,
         BATCH,
       );

@@ -33,6 +33,9 @@ struct ItemView: View {
                 author
                 text
                 pictures
+                if let sounds = detail?.sounds { ForEach(sounds, id: \.id) { VoicePlayer(file: $0) } }
+                if let facts = item.facts, !facts.isEmpty { factsCard(facts) }
+                if item.transcript?.isEmpty == false || detail?.textError != nil || detail?.sounds.isEmpty == false { transcriptCard }
                 if let summary = item.summary, !summary.isEmpty { summaryCard(summary) }
                 if let error { Text(error).font(.footnote).foregroundStyle(Theme.bad) }
                 details
@@ -161,6 +164,59 @@ struct ItemView: View {
                 }
             }
         }
+    }
+
+    /// The people and dates Claude found, so a birthday in a voice memo is plain to see.
+    private func factsCard(_ facts: Facts) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "person.text.rectangle").foregroundStyle(Theme.accent)
+                Text("What Brain found")
+            }
+            .font(.system(size: 12.5, weight: .medium))
+            .foregroundStyle(Theme.soft)
+            ForEach(Array(facts.dates.enumerated()), id: \.offset) { _, d in
+                HStack(alignment: .firstTextBaseline) {
+                    Text([d.person, d.what].compactMap { $0 }.joined(separator: ": ")).font(.system(size: 15, weight: .semibold))
+                    Spacer(minLength: 8)
+                    Text(Facts.dayLabel(d.date) + (d.yearly ? ", yearly" : "")).font(.system(size: 14)).foregroundStyle(Theme.ink2)
+                }
+            }
+            ForEach(Array(facts.people.enumerated()), id: \.offset) { _, p in
+                (Text(p.name).fontWeight(.semibold) + Text(p.about.isEmpty ? "" : "  \(p.about)").foregroundStyle(Theme.ink2))
+                    .font(.system(size: 15))
+            }
+        }
+        .foregroundStyle(Theme.ink)
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    /// What was said in a voice memo, or the text in a picture, with Read again.
+    private var transcriptCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: item.kind == "image" ? "text.viewfinder" : "quote.bubble").foregroundStyle(Theme.accent)
+                Text(item.kind == "image" ? "Text in the picture" : "What was said")
+                Spacer()
+                Button("Read again") { Task { await reread() } }.font(.system(size: 12.5, weight: .semibold))
+            }
+            .font(.system(size: 12.5, weight: .medium))
+            .foregroundStyle(Theme.soft)
+            if let t = item.transcript, !t.isEmpty {
+                Text(t).font(.system(size: 15)).lineSpacing(4).foregroundStyle(Theme.ink2).textSelection(.enabled)
+                    .multilineTextAlignment(item.isArabic ? .trailing : .leading)
+                    .frame(maxWidth: .infinity, alignment: item.isArabic ? .trailing : .leading)
+            } else if let e = detail?.textError {
+                Text("Brain couldn't read this: \(e)").font(.footnote).foregroundStyle(Theme.bad)
+            } else {
+                Text("Brain is still listening to this one.").font(.footnote).foregroundStyle(Theme.faint)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
     }
 
     private func summaryCard(_ summary: String) -> some View {
@@ -450,6 +506,17 @@ struct ItemView: View {
             error = nil
             store.edited = d.item
             await store.load(session: session)
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    private func reread() async {
+        do {
+            let d = try await API.shared.reread(preview.id)
+            detail = d
+            error = nil
+            store.edited = d.item
         } catch {
             self.error = error.localizedDescription
         }

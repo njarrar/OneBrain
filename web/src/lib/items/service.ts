@@ -4,6 +4,7 @@ import { noteKey, sha256Hex, urlKey } from "@/lib/canonical";
 import { saveOne } from "@/lib/ingest";
 import { reminderStatement } from "@/lib/memory/reminders";
 import { embedItems, forgetItems } from "@/lib/memory/embed";
+import { isAudioFile, readItems } from "@/lib/memory/read";
 import { sortItems } from "@/lib/sorter";
 import { firstUrl, isWebLink, sourceOfUrl, type SourceId } from "@/lib/sources";
 import { unfurl } from "@/lib/unfurl";
@@ -80,6 +81,8 @@ export type ItemDetail = {
   saves: { source_id: string; name: string; saved_at: string | null; original_url: string | null; created_at: string }[];
   tags: { name: string; added_by: string }[];
   files: { id: string; filename: string; mime: string }[];
+  // Why Brain couldn't hear or read this save, when it tried and failed.
+  textError: string | null;
 };
 
 export async function getItem(id: string): Promise<ItemDetail | null> {
@@ -98,7 +101,7 @@ export async function getItem(id: string): Promise<ItemDetail | null> {
     ),
     all<ItemDetail["files"][number]>(`select id, filename, mime from files where item_id = ? order by created_at`, id),
   ]);
-  return { item: parseItem(raw), saves, tags, files };
+  return { item: parseItem(raw), saves, tags, files, textError: raw.text_error ?? null };
 }
 
 // ───────────────────────────── Changing ─────────────────────────────
@@ -241,7 +244,9 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
       source,
       externalId: x.externalId ?? key,
       imageHash: hash,
-      kind: file.type.startsWith("image/") ? "image" : "file",
+      kind: file.type.startsWith("image/") ? "image"
+        : file.type.startsWith("video/") ? "video"
+        : isAudioFile(file.type, file.name) ? "audio" : "file",
       title: title ?? words?.split("\n")[0].slice(0, 120) ?? null,
       postedAt: x.takenAt ?? null,
       savedAt: x.takenAt ?? t,
@@ -251,7 +256,10 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
     if (!hasCopy) {
       const fileId = crypto.randomUUID();
       const r2Key = `files/${fileId}`;
-      const mime = file.type || "application/octet-stream";
+      // Some apps send a voice memo with no type; name it by its ending so it plays in the page.
+      const mime = file.type && file.type !== "application/octet-stream" ? file.type
+        : isAudioFile("", file.name) ? (/\.(mp4|mov|m4v)$/i.test(file.name) ? "video/mp4" : "audio/mp4")
+        : "application/octet-stream";
       await (await env()).FILES.put(r2Key, bytes, { httpMetadata: { contentType: mime } });
       await run(
         `insert into files (id, item_id, filename, mime, size, r2_key, sha256) select ?, ?, ?, ?, ?, ?, ?
@@ -300,9 +308,11 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
   if (x.remindAt) stmts.push(reminderStatement(d, id, x.remindAt));
   if (stmts.length) await d.batch(stmts);
 
-  // Claude sorts new items after the response, so saving stays quick; then the item gets its
-  // vector (after sorting, so its summary and category count toward what it's about).
-  if (!existed && x.sort !== false) runLater(sortItems([id]).catch(() => 0).then(() => embedItems([id])), "sort and embed");
-  else if (!existed || note) runLater(embedItems([id]), "embed");
+  // After the response, so saving stays quick: Brain hears or reads the save (voice memo, picture,
+  // note) and pulls out people and dates, Claude sorts it, then it gets its vector. Each step uses
+  // what the one before found, so a voice memo is sorted by what was said in it.
+  const readFirst = !existed && (file || !url) ? readItems([id]).catch(() => null) : Promise.resolve(null);
+  if (!existed && x.sort !== false) runLater(readFirst.then(() => sortItems([id]).catch(() => 0)).then(() => embedItems([id])), "read, sort and embed");
+  else if (!existed || note) runLater(readFirst.then(() => embedItems([id])), "read and embed");
   return { id, existed };
 }

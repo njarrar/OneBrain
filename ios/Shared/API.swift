@@ -234,6 +234,22 @@ struct API {
         return try await send(req, as: Saved.self)
     }
 
+    /// A voice memo, video or other file. The server writes out what was said and pulls out names and dates.
+    func save(file: Data, filename: String, mime: String, text: String? = nil, options: SaveOptions = .init()) async throws -> Saved {
+        try await save(image: file, filename: filename, mime: mime, externalId: nil, takenAt: nil, text: text, options: options)
+    }
+
+    /// Hears or reads an item again from the start (voice memo, picture or note).
+    func reread(_ id: String) async throws -> ItemDetail {
+        try await send(request("api/app/items/\(id)/read", method: "POST"), as: ItemDetail.self)
+    }
+
+    /// Loads one of Brain's own files, such as a voice memo, with the key.
+    func fileData(_ id: String) async throws -> Data {
+        guard let url = URL(string: "/files/\(id)", relativeTo: Config.baseURL)?.absoluteURL else { throw APIError.server("Bad file") }
+        return try await imageData(url)
+    }
+
     /// A picture. externalId stops the same screenshot being saved twice.
     func save(image: Data, filename: String, mime: String, externalId: String?, takenAt: Date?, text: String? = nil,
               options: SaveOptions = .init()) async throws -> Saved {

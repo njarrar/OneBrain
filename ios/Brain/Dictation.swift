@@ -2,12 +2,24 @@ import AVFoundation
 import Speech
 
 /// Turns speech into text as you talk, for the search field and the Add sheet.
+/// With keepAudio (the Add sheet), it also keeps what you said as a voice memo, so the server can
+/// write it out in full and keep the sound.
 @MainActor
 @Observable
 final class Dictation {
     var listening = false
     var text = ""
     var error: String?
+    /// The voice memo from the last time you spoke, when keepAudio is on.
+    var recording: URL?
+    var seconds: Double = 0
+
+    @ObservationIgnored private let keepAudio: Bool
+    @ObservationIgnored private var file: AVAudioFile?
+
+    init(keepAudio: Bool = false) {
+        self.keepAudio = keepAudio
+    }
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -20,6 +32,7 @@ final class Dictation {
     func start() async {
         error = nil
         text = ""
+        discardRecording()
         let speech = await withCheckedContinuation { c in SFSpeechRecognizer.requestAuthorization { c.resume(returning: $0) } }
         guard speech == .authorized else {
             error = "Brain needs speech recognition. Allow it in Settings, Brain."
@@ -42,7 +55,18 @@ final class Dictation {
             request.shouldReportPartialResults = true
             self.request = request
             let input = engine.inputNode
-            input.installTap(onBus: 0, bufferSize: 1024, format: input.outputFormat(forBus: 0), block: Self.feed(request))
+            let format = input.outputFormat(forBus: 0)
+            if keepAudio {
+                let url = FileManager.default.temporaryDirectory.appendingPathComponent("memo-\(UUID().uuidString).m4a")
+                file = try AVAudioFile(forWriting: url, settings: [
+                    AVFormatIDKey: kAudioFormatMPEG4AAC,
+                    AVSampleRateKey: format.sampleRate,
+                    AVNumberOfChannelsKey: format.channelCount,
+                    AVEncoderBitRateKey: 64000,
+                ], commonFormat: format.commonFormat, interleaved: format.isInterleaved)
+                recording = url
+            }
+            input.installTap(onBus: 0, bufferSize: 1024, format: format, block: Self.feed(request, file))
             engine.prepare()
             try engine.start()
             listening = true
@@ -58,8 +82,11 @@ final class Dictation {
     }
 
     // The audio and speech callbacks run off the main thread, so they are made outside the main actor.
-    private nonisolated static func feed(_ request: SFSpeechAudioBufferRecognitionRequest) -> AVAudioNodeTapBlock {
-        { buffer, _ in request.append(buffer) }
+    private nonisolated static func feed(_ request: SFSpeechAudioBufferRecognitionRequest, _ file: AVAudioFile?) -> AVAudioNodeTapBlock {
+        { buffer, _ in
+            request.append(buffer)
+            try? file?.write(from: buffer)
+        }
     }
 
     private nonisolated static func handler(_ update: @escaping @MainActor (String?, Bool) -> Void) -> (SFSpeechRecognitionResult?, Error?) -> Void {
@@ -79,6 +106,19 @@ final class Dictation {
         request = nil
         task = nil
         listening = false
+        if let file {
+            seconds = Double(file.length) / max(file.processingFormat.sampleRate, 1)
+            // Closes the file, so the memo is complete.
+            self.file = nil
+        }
+        if seconds < 1 { discardRecording() }
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    /// Drops the voice memo, for "remove" in the Add sheet or a fresh start.
+    func discardRecording() {
+        if let recording { try? FileManager.default.removeItem(at: recording) }
+        recording = nil
+        seconds = 0
     }
 }

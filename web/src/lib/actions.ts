@@ -10,7 +10,8 @@ import { captureItem, listItems, markOpened, purgeItems, updateItem, type ItemRo
 import { ItemChange, Question, Review, tagList } from "@/lib/items/schema";
 import { InputError, errorMessage } from "@/lib/http";
 import { review } from "@/lib/memory/reminders";
-import { searchByMeaning } from "@/lib/memory/embed";
+import { embedItems, searchByMeaning } from "@/lib/memory/embed";
+import { readItems, rereadItem, unreadTextCount } from "@/lib/memory/read";
 import { ask } from "@/lib/memory/ask";
 import { makeDigest } from "@/lib/memory/digest";
 import { importInstagram } from "@/lib/instagram";
@@ -53,6 +54,26 @@ export async function sortNext(): Promise<{ sorted: number; remaining: number; e
   } catch (err) {
     return { sorted: 0, remaining: await unsortedCount(), error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+// Hears or reads the next batch of saves (voice memos, pictures, notes). The Sources page calls this in a loop.
+export async function readNext(): Promise<{ read: number; remaining: number; error?: string }> {
+  await requireUser();
+  try {
+    const r = await readItems();
+    revalidatePath("/", "layout");
+    return { read: r.read + r.failed, remaining: await unreadTextCount() };
+  } catch (err) {
+    return { read: 0, remaining: await unreadTextCount(), error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// "Read again" on an item: hear or read it from the start, then sort and embed with what it found.
+export async function readAgain(id: string) {
+  await requireUser();
+  await rereadItem(id);
+  await embedItems([id]).catch(() => 0);
+  revalidatePath("/", "layout");
 }
 
 // The Claude key typed on the Sources page. Kept encrypted; the page shows only its last four characters.

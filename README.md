@@ -20,7 +20,11 @@ Brain then brings things back: **Remind me** and a daily **Resurface**, search b
 **Ask Brain** for answers from your own saves, **Related** saves on each item, and a
 **weekly digest**.
 
-**Version 0.2.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+Voice memos, screenshots, photos and notes get **written out**: Brain writes down what
+was said and reads the text in pictures, and Claude picks out the people and dates in
+them. Say a colleague's birthday into a voice memo and Ask Brain can tell you later.
+
+**Version 0.3.0 "Listen".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
 
@@ -139,6 +143,7 @@ Each source shows its status on the Sources page (`/sources`).
 | Instagram | Upload Instagram's "Download your information" export (the zip or `saved_posts.json`) on the Sources page. Instagram gives only the link, the account and the date. You can also share a post to Brain from the iPhone share sheet. |
 | Screenshots | The iPhone app sends your Screenshots album. Claude looks at each picture to sort it. |
 | Added by hand | The `/add` page, or "Save to Brain" in any iPhone app. |
+| Voice memos | Share a memo from Voice Memos to Save to Brain, pick a sound file in the iPhone Add sheet, speak in the Add sheet, or add a sound file on `/add`. |
 
 Feedly and other tools post to `/api/ingest/<source>?key=...`. The key is made for you
 and shown on the Sources page. Keep it private.
@@ -164,12 +169,28 @@ stay tidy, and it never overwrites a category, sub-topic or summary you already 
 - New items from Feedly, the `/add` page, the share sheet and screenshots are sorted as
   they arrive.
 - **Sort now** on the Sources page sorts everything still unsorted and shows progress.
-- A timer in `web/worker.ts` runs every six hours. It syncs YouTube, sorts up to 10
+- A timer in `web/worker.ts` runs every six hours. It syncs YouTube, reads new voice memos and pictures, sorts up to 10
   batches of unsorted items, reads new and changed items for search by meaning, and on
   Sunday's 18:00 UTC run writes the weekly digest.
 
 Sorting needs the `ANTHROPIC_API_KEY` Worker secret. Without it, items still save, and
 the Sources page says "Needs API key".
+
+## Voice memos, pictures and notes
+
+Brain reads each of your own saves once, as it arrives (`web/src/lib/memory/read.ts`):
+
+- **Sound and video** are written out by Workers AI Whisper
+  (`@cf/openai/whisper-large-v3-turbo`), in the language spoken. Files up to 20 MB.
+- **Screenshots and photos:** Claude reads the text in the picture.
+- Then Claude lists the **people** and the **dates** (birthdays, meetings, trips; yearly
+  ones marked), gives voice memos and pictures a short title, and adds up to five labels,
+  such as "Birthday" and the people's names.
+
+The transcript and the facts go into word search, search by meaning and Ask Brain.
+Saves already in Brain are read a few batches at each six-hour run, or all at once with
+**Read now** on the Sources page. **Read again** on an item starts over. Posts and links
+are not read this way; they come with their own text.
 
 ## Search by meaning
 
@@ -192,24 +213,26 @@ Unknown fields are refused.
 | `GET /items/:id`, `PATCH /items/:id` | One item. PATCH takes `status`, `read`, `trash`, `category`, `note`, `addTags`, `removeTags`, `remindAt` (null clears). |
 | `DELETE /items/:id`, `DELETE /items?view=trash` | Delete for good, from Trash only. |
 | `GET /items/:id/related` | Saves about the same thing. |
+| `POST /items/:id/read` | Hear or read the item again: transcript, people and dates. |
 | `GET /resurface`, `POST /resurface` | Today's cards; answer one with `{ id, how: keep, later or done }`. |
 | `POST /ask` | `{ q }`, answers from your saves with the items it used. |
 | `GET /digest`, `POST /digest` | The latest weekly digests; POST writes this week's now. |
-| `POST /save` | A link, a note or a file. |
+| `POST /save` | A link, a note or a file (a picture, a voice memo or a video). |
 | `GET /version` | The live web build: version, commit and build time. |
 | `GET /menu`, `GET/PUT /prefs`, `GET /sources`, `GET /unfurl`, `POST /import` | Counts, look, sources, link previews, bulk import. |
 
 ## The iPhone app
 
 The app is in `ios/`. It is a SwiftUI app built with XcodeGen, with a share extension
-called **Save to Brain** that saves a link, text or picture from any app.
+called **Save to Brain** that saves a link, text, picture or voice memo from any app.
 
 It reads and writes the same cloud data as the web app, so a note, tag or archive on one
 shows up on the other. You sign in with the same account as the web, Google included.
 Sources and the Claude key are set once on the web and shared. Screenshots from the
 Screenshots album and anything shared to Save to Brain go straight to the cloud.
 Library opens Resurface and the weekly digest, Search can Ask Brain, and each item has a
-bell for Remind me and a list of related saves. See
+bell for Remind me and a list of related saves. Speaking in the Add sheet keeps the voice
+memo, and an item shows a player, what was said and what Brain found in it. See
 [ios/README.md](ios/README.md) to build it.
 
 <p>

@@ -3,6 +3,34 @@
 Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.3.0 "Listen" (2026-10-02)
+
+Every save of yours now has text Brain can search and ask about, and Claude picks out the
+people, dates and events in it. Say "Sara's birthday is 14 March" into a voice memo, and
+Ask Brain can answer "when is Sara's birthday?".
+
+### New, on the web and the iPhone
+
+- **Voice memos:** share one from Voice Memos (or any sound or video file) to Save to Brain,
+  pick one in the Add sheet's Files button, or speak in the Add sheet: the phone now keeps
+  the sound as well as the words. On the web, add a sound file on the Add page.
+- **Written out in full:** the server writes out what was said (Workers AI Whisper), in the
+  language it was said. Screenshots and photos get the text in the picture read out by
+  Claude.
+- **What Brain found:** Claude lists the people and the dates in each save (birthdays,
+  meetings, trips) and adds labels such as "Birthday" and the people's names. The item page
+  shows them, with the transcript, a player for the sound, and Read again.
+- **Search and Ask Brain** now use the transcript and the facts, by word and by meaning.
+- **Older saves:** notes, screenshots and photos already in Brain are read too, a few at each
+  six-hour run, or all at once with Read now on the Sources page.
+
+### Under the hood
+
+- Migration `0011_transcripts.sql` adds `transcript`, `facts`, `text_at` and `text_error` to
+  items and rebuilds word search to cover the transcript and facts.
+- New route `POST /api/app/items/:id/read` reads an item again.
+- `/files/:id` plays sound and video in the page and answers byte ranges, which Safari needs.
+
 ## 0.2.1 (2026-09-28)
 
 - **Which build is live:** the web app shows its version, commit and deploy time at the

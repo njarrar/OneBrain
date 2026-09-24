@@ -11,6 +11,8 @@ import { disconnectX, disconnectYouTube } from "@/lib/actions";
 import { getPrefs } from "@/lib/theme";
 import { LookPicker } from "@/components/LookPicker";
 import { SortPanel } from "@/components/SortPanel";
+import { ReadPanel } from "@/components/ReadPanel";
+import { unreadTextCount } from "@/lib/memory/read";
 import { ClaudeKey, CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
@@ -21,8 +23,8 @@ const STATUS: Record<string, { label: string; tone: string }> = {
 };
 
 export default async function SourcesPage() {
-  const [sources, ready, unsorted, key, e, ytOn, xOn, claude, look] = await Promise.all([
-    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(), anthropicKeyStatus(), getPrefs(),
+  const [sources, ready, unsorted, key, e, ytOn, xOn, claude, look, unreadText] = await Promise.all([
+    listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(), anthropicKeyStatus(), getPrefs(), unreadTextCount(),
   ]);
   const base = e.BETTER_AUTH_URL ?? "http://localhost:3000";
   const feedlyHook = `${base}/api/ingest/feedly?key=${key}`;
@@ -118,6 +120,7 @@ export default async function SourcesPage() {
       <header className="page-head"><h1>Sources</h1></header>
       <LookPicker {...look} />
       <SortPanel ready={ready} remaining={unsorted} />
+      <ReadPanel ready={ready} remaining={unreadText} />
       <ClaudeKey last4={claude.last4} fromEnv={claude.fromEnv} />
       <ul className="sources">
         {sources.map((s) => {

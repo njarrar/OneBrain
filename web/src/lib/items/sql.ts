@@ -1,4 +1,5 @@
 import type { ListFilter } from "@/lib/items/schema";
+import { parseFacts, type Facts } from "@/lib/memory/read";
 
 // SQL shared by every item query, so the list, the item page, Resurface, Related and the app
 // API all return one shape.
@@ -37,20 +38,26 @@ export type ItemRow = {
   created_at: string;
   sort_at: string;
   remind_at: string | null;
+  // What Brain heard in a voice memo or read in a picture, and the people and dates Claude found.
+  transcript: string | null;
+  facts: Facts | null;
   media: string[];
   images: string[];
   sources: string[];
   tags: string[];
 };
 
-export type RawItem = Omit<ItemRow, "media" | "images" | "sources" | "tags"> & {
+export type RawItem = Omit<ItemRow, "media" | "images" | "sources" | "tags" | "facts"> & {
   media: string;
+  facts?: string | null;
   images?: string;
   sources?: string;
   tags?: string;
   // Internal columns the API does not send.
   canon?: string | null;
   embedded_at?: string | null;
+  text_at?: string | null;
+  text_error?: string | null;
 };
 
 const arr = (s: string | undefined | null): string[] => {
@@ -64,8 +71,8 @@ const arr = (s: string | undefined | null): string[] => {
 
 export function parseItem(r: RawItem): ItemRow {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { canon, embedded_at, ...rest } = r;
-  return { ...rest, media: arr(r.media), images: arr(r.images), sources: arr(r.sources), tags: arr(r.tags) };
+  const { canon, embedded_at, text_at, text_error, ...rest } = r;
+  return { ...rest, transcript: r.transcript ?? null, facts: parseFacts(r.facts), media: arr(r.media), images: arr(r.images), sources: arr(r.sources), tags: arr(r.tags) };
 }
 
 // Turns filters into a where clause. Search is handled by the caller because it changes the join.

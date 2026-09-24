@@ -331,6 +331,9 @@ textarea { resize: vertical; }
 .body.lead-text { font-size: 19px; line-height: 1.5; }
 .media { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .media img { width: 100%; border-radius: var(--r-ctl); border: 1px solid var(--line); display: block; }
+.media audio, .media video { width: 100%; grid-column: 1 / -1; border-radius: var(--r-ctl); }
+.facts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.transcript .body { white-space: pre-wrap; margin-bottom: 10px; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-panel); box-shadow: var(--card-shadow); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .saves { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .saves li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 14px; }

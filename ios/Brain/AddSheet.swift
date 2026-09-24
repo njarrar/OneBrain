@@ -4,6 +4,8 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// Add to Brain: one field for a link or a note, plus photos, the camera, voice and files.
+/// Speaking keeps the voice memo too: Brain writes it out in full on the server and pulls out
+/// names and dates, so what you said can be found and asked about later.
 struct AddSheet: View {
     /// Runs after a save, to refresh the lists.
     var saved: () async -> Void
@@ -20,11 +22,14 @@ struct AddSheet: View {
     @State private var files = false
     @State private var saving = false
     @State private var error: String?
-    @State private var dictation = Dictation()
+    @State private var dictation = Dictation(keepAudio: true)
+    /// A voice memo or video picked from Files.
+    @State private var pickedAudio: PickedAudio?
     @FocusState private var focused: Bool
 
     private var url: String? { Detected.firstURL(in: text) }
-    private var detected: Detected { .of(text: text, url: url, pictures: pictures.count) }
+    private var hasVoice: Bool { (dictation.recording != nil && !dictation.listening) || pickedAudio != nil }
+    private var detected: Detected { .of(text: text, url: url, pictures: pictures.count, voice: hasVoice) }
     private var canSave: Bool { !saving && detected != .empty }
 
     var body: some View {
@@ -59,6 +64,7 @@ struct AddSheet: View {
 
             if let url, let preview { linkCard(url, preview) }
             if !pictures.isEmpty { strip }
+            if hasVoice { voiceChip }
             if tagging {
                 TextField("Tags, split with commas", text: $tagText)
                     .font(.system(size: 15))
@@ -118,7 +124,7 @@ struct AddSheet: View {
             CameraPicker { data in if let data, pictures.count < 10 { pictures.append(data) } }
                 .ignoresSafeArea()
         }
-        .fileImporter(isPresented: $files, allowedContentTypes: [.image], allowsMultipleSelection: true) { result in
+        .fileImporter(isPresented: $files, allowedContentTypes: [.image, .audio, .movie], allowsMultipleSelection: true) { result in
             if case .success(let urls) = result { addFiles(urls) }
         }
     }
@@ -137,6 +143,32 @@ struct AddSheet: View {
         }
         .padding(10)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+    }
+
+    private var voiceChip: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "waveform").foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(pickedAudio?.filename ?? "Voice memo, \(Self.clock(dictation.seconds))")
+                    .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.ink).lineLimit(1)
+                Text("Brain keeps the sound and writes it out in full.")
+                    .font(.system(size: 12)).foregroundStyle(Theme.faint)
+            }
+            Spacer(minLength: 0)
+            Button {
+                if pickedAudio != nil { pickedAudio = nil } else { dictation.discardRecording() }
+            } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 18)).foregroundStyle(Theme.faint)
+            }
+            .accessibilityLabel("Remove voice memo")
+        }
+        .padding(10)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+    }
+
+    private static func clock(_ seconds: Double) -> String {
+        let s = Int(seconds.rounded())
+        return String(format: "%d:%02d", s / 60, s % 60)
     }
 
     private var strip: some View {
@@ -180,11 +212,22 @@ struct AddSheet: View {
     }
 
     private func addFiles(_ urls: [URL]) {
-        for u in urls where pictures.count < 10 {
+        for u in urls {
             let open = u.startAccessingSecurityScopedResource()
             defer { if open { u.stopAccessingSecurityScopedResource() } }
-            if let data = try? Data(contentsOf: u), let jpeg = Pictures.jpeg(data) { pictures.append(jpeg) }
+            if let sound = PickedAudio(url: u) {
+                pickedAudio = sound
+            } else if pictures.count < 10, let data = try? Data(contentsOf: u), let jpeg = Pictures.jpeg(data) {
+                pictures.append(jpeg)
+            }
         }
+    }
+
+    /// The voice memo to send: one picked from Files, else the one just spoken.
+    private func voiceMemo() -> PickedAudio? {
+        if let pickedAudio { return pickedAudio }
+        guard let url = dictation.recording, let data = try? Data(contentsOf: url) else { return nil }
+        return PickedAudio(data: data, filename: "Voice memo.m4a", mime: "audio/mp4")
     }
 
     private func save() async {
@@ -195,14 +238,24 @@ struct AddSheet: View {
         let options = API.SaveOptions(sort: sort, tags: tagging ? CaptureChips.tags(tagText) : [])
         let note = text.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            if pictures.isEmpty {
-                _ = try await API.shared.save(url: url, text: note.isEmpty ? nil : note, options: options)
-            } else {
+            let memo = voiceMemo()
+            if let memo {
+                // The server writes the memo out, so only words you typed yourself go along as a note.
+                let typed = note == dictation.text.trimmingCharacters(in: .whitespacesAndNewlines) ? "" : note
+                _ = try await API.shared.save(file: memo.data, filename: memo.filename, mime: memo.mime,
+                                              text: typed.isEmpty ? nil : typed, options: options)
+                dictation.discardRecording()
+                pickedAudio = nil
+            }
+            if !pictures.isEmpty {
                 // Each picture is its own save, with the text as its caption.
                 for (i, data) in pictures.enumerated() {
                     _ = try await API.shared.save(image: data, filename: "added-\(i + 1).jpg", mime: "image/jpeg",
                                                   externalId: nil, takenAt: nil, text: note.isEmpty ? nil : note, options: options)
                 }
+            } else if memo == nil || url != nil {
+                // A link or a note (a link spoken into a memo is saved as its own item too).
+                _ = try await API.shared.save(url: url, text: note.isEmpty ? nil : note, options: options)
             }
             await saved()
             dismiss()
@@ -244,3 +297,4 @@ struct CameraPicker: UIViewControllerRepresentable {
         }
     }
 }
+

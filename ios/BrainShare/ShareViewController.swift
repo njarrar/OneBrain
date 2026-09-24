@@ -3,7 +3,8 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// "Save to Brain" in the share sheet. Takes a link (Safari, Instagram, X), text,
-/// or up to ten pictures (screenshots from Photos), each picture saved as its own item.
+/// up to ten pictures (screenshots from Photos), each picture saved as its own item,
+/// or a voice memo or video (Voice Memos, Files), which the server writes out in full.
 final class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,6 +41,7 @@ final class ShareModel {
     var title: String?
     var text: String?
     var images: [Data] = []
+    var audio: PickedAudio?
     var note = ""
     var sort = true
     var tagging = false
@@ -62,12 +64,19 @@ final class ShareModel {
                 if let t = t?.trimmingCharacters(in: .whitespacesAndNewlines), !t.isEmpty { texts.append(t) }
             }
             for p in item.attachments ?? [] {
-                // Pictures first: a photo from Photos can also look like a (file) URL.
-                if p.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+                // Sound and video first: Voice Memos shares an audio file that can also look like a file URL.
+                if audio == nil, p.hasItemConformingToTypeIdentifier(UTType.audio.identifier)
+                    || p.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+                    if let a = await Self.loadAudio(p) { audio = a }
+                } else if p.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     if images.count < Self.maxImages, let data = await Self.loadImage(p) { images.append(data) }
                 } else if p.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     guard let u = await Self.loadURL(p) else { continue }
                     if u.isFileURL {
+                        if audio == nil, let a = PickedAudio(url: u) {
+                            audio = a
+                            continue
+                        }
                         // A picture shared as a file, for example from Files.
                         if images.count < Self.maxImages, UTType(filenameExtension: u.pathExtension)?.conforms(to: .image) == true,
                            let data = Pictures.jpeg(url: u) {
@@ -94,7 +103,7 @@ final class ShareModel {
         }
         sortTexts(texts)
 
-        if url == nil && text == nil && title == nil && images.isEmpty {
+        if url == nil && text == nil && title == nil && images.isEmpty && audio == nil {
             state = .failed("Nothing to save here.")
         } else if KeyStore.token == nil {
             state = .failed("Open Brain and sign in first.")
@@ -141,6 +150,17 @@ final class ShareModel {
         }
     }
 
+    /// A voice memo or video, copied out before the system removes its file.
+    private nonisolated static func loadAudio(_ p: NSItemProvider) async -> PickedAudio? {
+        let type = p.registeredTypeIdentifiers.compactMap(UTType.init).first { $0.conforms(to: .audio) || $0.conforms(to: .movie) }
+        guard let type else { return nil }
+        return await withCheckedContinuation { c in
+            _ = p.loadFileRepresentation(forTypeIdentifier: type.identifier) { url, _ in
+                c.resume(returning: url.flatMap { PickedAudio(url: $0) })
+            }
+        }
+    }
+
     private nonisolated static func loadImage(_ p: NSItemProvider) async -> Data? {
         guard let item = try? await p.loadItem(forTypeIdentifier: UTType.image.identifier) else { return nil }
         switch item {
@@ -157,7 +177,13 @@ final class ShareModel {
         let extra = note.trimmingCharacters(in: .whitespacesAndNewlines)
         let options = API.SaveOptions(sort: sort, tags: tagging ? CaptureChips.tags(tagText) : [])
         do {
-            if url == nil, !images.isEmpty {
+            if let audio {
+                // The memo is the item; a note typed here goes with it. The words the app shared (often
+                // just the memo's name) become the note only when nothing was typed.
+                state = .saving(done: 0, of: 1)
+                let words = extra.isEmpty ? text : extra
+                _ = try await API.shared.save(file: audio.data, filename: audio.filename, mime: audio.mime, text: words, options: options)
+            } else if url == nil, !images.isEmpty {
                 // Each picture becomes its own item, with the note on each.
                 let caption = extra.isEmpty ? text : extra
                 for (i, image) in images.enumerated() {
@@ -265,7 +291,19 @@ struct ShareView: View {
 
     /// The post or page being shared, or the pictures.
     @ViewBuilder private var preview: some View {
-        if model.url == nil, let first = model.images.first, let img = UIImage(data: first) {
+        if let audio = model.audio {
+            HStack(spacing: 10) {
+                Image(systemName: "waveform").font(.system(size: 20)).foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(audio.filename).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
+                    Text("Brain keeps the sound, writes it out and picks out names and dates.")
+                        .font(.system(size: 12)).foregroundStyle(Theme.faint)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.line))
+        } else if model.url == nil, let first = model.images.first, let img = UIImage(data: first) {
             Image(uiImage: img).resizable().scaledToFill()
                 .frame(maxWidth: .infinity).frame(height: 160)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -303,14 +341,14 @@ struct ShareView: View {
     private var host: String? { model.url.flatMap { URL(string: $0)?.host?.replacingOccurrences(of: "www.", with: "") } }
 
     private var savedLabel: String {
-        model.url == nil && model.images.count > 1 ? "Saved \(model.images.count) pictures" : "Saved to your inbox"
+        model.audio != nil ? "Saved. Brain is listening to it now" : model.url == nil && model.images.count > 1 ? "Saved \(model.images.count) pictures" : "Saved to your inbox"
     }
 
     private var canSave: Bool {
         switch model.state {
         case .ready: return true
         // After a failed save, try again; not when there's nothing to save or no sign in.
-        case .failed: return KeyStore.token != nil && (!model.images.isEmpty || model.url != nil || model.text != nil)
+        case .failed: return KeyStore.token != nil && (!model.images.isEmpty || model.audio != nil || model.url != nil || model.text != nil)
         default: return false
         }
     }

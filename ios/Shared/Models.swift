@@ -26,6 +26,10 @@ struct Item: Codable, Identifiable, Hashable {
     var tags: [String]?
     /// When it comes back in Resurface. Newer servers only.
     var remindAt: String?
+    /// What was said in a voice memo or video, or the text in a picture (0.3 servers).
+    var transcript: String?
+    /// The people and dates Claude found in it (0.3 servers).
+    var facts: Facts?
 
     var isSensitive: Bool { (sensitive ?? 0) != 0 }
     var isUnread: Bool { readAt == nil && deletedAt == nil }
@@ -90,6 +94,41 @@ struct ItemDetail: Codable {
     let saves: [Save]
     var tags: [Tag]
     let files: [File]
+    /// Why the server couldn't hear or read this save, when it tried and failed.
+    var textError: String?
+
+    /// Voice memos and videos, to play.
+    var sounds: [File] {
+        files.filter { $0.mime.hasPrefix("audio/") || $0.mime.hasPrefix("video/") }
+    }
+}
+
+/// The people and dates Claude found in a save.
+struct Facts: Codable, Hashable {
+    struct Person: Codable, Hashable {
+        let name: String
+        let about: String
+    }
+    struct Day: Codable, Hashable {
+        /// YYYY-MM-DD, or MM-DD when the year isn't known.
+        let date: String
+        let what: String
+        let person: String?
+        let yearly: Bool
+    }
+    let people: [Person]
+    let dates: [Day]
+
+    var isEmpty: Bool { people.isEmpty && dates.isEmpty }
+
+    /// "14 March" or "14 March 1990".
+    static func dayLabel(_ date: String) -> String {
+        let parts = date.split(separator: "-").map(String.init)
+        guard parts.count >= 2, let month = Int(parts[parts.count - 2]), let day = Int(parts[parts.count - 1]),
+              (1...12).contains(month) else { return date }
+        let name = Calendar(identifier: .gregorian).monthSymbols[month - 1]
+        return parts.count == 3 ? "\(day) \(name) \(parts[0])" : "\(day) \(name)"
+    }
 }
 
 struct MenuData: Codable {

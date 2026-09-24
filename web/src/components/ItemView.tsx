@@ -4,16 +4,19 @@ import { RemindMenu } from "@/components/RemindMenu";
 import { MarkOpened } from "@/components/MarkOpened";
 import { getItem } from "@/lib/items/service";
 import { listCategoryNames } from "@/lib/queries";
-import { acceptTag, addTags, purgeItem, removeTag, restoreItem, saveNote, setCategory, setRead, setStatus, trashItem } from "@/lib/actions";
+import { acceptTag, addTags, purgeItem, readAgain, removeTag, restoreItem, saveNote, setCategory, setRead, setStatus, trashItem } from "@/lib/actions";
 import { relatedItems } from "@/lib/memory/embed";
 import { SOURCE_LABELS, shortDate } from "@/lib/links";
+import { dayLabel, isAudioFile } from "@/lib/memory/read";
 
 // One item in full. Used by the item page and by the reading pane beside the list.
 // Opening an item marks it read, same as on the iPhone.
 export async function ItemView({ id, pane = false }: { id: string; pane?: boolean }) {
   const data = await getItem(id);
   if (!data) return <p className="empty">This item is gone.</p>;
-  const { item, saves, tags, files } = data;
+  const { item, saves, tags, files, textError } = data;
+  const sounds = files.filter((f) => isAudioFile(f.mime, f.filename));
+  const facts = item.facts;
   const trashed = !!item.deleted_at;
   const [categories, related] = await Promise.all([listCategoryNames(), trashed ? [] : relatedItems(id).catch(() => [])]);
   // Posts often have no title, so their text is the main thing on the page.
@@ -83,10 +86,41 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
             // eslint-disable-next-line @next/next/no-img-element
             <img key={m} src={m} alt="" loading="lazy" referrerPolicy="no-referrer" />
           ))}
+          {sounds.map((f) => (
+            f.mime.startsWith("video/")
+              ? <video key={f.id} src={`/files/${f.id}`} controls preload="metadata" />
+              : <audio key={f.id} src={`/files/${f.id}`} controls preload="metadata" />
+          ))}
           {files.filter((f) => !f.mime.startsWith("image/")).map((f) => (
             <a key={f.id} href={`/files/${f.id}`} className="btn quiet">{f.filename}</a>
           ))}
         </div>
+      )}
+
+      {facts && (facts.dates.length > 0 || facts.people.length > 0) && (
+        <section className="panel facts">
+          <h2>What Brain found</h2>
+          <ul>
+            {facts.dates.map((d, i) => (
+              <li key={`d${i}`} dir="auto">
+                <strong>{d.person ? `${d.person}: ` : ""}{d.what}</strong> <span className="muted">{dayLabel(d.date)}{d.yearly ? ", every year" : ""}</span>
+              </li>
+            ))}
+            {facts.people.map((p, i) => (
+              <li key={`p${i}`} dir="auto"><strong>{p.name}</strong>{p.about && <span className="muted"> {p.about}</span>}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {(item.transcript || textError || sounds.length > 0) && (
+        <section className="panel transcript">
+          <h2>{item.kind === "image" ? "Text in the picture" : "What was said"}</h2>
+          {item.transcript && <div className="body" dir="auto">{item.transcript}</div>}
+          {!item.transcript && !textError && <p className="muted small">Brain is still listening to this one.</p>}
+          {textError && <p className="error small">Brain couldn&apos;t read this: {textError}</p>}
+          <form action={readAgain.bind(null, item.id)}><button className="btn quiet small">Read again</button></form>
+        </section>
       )}
 
       {related.length > 0 && (

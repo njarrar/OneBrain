@@ -55,7 +55,7 @@ function gone(id: string): ItemRow {
   return {
     id, title: "Deleted item", summary: null, body: null, note: null, url: null, kind: "note", category: null,
     category_color: null, subtopic: null, lang: null, sensitive: 0, status: "archived", deleted_at: "gone", read_at: null,
-    author: null, author_handle: null, posted_at: null, created_at: "", sort_at: "", remind_at: null,
+    author: null, author_handle: null, posted_at: null, created_at: "", sort_at: "", remind_at: null, transcript: null, facts: null,
     media: [], images: [], sources: [], tags: [],
   };
 }

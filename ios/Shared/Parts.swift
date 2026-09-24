@@ -1,3 +1,4 @@
+import UniformTypeIdentifiers
 import SwiftUI
 
 /// A source's mark: the X, YouTube and Instagram logos from Marks.xcassets, an SF Symbol for the rest.
@@ -200,10 +201,11 @@ struct Flow: Layout {
 
 /// What a typed or shared text holds, for the badge in the Add sheet.
 enum Detected: Equatable {
-    case link(source: String), note, pictures(Int), empty
+    case link(source: String), note, pictures(Int), voice, empty
 
-    static func of(text: String, url: String?, pictures: Int) -> Detected {
+    static func of(text: String, url: String?, pictures: Int, voice: Bool = false) -> Detected {
         if pictures > 0 { return .pictures(pictures) }
+        if voice { return .voice }
         if let url { return .link(source: sourceOf(url)) }
         return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .empty : .note
     }
@@ -222,6 +224,7 @@ enum Detected: Equatable {
         case .link(let s): return s == "link" ? "Link" : Sources.label(s)
         case .note: return "Note"
         case .pictures(let n): return n == 1 ? "Photo" : "\(n) photos"
+        case .voice: return "Voice memo"
         case .empty: return ""
         }
     }
@@ -231,6 +234,7 @@ enum Detected: Equatable {
         case .link(let s): return s
         case .note: return "note"
         case .pictures: return "image"
+        case .voice: return "audio"
         case .empty: return "note"
         }
     }
@@ -279,5 +283,29 @@ struct CaptureChips: View {
         text.split(whereSeparator: { $0 == "," || $0 == "\n" })
             .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "#")) }
             .filter { !$0.isEmpty }
+    }
+}
+
+/// A voice memo or video to save: from Files or speaking in the Add sheet, or from the share sheet.
+struct PickedAudio {
+    let data: Data
+    let filename: String
+    let mime: String
+
+    /// Up to the server's 20 MB limit.
+    static let maxBytes = 20 * 1024 * 1024
+
+    init(data: Data, filename: String, mime: String) {
+        self.data = data
+        self.filename = filename
+        self.mime = mime
+    }
+
+    /// Reads a sound or video file, or returns nil for anything else (or a file that's too big).
+    init?(url: URL) {
+        guard let type = UTType(filenameExtension: url.pathExtension),
+              type.conforms(to: .audio) || type.conforms(to: .movie),
+              let data = try? Data(contentsOf: url), data.count <= Self.maxBytes else { return nil }
+        self.init(data: data, filename: url.lastPathComponent, mime: type.preferredMIMEType ?? "audio/mp4")
     }
 }
