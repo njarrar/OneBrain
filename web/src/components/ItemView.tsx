@@ -159,7 +159,7 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
         </form>
         <div className="chips tag-list">
           {tags.map((t) => (
-            <span key={t.name} className={t.added_by === "user" ? "chip" : "chip suggested"} title={t.added_by === "user" ? "Added by you" : "Suggested by Claude"}>
+            <span key={t.name} className={t.added_by === "user" ? "chip" : "chip suggested"} title={t.added_by === "user" ? "Added by you" : "Suggested by the AI"}>
               <Link href={`/?view=all&tag=${encodeURIComponent(t.name)}`} dir="auto">{t.name}</Link>
               {t.added_by !== "user" && (
                 <form action={acceptTag.bind(null, item.id, t.name)}>
@@ -174,7 +174,7 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
           {tags.length === 0 && <span className="muted">No tags yet.</span>}
         </div>
         {tags.some((t) => t.added_by !== "user") && (
-          <p className="muted small">Dashed tags are Claude&apos;s suggestions. Press ✓ to keep one.</p>
+          <p className="muted small">Dashed tags are the AI&apos;s suggestions. Press ✓ to keep one.</p>
         )}
         <form action={addTags.bind(null, item.id)} className="inline-form">
           <input id={`tags-${item.id}`} name="tags" placeholder="Add tags, split with commas" dir="auto" aria-label="Add tags" />

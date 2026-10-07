@@ -49,7 +49,7 @@ export const SaveJson = z.object({
   url: z.string().trim().max(2000).optional(),
   text: z.string().max(20000).optional(),
   title: z.string().trim().max(500).optional(),
-  // false skips Claude's sorting.
+  // false skips the AI's sorting.
   sort: z.boolean().optional(),
   tags: z.union([TagList, z.string().max(2000)]).optional(),
   remindAt: IsoDate.optional(),

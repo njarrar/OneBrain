@@ -1,14 +1,14 @@
 import { appRoute } from "@/lib/http";
 import { env } from "@/lib/db";
 import { listSources } from "@/lib/queries";
-import { sorterReady } from "@/lib/sorter";
+import { aiName, aiReady } from "@/lib/ai";
 import { xConnected } from "@/lib/x";
 import { youtubeConnected } from "@/lib/youtube";
 
 // What the Sources page shows, for the app. Connecting and setting keys happen on the web page.
 export const GET = appRoute(async (req) => {
-  const [sources, x, youtube, claude, e] = await Promise.all([
-    listSources(), xConnected(), youtubeConnected(), sorterReady(), env(),
+  const [sources, x, youtube, ready, e] = await Promise.all([
+    listSources(), xConnected(), youtubeConnected(), aiReady(), env(),
   ]);
   return Response.json({
     sources: sources.map((s) => ({
@@ -19,7 +19,9 @@ export const GET = appRoute(async (req) => {
       lastError: s.last_error,
       items: s.items,
     })),
-    connected: { x, youtube, claude },
+    // claude stays for older phone builds; it means the chosen AI has a key.
+    connected: { x, youtube, claude: ready, ai: ready },
+    ai: await aiName(),
     sourcesUrl: `${e.BETTER_AUTH_URL ?? new URL(req.url).origin}/sources`,
   });
 });

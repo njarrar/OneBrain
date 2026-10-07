@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import {
-  importInstagramFile, pickYouTubePlaylists, removeAnthropicKey, saveAnthropicKey, syncXNow, syncYouTubeNow,
+  importInstagramFile, pickYouTubePlaylists, syncXNow, syncYouTubeNow,
 } from "@/lib/actions";
 
 export function CopyField({ value, label }: { value: string; label: string }) {
@@ -72,28 +72,3 @@ export function YouTubePicker({ lists, picked }: { lists: { id: string; title: s
   );
 }
 
-// Saves the Claude key. The field is always empty; the page shows only the last four characters.
-export function ClaudeKey({ last4, fromEnv }: { last4: string | null; fromEnv: boolean }) {
-  const [message, action, pending] = useActionState(saveAnthropicKey, null);
-  return (
-    <section className="source-row">
-      <div className="source-main">
-        <span className="source-name">Claude key</span>
-        <span className={`pill ${last4 || fromEnv ? "ok" : "off"}`}>
-          {last4 ? `Saved, ends in …${last4}` : fromEnv ? "Set on the server" : "Not set"}
-        </span>
-      </div>
-      <p className="small muted">
-        Your Anthropic API key, from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a>. It is stored encrypted and used only for sorting.
-      </p>
-      <form action={action} className="inline-form">
-        <input type="password" name="key" placeholder="sk-ant-…" autoComplete="off" aria-label="Anthropic API key" required />
-        <button className="btn small" disabled={pending}>{pending ? "Saving…" : last4 ? "Replace" : "Save"}</button>
-      </form>
-      {last4 && (
-        <form action={removeAnthropicKey}><button className="link-btn">Remove</button></form>
-      )}
-      {message && <p className="small" role="status">{message}</p>}
-    </section>
-  );
-}

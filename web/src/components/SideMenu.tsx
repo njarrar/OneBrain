@@ -112,6 +112,7 @@ export function SideMenu({
 
         <div className="menu-group">
           {row("/sources", "Sources", null, pathname === "/sources")}
+          {row("/settings", "Settings", null, pathname === "/settings")}
           <form action={logout}>
             <button className="menu-row as-button" type="submit">
               <span>Sign out</span>

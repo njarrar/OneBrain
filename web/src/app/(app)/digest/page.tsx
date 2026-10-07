@@ -27,7 +27,7 @@ function Cited({ text, items }: { text: string; items: Digest["items"] }) {
   );
 }
 
-// One short write-up per week of what was saved, made by Claude on Sunday evenings.
+// One short write-up per week of what was saved, made by the chosen AI on Sunday evenings.
 export default async function DigestPage() {
   const digests = await listDigests(8);
   const thisWeek = weekStart();
@@ -38,7 +38,7 @@ export default async function DigestPage() {
         <h1>Weekly digest</h1>
         <DigestButton label={hasThisWeek ? "Write this week's again" : "Write this week's now"} />
       </header>
-      <p className="muted small">Claude writes one every Sunday evening from what you saved that week.</p>
+      <p className="muted small">Your AI writes one every Sunday evening from what you saved that week.</p>
       {digests.length === 0 && <p className="empty">No digest yet. The first one comes on Sunday evening.</p>}
       {digests.map((d) => (
         <section key={d.week_start} className="panel digest">

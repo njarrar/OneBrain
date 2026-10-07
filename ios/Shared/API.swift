@@ -160,7 +160,7 @@ struct API {
         return try await send(request("api/app/digest"), as: Digests.self).digests
     }
 
-    /// Asks Claude for this week's digest now.
+    /// Asks the AI for this week's digest now.
     func makeDigest() async throws -> Digests {
         var req = try request("api/app/digest", method: "POST")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -271,6 +271,63 @@ struct API {
         body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
         req.httpBody = body
         return try await send(req, as: Saved.self)
+    }
+
+    /// Which AI does Brain's work, and which keys are saved (never the keys themselves).
+    struct AIState: Decodable {
+        struct Provider: Decodable, Identifiable, Hashable {
+            let id: String
+            let name: String
+            let model: String
+            let defaultModel: String
+            let keyHint: String
+            let keyUrl: String
+            let last4: String?
+            let fromEnv: Bool
+            var hasKey: Bool { last4 != nil || fromEnv }
+        }
+        let provider: String
+        let providers: [Provider]
+        var current: Provider? { providers.first { $0.id == provider } }
+    }
+
+    struct TestResult: Decodable {
+        let ok: Bool
+        let message: String
+    }
+
+    func ai() async throws -> AIState {
+        if Demo.on { return try decoder.decode(AIState.self, from: Data(Self.demoAI.utf8)) }
+        return try await send(request("api/app/ai"), as: AIState.self)
+    }
+
+    /// For screenshots: Claude in use with a key, the others empty.
+    private static let demoAI = """
+    {"provider":"claude","providers":[
+     {"id":"claude","name":"Claude","model":"claude-haiku-4-5","defaultModel":"claude-haiku-4-5","keyHint":"sk-ant-…","keyUrl":"https://console.anthropic.com/settings/keys","last4":"x7Qa","fromEnv":false},
+     {"id":"openai","name":"ChatGPT","model":"gpt-5.4-mini","defaultModel":"gpt-5.4-mini","keyHint":"sk-…","keyUrl":"https://platform.openai.com/api-keys","last4":null,"fromEnv":false},
+     {"id":"gemini","name":"Gemini","model":"gemini-flash-latest","defaultModel":"gemini-flash-latest","keyHint":"AIza…","keyUrl":"https://aistudio.google.com/app/apikey","last4":null,"fromEnv":false}]}
+    """
+
+    /// Changes the AI in use, one model name (modelOf) or one key (keyOf). With modelOf, a nil model
+    /// goes back to the default; with keyOf, a nil key removes it.
+    func setAI(provider: String? = nil, modelOf: String? = nil, model: String? = nil,
+               keyOf: String? = nil, key: String? = nil) async throws -> AIState {
+        var body: [String: Any] = [:]
+        if let provider { body["provider"] = provider }
+        if let modelOf { body["model"] = ["provider": modelOf, "name": model.map { $0 as Any } ?? NSNull()] }
+        if let keyOf { body["key"] = ["provider": keyOf, "value": key.map { $0 as Any } ?? NSNull()] }
+        var req = try request("api/app/ai", method: "PUT")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        return try await send(req, as: AIState.self)
+    }
+
+    func testAI(_ provider: String) async throws -> TestResult {
+        var req = try request("api/app/ai/test", method: "POST")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(["provider": provider])
+        return try await send(req, as: TestResult.self)
     }
 
     struct SourceStatus: Decodable, Identifiable {

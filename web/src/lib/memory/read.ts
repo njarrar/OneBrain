@@ -1,16 +1,13 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
+import { aiReady, askJson, type Part } from "@/lib/ai";
 import { all, db, env, first, now } from "@/lib/db";
-import { getAnthropicKey } from "@/lib/secrets";
 
 // Reading: every save of yours ends up with text Brain can search. Voice memos and videos are
-// heard (Workers AI Whisper), screenshots and photos are read (Claude looks at the picture),
-// then Claude pulls out the people, dates and events in it as facts and labels. Ask Brain,
+// heard (Workers AI Whisper), screenshots and photos are read (the chosen AI looks at the picture),
+// then the AI (Claude, ChatGPT or Gemini) pulls out the people, dates and events in it as facts and labels. Ask Brain,
 // word search and meaning search all use what comes out, so "when is Sara's birthday" works.
 
 const WHISPER = "@cf/openai/whisper-large-v3-turbo" as const;
-const MODEL = "claude-haiku-4-5";
 export const READ_BATCH = 10;
 const MAX_AUDIO = 25 * 1024 * 1024;
 const MAX_IMAGE = 4 * 1024 * 1024;
@@ -109,7 +106,7 @@ Give:
 - labels: 1 to 5 short Title Case English labels for finding this later: the kind of thing ("Birthday", "Receipt", "Meeting") and the names of the people in it.
 Only use what the item says. Leave lists empty when there is nothing.`;
 
-async function readOne(client: Anthropic, p: Pending, transcript: string | null, picture: Anthropic.ImageBlockParam | null) {
+async function readOne(p: Pending, transcript: string | null, picture: Part | null) {
   const text = [
     `Saved: ${(p.posted_at ?? p.created_at).slice(0, 10)}`,
     `Kind: ${p.kind}`,
@@ -118,16 +115,9 @@ async function readOne(client: Anthropic, p: Pending, transcript: string | null,
     p.note && `Owner's note: ${p.note}`,
     transcript && `Transcript: ${transcript}`,
   ].filter(Boolean).join("\n").slice(0, MAX_TEXT);
-  const content: Anthropic.ContentBlockParam[] = [{ type: "text", text: `<item>\n${text}\n</item>` }];
-  if (picture) content.push({ type: "text", text: "The picture:" }, picture);
-  const res = await client.messages.parse({
-    model: MODEL,
-    max_tokens: 4000,
-    system: SYSTEM,
-    messages: [{ role: "user", content }],
-    output_config: { format: zodOutputFormat(Result) },
-  });
-  return res.parsed_output;
+  const parts: Part[] = [{ type: "text", text: `<item>\n${text}\n</item>` }];
+  if (picture) parts.push({ type: "text", text: "The picture:" }, picture);
+  return askJson({ name: "item_facts", maxTokens: 6000, system: SYSTEM, parts, schema: Result });
 }
 
 const VALID_DATE = /^(\d{4}-)?\d{2}-\d{2}$/;
@@ -135,7 +125,7 @@ const VALID_DATE = /^(\d{4}-)?\d{2}-\d{2}$/;
 // Reads the given items, or the next batch nobody has read yet. Returns how many it read.
 export async function readItems(ids?: string[], limit = READ_BATCH): Promise<{ read: number; failed: number }> {
   const e = await env();
-  const apiKey = await getAnthropicKey();
+  const ready = await aiReady();
   const cols = `id, kind, title, body, note, transcript, posted_at, created_at`;
   const pending = ids?.length
     ? await all<Pending>(`select ${cols} from items where deleted_at is null and id in (${ids.map(() => "?").join(",")})`, ...ids)
@@ -144,7 +134,6 @@ export async function readItems(ids?: string[], limit = READ_BATCH): Promise<{ r
          order by created_at desc limit ?`,
         limit,
       );
-  const client = apiKey ? new Anthropic({ apiKey }) : null;
   const d = await db();
   let read = 0;
   let failed = 0;
@@ -160,21 +149,19 @@ export async function readItems(ids?: string[], limit = READ_BATCH): Promise<{ r
         // Kept at once, so a Claude failure later doesn't cost the transcript.
         if (transcript) await d.prepare(`update items set transcript = ?, embedded_at = null where id = ?`).bind(transcript, p.id).run();
       }
-      // Without a Claude key the transcript is still searchable; facts come once a key is added.
-      if (!client) {
+      // Without an AI key the transcript is still searchable; facts come once a key is added.
+      if (!ready) {
         if (transcript) read++;
         continue;
       }
       const bytes = image ? await bytesOf(image) : null;
-      const picture: Anthropic.ImageBlockParam | null = image && bytes
-        ? { type: "image", source: { type: "base64", media_type: image.mime as "image/jpeg", data: base64(bytes) } }
-        : null;
+      const picture: Part | null = image && bytes ? { type: "image", mime: image.mime, data: base64(bytes) } : null;
       if (!transcript && !picture && !p.title && !p.body && !p.note) {
         await d.prepare(`update items set text_at = ?, text_error = null where id = ?`).bind(now(), p.id).run();
         continue;
       }
-      const out = await readOne(client, p, transcript, picture);
-      if (!out) throw new Error("Claude gave no answer.");
+      const out = await readOne(p, transcript, picture);
+      if (!out) throw new Error("The AI gave no answer.");
       const facts: Facts = {
         people: out.people.filter((x) => x.name.trim()).slice(0, 30).map((x) => ({ name: x.name.trim(), about: x.about.trim() })),
         dates: out.dates.filter((x) => VALID_DATE.test(x.date)).slice(0, 30)

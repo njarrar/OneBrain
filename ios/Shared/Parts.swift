@@ -256,7 +256,7 @@ struct CaptureChips: View {
             Button { sort.toggle() } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "sparkle").foregroundStyle(sort ? Theme.accent : Theme.faint)
-                    Text("Let Claude sort").strikethrough(!sort, color: Theme.faint)
+                    Text("Let AI sort").strikethrough(!sort, color: Theme.faint)
                 }
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(sort ? Theme.ink : Theme.soft)

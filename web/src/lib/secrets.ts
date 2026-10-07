@@ -1,10 +1,9 @@
 import { env } from "@/lib/db";
 import { getSetting, setSetting } from "@/lib/settings";
 
-// Secrets typed on the web (like the Claude key) are kept in the settings table, encrypted with
+// Secrets typed in Settings (the AI keys) are kept in the settings table, encrypted with
 // AES-GCM under a key made from the BETTER_AUTH_SECRET Worker secret. Stored as base64 of iv + ciphertext.
 
-const ANTHROPIC = "anthropic_api_key";
 
 async function cryptoKey() {
   const secret = (await env()).BETTER_AUTH_SECRET;
@@ -34,29 +33,47 @@ export async function decrypt(stored: string): Promise<string> {
   return new TextDecoder().decode(plain);
 }
 
+type KeyFor = "claude" | "openai" | "gemini";
+
+// Where each provider's key is kept, and the Worker secret used when none is saved.
+const SLOTS: Record<KeyFor, { setting: string; env: "ANTHROPIC_API_KEY" | "OPENAI_API_KEY" | "GEMINI_API_KEY" }> = {
+  claude: { setting: "anthropic_api_key", env: "ANTHROPIC_API_KEY" },
+  openai: { setting: "openai_api_key", env: "OPENAI_API_KEY" },
+  gemini: { setting: "gemini_api_key", env: "GEMINI_API_KEY" },
+};
+
 // The key saved on the web, or null if none is saved (or it can't be read after the secret changed).
-async function savedAnthropicKey(): Promise<string | null> {
-  const stored = await getSetting(ANTHROPIC);
+async function savedKey(p: KeyFor): Promise<string | null> {
+  const stored = await getSetting(SLOTS[p].setting);
   if (!stored) return null;
   try {
     return await decrypt(stored);
   } catch (err) {
-    console.error("can't read the saved Claude key", err);
+    console.error(`can't read the saved ${p} key`, err);
     return null;
   }
 }
 
-// The Claude key to use: the one saved on the web, else the ANTHROPIC_API_KEY Worker secret.
-export async function getAnthropicKey(): Promise<string | null> {
-  return (await savedAnthropicKey()) ?? (await env()).ANTHROPIC_API_KEY ?? null;
+// The key to use: the one saved in Settings, else the Worker secret.
+export async function getApiKey(p: KeyFor): Promise<string | null> {
+  return (await savedKey(p)) ?? (await env())[SLOTS[p].env] ?? null;
 }
 
-// What the Sources page shows. Never the key itself.
-export async function anthropicKeyStatus(): Promise<{ last4: string | null; fromEnv: boolean }> {
-  const saved = await savedAnthropicKey();
-  return { last4: saved ? saved.slice(-4) : null, fromEnv: !saved && !!(await env()).ANTHROPIC_API_KEY };
+// What Settings shows. Never the key itself.
+export async function keyStatus(p: KeyFor): Promise<{ last4: string | null; fromEnv: boolean }> {
+  const saved = await savedKey(p);
+  return { last4: saved ? saved.slice(-4) : null, fromEnv: !saved && !!(await env())[SLOTS[p].env] };
 }
 
-export async function setAnthropicKey(key: string | null) {
-  await setSetting(ANTHROPIC, key === null ? null : await encrypt(key));
+export async function setApiKey(p: KeyFor, key: string | null) {
+  await setSetting(SLOTS[p].setting, key === null ? null : await encrypt(key));
+}
+
+// Quick checks on a pasted key, so a mix-up is caught before it's saved.
+export function keyProblem(p: KeyFor, key: string): string | null {
+  if (key.length < 20 || /\s/.test(key)) return "That doesn't look like a whole key.";
+  if (p === "claude" && !key.startsWith("sk-ant-")) return "Claude keys start with sk-ant-";
+  if (p === "openai" && (!key.startsWith("sk-") || key.startsWith("sk-ant-"))) return "ChatGPT keys start with sk-";
+  if (p === "gemini" && !key.startsWith("AIza")) return "Gemini keys start with AIza";
+  return null;
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { sortNext } from "@/lib/actions";
 
 // Sorts everything still unsorted, one batch at a time, and shows progress.
-export function SortPanel({ ready, remaining: start }: { ready: boolean; remaining: number }) {
+export function SortPanel({ ready, remaining: start, ai }: { ready: boolean; remaining: number; ai: string }) {
   const [remaining, setRemaining] = useState(start);
   const [done, setDone] = useState(0);
   const [running, setRunning] = useState(false);
@@ -29,13 +29,13 @@ export function SortPanel({ ready, remaining: start }: { ready: boolean; remaini
   return (
     <section className="source-row">
       <div className="source-main">
-        <span className="source-name">Claude sorting</span>
+        <span className="source-name">Sorting</span>
         <span className={`pill ${!ready ? "off" : remaining ? "warn" : "ok"}`}>
-          {!ready ? "Needs API key" : remaining ? `${remaining.toLocaleString()} unsorted` : "All sorted"}
+          {!ready ? `Needs a ${ai} key` : remaining ? `${remaining.toLocaleString()} unsorted` : "All sorted"}
         </span>
       </div>
       <p className="small muted">
-        Claude gives each item a category, sub-topic, one-line summary and tags. New items are sorted as they arrive.
+        {ai} gives each item a category, sub-topic, one-line summary and tags. New items are sorted as they arrive.
       </p>
       {ready && remaining > 0 && (
         <button className="btn small" onClick={run} disabled={running} style={{ alignSelf: "flex-start" }}>

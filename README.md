@@ -4,7 +4,7 @@ Brain is a digital brain: one private place for everything you save. It pulls in
 X bookmarks, Instagram saves, screenshots, Feedly articles and YouTube videos, and keeps
 all of it. Nothing is thrown away.
 
-Claude Haiku reads each new item and gives it:
+An AI reads each new item (Claude, ChatGPT or Gemini, picked in Settings) and gives it:
 
 - one of 8 categories
 - a sub-topic inside that category
@@ -21,10 +21,10 @@ Brain then brings things back: **Remind me** and a daily **Resurface**, search b
 **weekly digest**.
 
 Voice memos, screenshots, photos and notes get **written out**: Brain writes down what
-was said and reads the text in pictures, and Claude picks out the people and dates in
+was said and reads the text in pictures, and the AI picks out the people and dates in
 them. Say a colleague's birthday into a voice memo and Ask Brain can tell you later.
 
-**Version 0.3.0 "Listen".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.4.0 "Choice".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
 
@@ -161,10 +161,35 @@ npm run import:x -- ../../x-bookmark-manager/bookmarks_export.json ../../x-bookm
 Add `--remote` to load them into the real D1 database, and `--status read` to keep them
 out of the inbox.
 
-## Claude sorting
+## Choosing the AI
 
-Claude Haiku sorts items in batches of 20. It reuses sub-topics already in use so they
-stay tidy, and it never overwrites a category, sub-topic or summary you already have.
+Settings (`/settings` on the web, Settings, AI on the iPhone) picks which AI does Brain's
+work: **Claude**, **ChatGPT** or **Gemini**. The choice is stored in the cloud, so the web
+and the phone always agree. It sorts saves, reads voice memos and pictures for people and
+dates, answers Ask Brain and writes the weekly digest.
+
+| AI | Default model | Key from |
+| --- | --- | --- |
+| Claude | `claude-haiku-4-5` | console.anthropic.com |
+| ChatGPT | `gpt-5.4-mini` | platform.openai.com |
+| Gemini | `gemini-flash-latest` | aistudio.google.com |
+
+Each AI has its own key and an optional model name. Keys are stored encrypted (AES-GCM
+under `BETTER_AUTH_SECRET`) and shown back only as their last four characters. **Test**
+makes one small call, so you know a key and model work. Keys only: none of the three lets
+another app sign in with your account and use your plan for API calls (Gemini can take a
+Google sign-in, but only through a Google Cloud project of your own, which a key is
+simpler than). Search by meaning and writing out voice memos stay on Workers AI, so
+switching AI never means building the search index again.
+
+The code is in `web/src/lib/ai.ts`: one `askJson` and one `askText` call that every
+feature uses. ChatGPT gets a strict JSON schema, Gemini a response schema, and Claude
+structured outputs, so all three return the same shapes.
+
+## Sorting
+
+The AI sorts items in batches of 20. It reuses sub-topics already in use so they stay
+tidy, and it never overwrites a category, sub-topic or summary you already have.
 
 - New items from Feedly, the `/add` page, the share sheet and screenshots are sorted as
   they arrive.
@@ -173,8 +198,7 @@ stay tidy, and it never overwrites a category, sub-topic or summary you already 
   batches of unsorted items, reads new and changed items for search by meaning, and on
   Sunday's 18:00 UTC run writes the weekly digest.
 
-Sorting needs the `ANTHROPIC_API_KEY` Worker secret. Without it, items still save, and
-the Sources page says "Needs API key".
+Without a key for the chosen AI, items still save, and the Sources page says it needs one.
 
 ## Voice memos, pictures and notes
 
@@ -182,8 +206,8 @@ Brain reads each of your own saves once, as it arrives (`web/src/lib/memory/read
 
 - **Sound and video** are written out by Workers AI Whisper
   (`@cf/openai/whisper-large-v3-turbo`), in the language spoken. Files up to 20 MB.
-- **Screenshots and photos:** Claude reads the text in the picture.
-- Then Claude lists the **people** and the **dates** (birthdays, meetings, trips; yearly
+- **Screenshots and photos:** the AI reads the text in the picture.
+- Then the AI lists the **people** and the **dates** (birthdays, meetings, trips; yearly
   ones marked), gives voice memos and pictures a short title, and adds up to five labels,
   such as "Birthday" and the people's names.
 
@@ -218,6 +242,7 @@ Unknown fields are refused.
 | `POST /ask` | `{ q }`, answers from your saves with the items it used. |
 | `GET /digest`, `POST /digest` | The latest weekly digests; POST writes this week's now. |
 | `POST /save` | A link, a note or a file (a picture, a voice memo or a video). |
+| `GET /ai`, `PUT /ai`, `POST /ai/test` | The AI in use, its model and keys (last four only); change them; test one. |
 | `GET /version` | The live web build: version, commit and build time. |
 | `GET /menu`, `GET/PUT /prefs`, `GET /sources`, `GET /unfurl`, `POST /import` | Counts, look, sources, link previews, bulk import. |
 
@@ -228,7 +253,7 @@ called **Save to Brain** that saves a link, text, picture or voice memo from any
 
 It reads and writes the same cloud data as the web app, so a note, tag or archive on one
 shows up on the other. You sign in with the same account as the web, Google included.
-Sources and the Claude key are set once on the web and shared. Screenshots from the
+Sources are set once on the web and shared; the AI choice and its keys can be set on either. Screenshots from the
 Screenshots album and anything shared to Save to Brain go straight to the cloud.
 Library opens Resurface and the weekly digest, Search can Ask Brain, and each item has a
 bell for Remind me and a list of related saves. Speaking in the Add sheet keeps the voice
@@ -267,7 +292,7 @@ npx wrangler secret put NAME
 | --- | --- |
 | `BETTER_AUTH_SECRET` | Long random string that signs sessions. Also guards the six-hourly timer. |
 | `ALLOWED_EMAILS` | Who may make an account, comma separated. Unset means only the first account. |
-| `ANTHROPIC_API_KEY` | Turns on Claude sorting. |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optional. Used when no key for that AI is saved in Settings. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Shows "Continue with Google" and lets you connect YouTube. |
 | `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_APP_BUNDLE_ID` | Optional. Shows "Continue with Apple". |
 
@@ -295,7 +320,7 @@ Workers AI and Vectorize only run on Cloudflare, so `npm run dev` leaves them of
 `BRAIN_REMOTE=1 npm run dev` after `npx wrangler login` to use the real ones.
 
 Open http://localhost:3000, sign up with an email from `ALLOWED_EMAILS`, and add items at
-`/add`. Add `ANTHROPIC_API_KEY` to `.dev.vars` to try sorting. Never commit `.dev.vars`.
+`/add`. Add `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`, `GEMINI_API_KEY`) to `.dev.vars` to try sorting. Never commit `.dev.vars`.
 
 Other scripts:
 

@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("blurSensitive") private var blur = true
     @State private var look = Look.shared
     @State private var server: API.ServerBuild?
+    @State private var aiName: String?
 
     var body: some View {
         ScrollView {
@@ -48,7 +49,10 @@ struct SettingsView: View {
                         }
                         .disabled(screenshots.running)
                     }
-                    GroupRow(label: "Claude sorting", value: sortingStatus, mono: false, chevron: false)
+                    NavigationLink { AISettingsView() } label: {
+                        GroupRow(label: "AI", value: aiName ?? "Set up", mono: false)
+                    }
+                    GroupRow(label: "Sorting", value: sortingStatus, mono: false, chevron: false)
                     toggleRow("Blur sensitive pictures", isOn: $blur, divider: false)
                 }
                 .groupBox()
@@ -92,6 +96,7 @@ struct SettingsView: View {
         .background(Theme.grouped)
         .navigationBarTitleDisplayMode(.inline)
         .task { server = try? await API.shared.serverBuild() }
+        .task { aiName = (try? await API.shared.ai())?.current?.name }
     }
 
     // MARK: About

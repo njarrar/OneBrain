@@ -3,6 +3,31 @@
 Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.4.0 "Choice" (2026-10-02)
+
+Pick the AI that does Brain's work: Claude, ChatGPT or Gemini.
+
+### New, on the web and the iPhone
+
+- **Settings, AI:** choose Claude, ChatGPT or Gemini. The choice syncs, so the web and the
+  phone use the same one. It sorts saves, reads voice memos and pictures for people and
+  dates, answers Ask Brain and writes the weekly digest.
+- **A key for each:** paste an API key per AI. Keys are stored encrypted and shown only by
+  their last four characters. Each AI also takes an optional model name.
+- **Test:** one small call that says whether the key and model work.
+- The web has a new Settings page (design, mode and AI). The Sources page keeps sources,
+  sorting and Read now.
+
+Sign-in instead of a key isn't offered: none of the three lets another app use your
+account's plan for API calls.
+
+### Under the hood
+
+- `web/src/lib/ai.ts` is the one place that calls an AI. Sorting, reading, Ask Brain and the
+  digest all go through it.
+- New routes `GET/PUT /api/app/ai` and `POST /api/app/ai/test`.
+- Search by meaning and transcription stay on Workers AI, so switching AI needs no reindex.
+
 ## 0.3.0 "Listen" (2026-10-02)
 
 Every save of yours now has text Brain can search and ask about, and Claude picks out the

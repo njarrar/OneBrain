@@ -202,7 +202,7 @@ export type CaptureInput = {
   // For the Screenshots album: the photo's id on the phone, so it is saved only once.
   externalId?: string | null;
   takenAt?: string | null;
-  // false skips Claude's sorting.
+  // false skips the AI's sorting.
   sort?: boolean;
   // Where it came from, when the caller knows better than the link does.
   source?: SourceId;

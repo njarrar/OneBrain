@@ -166,7 +166,7 @@ struct ItemView: View {
         }
     }
 
-    /// The people and dates Claude found, so a birthday in a voice memo is plain to see.
+    /// The people and dates the AI found, so a birthday in a voice memo is plain to see.
     private func factsCard(_ facts: Facts) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
@@ -301,7 +301,7 @@ struct ItemView: View {
         .buttonStyle(.plain)
     }
 
-    /// Solid tags are yours; dashed ones are Claude's suggestions. Tap a dashed tag to keep it; hold any tag to remove it.
+    /// Solid tags are yours; dashed ones are the AI's suggestions. Tap a dashed tag to keep it; hold any tag to remove it.
     private var tagsRow: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text("Tags").foregroundStyle(Theme.soft).frame(width: 78, alignment: .leading)
@@ -331,7 +331,7 @@ struct ItemView: View {
                             Label("Remove tag", systemImage: "xmark")
                         }
                     }
-                    .accessibilityHint(suggested ? "Suggested by Claude. Tap to keep." : "")
+                    .accessibilityHint(suggested ? "Suggested by the AI. Tap to keep." : "")
                 }
                 Button { addingTag = true } label: {
                     Image(systemName: "plus").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.soft)

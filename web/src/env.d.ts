@@ -3,6 +3,8 @@ interface CloudflareEnv {
   BETTER_AUTH_URL?: string;
   GOOGLE_CLIENT_ID?: string;
   ANTHROPIC_API_KEY?: string;
+  OPENAI_API_KEY?: string;
+  GEMINI_API_KEY?: string;
   GOOGLE_CLIENT_SECRET?: string;
   X_CLIENT_ID?: string;
   X_CLIENT_SECRET?: string;

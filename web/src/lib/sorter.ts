@@ -1,14 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
+import { aiReady, askJson, type Part } from "@/lib/ai";
 import { all, db, env, first, now } from "@/lib/db";
-import { getAnthropicKey } from "@/lib/secrets";
 import { base64 } from "@/lib/memory/read";
 
-// Claude sorts items the way x-bookmarks-review did: one of the categories, a sub-topic,
+// The chosen AI (Claude, ChatGPT or Gemini) sorts items the way x-bookmarks-review did: one of the categories, a sub-topic,
 // a one-line summary, a few tags, the language, and whether it is sensitive.
 
-const MODEL = "claude-haiku-4-5";
 export const BATCH = 20;
 const MAX_TEXT = 1500;
 
@@ -28,7 +25,7 @@ const MAX_IMAGE = 4 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
 // Screenshots and photos have no text, so Claude looks at the picture itself.
-async function pictureBlock(itemId: string): Promise<Anthropic.ImageBlockParam | null> {
+async function pictureBlock(itemId: string): Promise<Part | null> {
   const f = await first<{ mime: string; size: number; r2_key: string }>(
     `select mime, size, r2_key from files where item_id = ? and mime like 'image/%' order by created_at limit 1`,
     itemId,
@@ -37,11 +34,11 @@ async function pictureBlock(itemId: string): Promise<Anthropic.ImageBlockParam |
   const obj = await (await env()).FILES.get(f.r2_key);
   if (!obj) return null;
   const data = base64(new Uint8Array(await obj.arrayBuffer()));
-  return { type: "image", source: { type: "base64", media_type: f.mime as "image/jpeg", data } };
+  return { type: "image", mime: f.mime, data };
 }
 
 export async function sorterReady() {
-  return !!(await getAnthropicKey());
+  return aiReady();
 }
 
 export async function unsortedCount() {
@@ -74,8 +71,8 @@ function describe(p: Pending) {
   ].filter(Boolean).join("\n");
 }
 
-async function contentFor(pending: Pending[]): Promise<Anthropic.ContentBlockParam[]> {
-  const blocks: Anthropic.ContentBlockParam[] = [];
+async function contentFor(pending: Pending[]): Promise<Part[]> {
+  const blocks: Part[] = [];
   for (const p of pending) {
     blocks.push({ type: "text", text: describe(p) });
     if (p.kind === "image") {
@@ -88,8 +85,7 @@ async function contentFor(pending: Pending[]): Promise<Anthropic.ContentBlockPar
 
 // Sorts the given items, or the next batch of unsorted ones. Returns how many it sorted.
 export async function sortItems(ids?: string[]): Promise<number> {
-  const apiKey = await getAnthropicKey();
-  if (!apiKey) return 0;
+  if (!(await aiReady())) return 0;
 
   const pending = ids?.length
     ? await all<Pending>(
@@ -118,10 +114,9 @@ export async function sortItems(ids?: string[]): Promise<number> {
     ),
   });
 
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.parse({
-    model: MODEL,
-    max_tokens: 8000,
+  const response = await askJson({
+    name: "sorted_items",
+    maxTokens: 8000,
     system: `You sort saved bookmarks for one person, who reads English and Arabic.
 
 Categories:
@@ -134,10 +129,10 @@ For every item give:
 - tags: 2 to 4 short English tags in Title Case.
 - lang: "ar" if the text is mainly Arabic, "en" if mainly English, otherwise "other".
 - sensitive: true for adult, explicit or NSFW content.`,
-    messages: [{ role: "user", content: await contentFor(pending) }],
-    output_config: { format: zodOutputFormat(Result) },
+    parts: await contentFor(pending),
+    schema: Result,
   });
-  const out = response.parsed_output?.items ?? [];
+  const out = response?.items ?? [];
 
   const d = await db();
   const known = new Set(pending.map((p) => p.id));

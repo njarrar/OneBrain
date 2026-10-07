@@ -651,3 +651,8 @@ kbd {
 
 /* Version, commit and deploy time, to say which build is live when something goes wrong. */
 .build-info { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--line); font: 12px var(--mono); color: var(--faint); }
+
+/* Settings, AI: one block per provider; the one in use stands out. */
+.ai-key { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); }
+.ai-key.active { border-color: var(--line-strong); background: var(--raised); }
+.ai-key .inline-form input { font-family: var(--mono, ui-monospace, monospace); }

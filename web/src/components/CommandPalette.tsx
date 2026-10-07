@@ -162,7 +162,7 @@ export function CommandPalette() {
             <p dir="auto">
               {answer.error ??
                 answer.text ??
-                (answer.sources.length ? "Add a Claude key on Sources to get written answers. These look closest:" : "Nothing found.")}
+                (answer.sources.length ? "Add an AI key in Settings to get written answers. These look closest:" : "Nothing found.")}
             </p>
             <ol className="answer-sources">
               {answer.sources.map((s, i) => (

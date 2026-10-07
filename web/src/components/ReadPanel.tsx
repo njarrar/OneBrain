@@ -4,7 +4,7 @@ import { useState } from "react";
 import { readNext } from "@/lib/actions";
 
 // Hears voice memos and reads pictures and notes not read yet, one batch at a time.
-export function ReadPanel({ ready, remaining: start }: { ready: boolean; remaining: number }) {
+export function ReadPanel({ ready, remaining: start, ai }: { ready: boolean; remaining: number; ai: string }) {
   const [remaining, setRemaining] = useState(start);
   const [done, setDone] = useState(0);
   const [running, setRunning] = useState(false);
@@ -31,11 +31,11 @@ export function ReadPanel({ ready, remaining: start }: { ready: boolean; remaini
       <div className="source-main">
         <span className="source-name">Voice memos, pictures and notes</span>
         <span className={`pill ${!ready ? "off" : remaining ? "warn" : "ok"}`}>
-          {!ready ? "Needs API key" : remaining ? `${remaining.toLocaleString()} to read` : "All read"}
+          {!ready ? `Needs a ${ai} key` : remaining ? `${remaining.toLocaleString()} to read` : "All read"}
         </span>
       </div>
       <p className="small muted">
-        Brain writes out what was said in voice memos and videos and the text in screenshots, then Claude picks out the people,
+        Brain writes out what was said in voice memos and videos and the text in screenshots, then {ai} picks out the people,
         dates and events, so Ask Brain can answer things like &ldquo;when is Sara&apos;s birthday?&rdquo;. New saves are read as they arrive.
       </p>
       {ready && remaining > 0 && (

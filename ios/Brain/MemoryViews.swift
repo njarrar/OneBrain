@@ -180,7 +180,7 @@ struct ResurfaceView: View {
 
 // MARK: Weekly digest
 
-/// One short write-up per week of what was saved, made by Claude on Sunday evenings.
+/// One short write-up per week of what was saved, made by the chosen AI on Sunday evenings.
 struct DigestView: View {
     @Environment(AppSession.self) private var session
     @State private var digests: [Digest] = []
@@ -191,7 +191,7 @@ struct DigestView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Claude writes one every Sunday evening from what you saved that week.")
+                Text("Your AI writes one every Sunday evening from what you saved that week.")
                     .font(.system(size: 15)).foregroundStyle(Theme.soft)
                 Button { Task { await make() } } label: {
                     HStack(spacing: 8) {
@@ -270,7 +270,7 @@ struct DigestView: View {
 
 // MARK: Ask Brain
 
-/// Ask a question of your own saves. Claude answers from the closest ones and cites them as [1], [2] …
+/// Ask a question of your own saves. the chosen AI answers from the closest ones and cites them as [1], [2] …
 struct AskView: View {
     let question: String
 
@@ -288,7 +288,7 @@ struct AskView: View {
                             .font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.accent)
                         Text(answer.answer ?? (answer.sources.isEmpty
                             ? "Nothing you've saved seems to be about that yet."
-                            : "Add a Claude key on the web's Sources page to get written answers. These look closest:"))
+                            : "Add an AI key in Settings, AI to get written answers. These look closest:"))
                             .font(.system(size: 16)).lineSpacing(5).foregroundStyle(Theme.ink)
                             .textSelection(.enabled)
                     }

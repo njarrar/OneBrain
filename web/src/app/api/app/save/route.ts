@@ -5,7 +5,7 @@ import { captureItem, type CaptureInput } from "@/lib/items/service";
 // The share sheet, the Add sheet and the Screenshots album post here.
 //   JSON { url?, text?, title?, sort?, tags?, remindAt? }         a link or a note from any app
 //   form { file, text?, externalId?, takenAt?, sort?, tags? }     a screenshot or a shared picture
-// sort: false skips Claude's sorting. tags: a list, or one comma-separated string.
+// sort: false skips the AI's sorting. tags: a list, or one comma-separated string.
 export const POST = appRoute(async (req) => {
   let input: CaptureInput;
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) {

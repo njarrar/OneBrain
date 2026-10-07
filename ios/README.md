@@ -2,7 +2,7 @@
 
 A SwiftUI app for the same archive as the web app: the side menu, the card list with pictures,
 each item's page (note, category, tags, archive), a **Save to Brain** share sheet for any app,
-and sending your Screenshots album to Brain so Claude can read and sort them.
+and sending your Screenshots album to Brain so the AI can read and sort them.
 
 It talks to the web app's `/api/app/*` routes. Signing in opens the web page `/connect-app`
 in a Safari sheet (so Google, Apple and passwords all work), which hands the app its own key.
@@ -13,7 +13,7 @@ The key lives in the Keychain, shared with the share sheet through the app group
 
 All data lives in the web app, so the phone and the web always show the same saves, notes,
 tags and settings. Sources (X, YouTube and its playlist picks, Feedly, Instagram) and the
-Claude key are set once on the web's Sources page, and the server syncs and sorts for both.
+AI choice and keys are shared with the web (Settings, AI on the phone, /settings on the web), and the server syncs and sorts for both.
 
 An earlier version kept saves on the phone. On first open, this version sends anything left
 from it to the web app (items, notes, tags, archive status and screenshots), then deletes the

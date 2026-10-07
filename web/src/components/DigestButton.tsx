@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { makeDigestNow } from "@/lib/actions";
 
-// Asks Claude for this week's digest now instead of waiting for Sunday evening.
+// Asks the AI for this week's digest now instead of waiting for Sunday evening.
 export function DigestButton({ label }: { label: string }) {
   const [message, action, pending] = useActionState(async () => makeDigestNow(), null);
   return (

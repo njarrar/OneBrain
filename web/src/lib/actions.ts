@@ -17,7 +17,8 @@ import { makeDigest } from "@/lib/memory/digest";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
-import { setAnthropicKey } from "@/lib/secrets";
+import { keyProblem, setApiKey } from "@/lib/secrets";
+import { isProvider, saveAiSettings, testProvider, type Provider } from "@/lib/ai";
 import { isDesign, isMode, savePrefs } from "@/lib/theme";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -76,20 +77,47 @@ export async function readAgain(id: string) {
   revalidatePath("/", "layout");
 }
 
-// The Claude key typed on the Sources page. Kept encrypted; the page shows only its last four characters.
-export async function saveAnthropicKey(_: string | null, form: FormData): Promise<string | null> {
+// The AI keys typed in Settings. Kept encrypted; the page shows only the last four characters.
+export async function saveAiKey(provider: Provider, _: string | null, form: FormData): Promise<string | null> {
   await requireUser();
+  if (!isProvider(provider)) return "Unknown AI.";
   const key = String(form.get("key") ?? "").trim();
-  if (!key.startsWith("sk-ant-")) return "Claude keys start with sk-ant-";
-  await setAnthropicKey(key);
-  revalidatePath("/sources");
-  return "Saved.";
+  const problem = keyProblem(provider, key);
+  if (problem) return problem;
+  await setApiKey(provider, key);
+  revalidatePath("/", "layout");
+  return "Saved. Press Test to check it.";
 }
 
-export async function removeAnthropicKey() {
+export async function removeAiKey(provider: Provider) {
   await requireUser();
-  await setAnthropicKey(null);
-  revalidatePath("/sources");
+  if (!isProvider(provider)) return;
+  await setApiKey(provider, null);
+  revalidatePath("/", "layout");
+}
+
+// Which AI does the work: sorting, labels, Ask Brain and the digest.
+export async function setAiProvider(form: FormData) {
+  await requireUser();
+  const provider = form.get("provider");
+  if (isProvider(provider)) await saveAiSettings({ provider });
+  revalidatePath("/", "layout");
+}
+
+// The model name for one AI. Empty goes back to the default.
+export async function setAiModel(provider: Provider, form: FormData) {
+  await requireUser();
+  if (!isProvider(provider)) return;
+  const name = String(form.get("model") ?? "").trim().slice(0, 100);
+  if (name && !/^[\w.:/-]+$/.test(name)) return;
+  await saveAiSettings({ model: { provider, name: name || null } });
+  revalidatePath("/settings");
+}
+
+export async function testAi(provider: Provider): Promise<{ ok: boolean; message: string }> {
+  await requireUser();
+  if (!isProvider(provider)) return { ok: false, message: "Unknown AI." };
+  return testProvider(provider);
 }
 
 const MAX_IMPORT_BYTES = 90 * 1024 * 1024;
