@@ -1,9 +1,8 @@
 name: deploy
-# Publishes the app to Cloudflare on every push to main:
+# Publishes the app to Cloudflare when you run it from the Actions tab:
 # applies new database migrations, then builds and deploys the Worker.
+# Once your own Cloudflare setup works, add a push trigger on main to deploy on merge.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 concurrency:
   group: deploy

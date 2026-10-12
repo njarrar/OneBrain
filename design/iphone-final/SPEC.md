@@ -1,6 +1,6 @@
 # Brain for iPhone: final design spec
 
-Source: the owner's the design tool project, file "Brain iOS.dc.html" (exported 2026-09-28).
+Source: the owner's design project, file "Brain iOS.dc.html" (exported 2026-09-28).
 This folder holds the file itself (`Brain iOS.dc.html`, open it next to `ios-frame.jsx` and `support.js`), this spec, the Pocket icon (`pocket-light.svg`), and `web-reference/Brain Redesign.dc.html` (the matching web redesign, for reference only).
 `uploads/` holds what came in the owner's zip: four PNG shots of the web redesign with the owner's comment pins, and a 7-page PDF of shots. They add no iPhone screens.
 

@@ -272,10 +272,17 @@ Sign in, the inbox, Library, an item and Settings, with made-up sample data.
 
 ## Deploys
 
-GitHub is the source of truth. Merge to `main` and it goes live.
+To run your own copy:
 
-- `.github/workflows/deploy.yml` runs on every push to `main`. It applies new D1
-  migrations to the real database, then builds and deploys the Worker. It needs a
+1. In `web/`, make the database with `npx wrangler d1 create digital-brain` and put its id
+   in `web/wrangler.jsonc`.
+2. Set `BETTER_AUTH_URL` in `web/wrangler.jsonc` and `baseURL` in `ios/Shared/Config.swift`
+   to your Worker address.
+3. Pick your own bundle ids and app group in `ios/project.yml` and the two
+   `.entitlements` files.
+
+- `.github/workflows/deploy.yml` runs when you start it from the Actions tab. It applies new
+  D1 migrations, then builds and deploys the Worker. It needs a
   `CLOUDFLARE_API_TOKEN` repository secret (Edit Cloudflare Workers template, plus D1
   Edit and Vectorize Edit). It also makes the Vectorize index the first time.
 - `.github/workflows/web.yml` runs lint, a typecheck, the unit tests and a build on every
@@ -331,7 +338,7 @@ Other scripts:
 | `npm test` | Unit tests (input checks, paging, Resurface schedule, digest week, links) |
 | `npm run build` | Next.js build |
 | `npm run migrate:remote` | Applies migrations to the real D1 database |
-| `npm run deploy` | Builds and deploys by hand (the GitHub workflow does this for you) |
+| `npm run deploy` | Builds and deploys by hand |
 | `npm run cf-typegen` | Rebuilds the binding types in `cloudflare-env.d.ts` |
 
 ## Repo layout
@@ -352,5 +359,5 @@ Other scripts:
 ├── ios/                     iPhone app and "Save to Brain" share extension
 ├── docs/                    Design doc and README screenshots
 ├── CHANGELOG.md             What changed in each version
-└── .github/workflows/       Deploy on merge, checks on pull requests
+└── .github/workflows/       Deploy by hand, checks on pull requests
 ```

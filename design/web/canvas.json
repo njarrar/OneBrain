@@ -21,7 +21,7 @@
 },"order":["Login.dc.html","Main.dc.html","Item.dc.html","Add.dc.html","Sources.dc.html","Connect.dc.html","Sidebar.dc.html","WLogin.dc.html","WInbox.dc.html","WItem.dc.html","WAdd.dc.html","WSources.dc.html","WConnect.dc.html","LLogin.dc.html","LMain.dc.html","LItem.dc.html","LAdd.dc.html","LSources.dc.html","LConnect.dc.html"],
 "notes":{
 "title":{"x":0,"y":-300,"text":"Brain on the web: full designs","kind":"title1","maxW":4480,"page":"design"},
-"how":{"x":4904,"y":0,"w":320,"maxH":460,"text":"Each screen has a Theme tweak: Sunroom light or dark, X-Vault light or dark. The All four looks page shows them side by side.\n\nPress Play to click through: Sign in, Inbox, Item, Add, Sources.\n\nThe side menu is one shared part: change it once and every screen follows.\n\nComment on any screen and send it to Claude to get it redrawn.","fill":"orange","page":"design"},
+"how":{"x":4904,"y":0,"w":320,"maxH":460,"text":"Each screen has a Theme tweak: Sunroom light or dark, X-Vault light or dark. The All four looks page shows them side by side.\n\nPress Play to click through: Sign in, Inbox, Item, Add, Sources.\n\nThe side menu is one shared part: change it once and every screen follows.","fill":"orange","page":"design"},
 "wtitle":{"x":0,"y":-300,"text":"Brain on the web: wireframes","kind":"title1","maxW":4480,"page":"wire"},
 "ltitle":{"x":0,"y":-300,"text":"Every web screen in all four looks","kind":"title1","maxW":6000,"page":"looks"}
 },"designSystems":[]}

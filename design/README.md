@@ -4,7 +4,7 @@ Every design file for Brain lives here. App code lives in `web/` and `ios/`.
 
 | Folder | What it holds |
 | --- | --- |
-| `iphone-final/` | **The final iPhone design to build.** the owner's the design tool file "Brain iOS.dc.html", its spec (`SPEC.md`) and the matching web redesign |
+| `iphone-final/` | **The final iPhone design to build.** The owner's design file "Brain iOS.dc.html", its spec (`SPEC.md`) and the matching web redesign |
 | `iphone/` | The first iPhone screens from the first canvas "Brain iPhone app" (replaced by `iphone-final/`) |
 | `web/` | The web screens from the first canvas "Brain web app" |
 | `icons/` | The Pocket app icon masters (SVG), light, dark and tinted |

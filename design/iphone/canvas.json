@@ -32,7 +32,7 @@
 },"order":["SignIn.dc.html","Menu.dc.html","Main.dc.html","Item.dc.html","Settings.dc.html","Share.dc.html","Search.dc.html","Filters.dc.html","Add.dc.html","Tags.dc.html","WSignIn.dc.html","WMenu.dc.html","WInbox.dc.html","WItem.dc.html","WSettings.dc.html","WShare.dc.html","WSearch.dc.html","WFilters.dc.html","WAdd.dc.html","WTags.dc.html","LSignIn.dc.html","LMenu.dc.html","LInbox.dc.html","LItem.dc.html","LSettings.dc.html","LShare.dc.html","LSearch.dc.html","LFilters.dc.html","LAdd.dc.html","LTags.dc.html"],
 "notes":{
 "row":{"x":0,"y":-300,"text":"Brain on iPhone: full designs","kind":"title1","maxW":2740,"page":"design"},
-"how":{"x":2820,"y":0,"w":320,"maxH":460,"text":"Each screen has a Theme tweak: Sunroom light or dark, X-Vault light or dark. The All four looks page shows them side by side.\n\nPress Play to click through: Sign in, Inbox, Item, Menu, Settings, Search, Filters, Add, Tags.\n\nComment on any screen and send it to Claude to get it redrawn.","fill":"orange","page":"design"},
+"how":{"x":2820,"y":0,"w":320,"maxH":460,"text":"Each screen has a Theme tweak: Sunroom light or dark, X-Vault light or dark. The All four looks page shows them side by side.\n\nPress Play to click through: Sign in, Inbox, Item, Menu, Settings, Search, Filters, Add, Tags.","fill":"orange","page":"design"},
 "wtitle":{"x":0,"y":-300,"text":"Brain on iPhone: wireframes","kind":"title1","maxW":2740,"page":"wire"},
 "wnote":{"x":2820,"y":0,"w":320,"maxH":300,"text":"Layout only, no color. Move boxes, cross things out, or comment on what should change. Press Play to click through.","fill":"gray","page":"wire"},
 "ltitle":{"x":0,"y":-300,"text":"Every screen in all four looks","kind":"title1","maxW":3440,"page":"looks"}
