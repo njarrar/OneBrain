@@ -58,6 +58,7 @@ struct LibraryView: View {
                 NavigationLink(value: Route.settings) { Image(systemName: "gearshape") }
                     .accessibilityLabel("Settings")
             }
+            ToolbarItem(placement: .topBarTrailing) { AddButton() }
         }
     }
 

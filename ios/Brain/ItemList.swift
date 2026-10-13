@@ -64,8 +64,6 @@ struct ItemList: View {
         .scrollContentBackground(.hidden)
         .background(Theme.bg)
         .environment(\.defaultMinListHeaderHeight, 0)
-        // Room for the Add button.
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: mode == .search ? 0 : 72) }
         .modifier(Bars(mode: mode, filter: filter, total: total, filterMenu: AnyView(filterMenu), emptyTrash: { confirmEmpty = true }))
         .confirmationDialog("Delete everything in Trash for good?", isPresented: $confirmEmpty, titleVisibility: .visible) {
             Button("Empty Trash", role: .destructive) { Task { await emptyTrash() } }
@@ -339,7 +337,10 @@ private struct Bars: ViewModifier {
                 .navigationTitle(filter.title)
                 .navigationBarTitleDisplayMode(.large)
                 .countSubtitle(counted(total, "save"))
-                .toolbar { ToolbarItem(placement: .topBarTrailing) { filterMenu } }
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) { filterMenu }
+                    if mode == .inbox { ToolbarItem(placement: .topBarTrailing) { AddButton() } }
+                }
         case .trash:
             content
                 .navigationTitle(filter.title)

@@ -36,8 +36,9 @@ struct SearchView: View {
         .background(Theme.bg)
         .navigationTitle("Search")
         .navigationBarTitleDisplayMode(.large)
-        // In the Search tab on iOS 26 the field sits at the bottom, by the tab bar.
-        .searchable(text: $text, isPresented: $focused, prompt: "Search or ask, in English or Arabic")
+        // Always shown under the title, so it's plain where to type.
+        .searchable(text: $text, isPresented: $focused, placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search or ask, in English or Arabic")
         .autocorrectionDisabled()
         .onSubmit(of: .search) { query = typed }
         .toolbar {

@@ -28,7 +28,8 @@ A design pass on the phone apps, from a review of the iPhone app.
 
 ### iPhone only
 - The system tab bar (Liquid Glass on iOS 26, shrinks while you scroll), with Search in its
-  own place on the right. The **+** button sits above it.
+  own place on the right. **+** sits at the top right of Inbox and Library, so it never
+  covers a row.
 - Inbox, Library, Search and Settings use the system large title, which shrinks as you
   scroll; on iOS 26 the count sits under it.
 - Needs iOS 18 or later.

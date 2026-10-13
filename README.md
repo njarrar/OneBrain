@@ -350,7 +350,7 @@ Sign in, the inbox, Library, an item, Search with Ask Brain, and Settings, with 
 
 <img src="docs/images/iphone-add.png" width="260" alt="The Add to Brain sheet with a note, tags and every option">
 
-Tap **+** above the tab bar to open **Add to Brain**. The sheet opens just tall enough for
+Tap **+** at the top right of Inbox or Library to open **Add to Brain**. The sheet opens just tall enough for
 what it holds:
 
 - **The text box** takes a link or a note. Brain shows what it found (Note, Link, Photo,

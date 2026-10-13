@@ -23,6 +23,8 @@ final class MenuStore {
     var changed = 0
     var edited: Item?
     var purged: String?
+    /// The Add sheet is open. The + in Inbox and Library sets it.
+    var adding = false
 
     func load(session: AppSession) async {
         do {
@@ -33,7 +35,8 @@ final class MenuStore {
     }
 }
 
-/// The app once signed in: three tabs (Inbox, Library, Search) in the system tab bar, and the round Add button above it.
+/// The app once signed in: three tabs (Inbox, Library, Search) in the system tab bar. The + at the
+/// top right of Inbox and Library opens the Add sheet.
 /// Search also asks Brain, so there is one place to find or ask.
 struct MainView: View {
     @Environment(AppSession.self) private var session
@@ -42,7 +45,6 @@ struct MainView: View {
     @State private var inboxPath: [Route] = []
     @State private var libraryPath: [Route] = []
     @State private var searchPath: [Route] = []
-    @State private var adding = false
     @State private var store = MenuStore()
     @State private var screenshots = ScreenshotSync.shared
 
@@ -52,13 +54,11 @@ struct MainView: View {
                 NavigationStack(path: $inboxPath) {
                     ItemList(filter: Filter(), mode: .inbox).routes()
                 }
-                .overlay(alignment: .bottomTrailing) { addButton(inboxPath) }
             }
             Tab("Library", systemImage: "books.vertical", value: AppTab.library) {
                 NavigationStack(path: $libraryPath) {
                     LibraryView().routes()
                 }
-                .overlay(alignment: .bottomTrailing) { addButton(libraryPath) }
             }
             Tab(value: AppTab.search, role: .search) {
                 NavigationStack(path: $searchPath) {
@@ -68,7 +68,7 @@ struct MainView: View {
         }
         .tint(Theme.accent)
         .minimizeTabBarOnScroll()
-        .sheet(isPresented: $adding) {
+        .sheet(isPresented: $store.adding) {
             AddSheet { store.changed += 1; await store.load(session: session) }
         }
         .environment(store)
@@ -92,27 +92,6 @@ struct MainView: View {
         })
     }
 
-    /// The round Add button, above the tab bar. It hides on an item, which has its own toolbar, and in Settings.
-    @ViewBuilder private func addButton(_ path: [Route]) -> some View {
-        switch path.last {
-        case .item, .settings, .ask:
-            EmptyView()
-        default:
-            Button { adding = true } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(Theme.accentInk)
-                    .frame(width: 56, height: 56)
-                    .background(Theme.accentFill, in: Circle())
-                    .shadow(color: .black.opacity(0.22), radius: 12, y: 8)
-            }
-            .accessibilityLabel("Add")
-            .padding(.trailing, 18)
-            .padding(.bottom, 12)
-            .transition(.scale.combined(with: .opacity))
-        }
-    }
-
     private func popToRoot(_ t: AppTab) {
         switch t {
         case .inbox: inboxPath = []
@@ -130,12 +109,22 @@ struct MainView: View {
         case "trash": tab = .library; libraryPath = [.trash]
         case "settings": tab = .library; libraryPath = [.settings]
         case "search", "ask": tab = .search
-        case "add": adding = true
+        case "add": store.adding = true
         case "item": if let first = try? Demo.page().items.first { inboxPath = [.item(first)] }
         default: break
         }
     }
     #endif
+}
+
+/// The + that opens the Add sheet, at the top right of Inbox and Library.
+struct AddButton: View {
+    @Environment(MenuStore.self) private var store
+
+    var body: some View {
+        Button { store.adding = true } label: { Image(systemName: "plus") }
+            .accessibilityLabel("Add")
+    }
 }
 
 extension View {
