@@ -24,7 +24,7 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      # The runner already has the Android SDK (ANDROID_HOME); Gradle fetches any missing parts.
 
       # A real release key, when the repository has one. Without it the release APK is signed
       # with the debug key kept in android/app, so it still installs (and updates over itself).
