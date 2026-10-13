@@ -26,8 +26,6 @@ them. Say a colleague's birthday into a voice memo and Ask Brain can tell you la
 
 **Version 0.4.0 "Choice".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
-The full design is in [design/plan/second-brain-plan.html](design/plan/second-brain-plan.html).
-
 ## What it looks like
 
 The screenshots below use sample data on a local copy of the app.
