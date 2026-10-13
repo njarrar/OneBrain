@@ -1,33 +1,40 @@
 # Brain
 
-Brain is a digital brain: one private place for everything you save. It pulls in
-X bookmarks, Instagram saves, screenshots, Feedly articles and YouTube videos, and keeps
-all of it. Nothing is thrown away.
+**Brain is the one place that remembers everything you have or care about, and an AI that
+knows it all.** Save anything, from anywhere, and ask about it later in plain words, in
+English or Arabic.
 
-An AI reads each new item (Claude, ChatGPT or Gemini, picked in Settings) and gives it:
+> *"What gift should I get my colleague's kids?"* Brain finds the kids' names and ages in a
+> voice memo you recorded months ago, then the toys you screenshotted, the pins you saved
+> and the email about the party, and suggests ideas, with a link to each save it used.
 
-- one of 8 categories
-- a sub-topic inside that category
-- a one-line summary in English
-- 2 to 4 tags
-- its language (English or Arabic)
-- a sensitive flag
+## How the AI works for you
 
-You can then search, filter, read, archive, change the category or tags, add a note, and
-add items by hand. Arabic text shows right to left.
+You pick the AI in Settings: **Claude**, **ChatGPT** or **Gemini**, with your own key.
 
-Brain then brings things back: **Remind me** and a daily **Resurface**, search by meaning,
-**Ask Brain** for answers from your own saves, **Related** saves on each item, and a
-**weekly digest**.
+- **It reads everything.** Bookmarks, posts, emails, pins, notes, screenshots, photos and
+  voice memos. It writes out what was said, reads the text in pictures, and picks out the
+  people, dates and events in each save, such as a birthday or a meeting.
+- **It sorts everything.** Each save gets a category, a sub-topic, a one-line summary, tags,
+  its language and a sensitive flag. Categories aren't fixed: when nothing fits, the AI adds
+  a new one.
+- **It joins things up.** **Ask Brain** works out what to look for, searches your saves by
+  words and by meaning, then searches again for the people it found, so a name in a voice
+  memo links to the screenshots, bookmarks and emails about that person.
+- **It brings things back.** **Remind me**, a daily **Resurface**, **Related** saves on each
+  item, and a **weekly digest** of what you saved.
 
-Voice memos, screenshots, photos and notes get **written out**: Brain writes down what
-was said and reads the text in pictures, and the AI picks out the people and dates in
-them. Say a colleague's birthday into a voice memo and Ask Brain can tell you later.
+## What goes in
 
-Brain can also read your **Gmail** or **Outlook** mail (read only) and bring in your
-**Pinterest** boards. **Ask Brain** joins things up across all of it: ask "what gift should I
-get my colleague's kids?" and it finds the kids' names in a voice memo, then the screenshots,
-bookmarks, pins and emails about them, and suggests ideas.
+- **X** bookmarks, **YouTube** likes and playlists, **Instagram** saves, **Feedly** articles
+  and **Pinterest** boards
+- **Gmail** and **Outlook** mail, read only, your whole history
+- **Screenshots** from your iPhone album, **photos**, **voice memos** and **notes**
+- Anything you share to **Save to Brain** from any iPhone app, or add on the web
+
+Nothing is thrown away. Your data stays in your own cloud account, and the web and iPhone
+apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
+Arabic text shows right to left.
 
 **Version 0.5.0 "Connect".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
@@ -77,6 +84,9 @@ setup steps.*
 
 ## Categories
 
+Brain starts with these eight. The AI adds a new broad category when nothing fits
+(up to 24 in all).
+
 | Category | What goes in it |
 | --- | --- |
 | AI, Code & Dev Tools | LLMs, agents, prompts, coding tools, open source, Mac utilities |
@@ -88,7 +98,7 @@ setup steps.*
 | Viral Threads & Internet Culture | Memes, viral stories, social commentary, humor |
 | Models, Pop Culture & NSFW | Celebrities, models, pop culture, sensitive content |
 
-The categories live in the `categories` table, so you can rename or add them.
+The categories live in the `categories` table, so you can rename or add them too.
 
 ## The web app
 
