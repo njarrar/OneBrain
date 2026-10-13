@@ -54,6 +54,16 @@ it.*
 ![The ⌘K box with word matches and Ask Brain](docs/images/palette.png)
 *⌘K: word matches and things about the same idea, and Ask Brain for a written answer.*
 
+![The Ask Brain page with an answer that links a voice memo, an email, a screenshot, a pin and a bookmark](docs/images/ask.png)
+*Ask Brain. Type a question and the AI answers from your own saves. Here it finds the kids'
+names in a voice memo, the party in an email, then a screenshot, a pin and a bookmark, and
+suggests gifts. "Looked for" shows what it searched, and each number opens the save it used.*
+
+![The Add to Brain page with a link, title, note, tags and a file](docs/images/add.png)
+*Add to Brain on the web: a link, a title (filled in from the link when left empty), a note,
+your own tags split with commas, and a photo or file up to 20 MB. The AI sorts it after you
+save.*
+
 ![A Resurface card with Done, Tomorrow and Keep](docs/images/resurface.png)
 *Resurface: a few saves a day. Keys 1, 2 and 3 answer.*
 
