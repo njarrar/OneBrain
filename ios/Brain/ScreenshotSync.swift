@@ -70,7 +70,7 @@ final class ScreenshotSync {
         }
         status = assets.count > maxPerRun
             ? "Sent \(sent). More left; they go next time."
-            : "Sent \(sent) screenshots."
+            : "Sent \(counted(sent, "screenshot"))."
     }
 
     private func fetch(since: Date?, before: Date?) -> [PHAsset] {

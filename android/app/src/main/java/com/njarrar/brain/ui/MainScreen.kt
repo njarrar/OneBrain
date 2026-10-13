@@ -15,13 +15,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
@@ -58,7 +59,7 @@ import com.njarrar.brain.data.Store
 import com.njarrar.brain.ui.theme.Theme
 import kotlinx.coroutines.launch
 
-/** The app once signed in: four tabs (Inbox, Library, Search, Ask Brain) in a floating bar, and the Add button beside it. */
+/** The app once signed in: three tabs (Inbox, Library, Search) in a floating bar, and the Add button beside it. */
 @Composable
 fun MainScreen() {
     val c = Theme.colors
@@ -71,8 +72,6 @@ fun MainScreen() {
         !it.hasRoute(ItemRoute::class) && !it.hasRoute(SettingsRoute::class) && !it.hasRoute(AISettingsRoute::class)
     } ?: true
     var adding by remember { mutableStateOf(false) }
-    // The Inbox's mic opens Search and starts listening.
-    var listen by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { MenuStore.load() }
@@ -93,15 +92,9 @@ fun MainScreen() {
                 enterTransition = { fadeIn(tween(180)) },
                 exitTransition = { fadeOut(tween(180)) },
             ) {
-                composable<InboxRoute> {
-                    ItemList(Filter(), ListMode.Inbox, openSearch = { voice ->
-                        listen = voice
-                        nav.tab(Tab.Search)
-                    })
-                }
+                composable<InboxRoute> { ItemList(Filter(), ListMode.Inbox) }
                 composable<LibraryRoute> { LibraryScreen() }
-                composable<SearchRoute> { SearchScreen(listen = listen, onListen = { listen = false }) }
-                composable<AskRoute> { AskHome() }
+                composable<SearchRoute> { SearchScreen() }
                 composable<ItemRoute> { e -> ItemScreen(e.toRoute<ItemRoute>().id) }
                 composable<Filter> { e -> ItemList(e.toRoute<Filter>(), ListMode.List) }
                 composable<TrashRoute> { ItemList(Filter(view = "trash"), ListMode.Trash) }
@@ -153,18 +146,18 @@ fun MainScreen() {
     }
 }
 
-/** The four-tab pill. Tapping the open tab again goes back to its first screen. */
+/** The three-tab pill. Tapping the open tab again goes back to its first screen. */
 @Composable
 private fun TabBar(tab: Tab, onPick: (Tab) -> Unit, modifier: Modifier = Modifier) {
     val c = Theme.colors
     Row(
-        modifier.height(62.dp).shadow(14.dp, CircleShape).clip(CircleShape).background(c.card).padding(horizontal = 6.dp),
+        modifier.heightIn(min = 62.dp).height(IntrinsicSize.Min).shadow(14.dp, CircleShape).clip(CircleShape).background(c.card).padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tab.entries.forEach { t ->
             val on = t == tab
             Column(
-                Modifier.weight(1f).fillMaxHeight().padding(vertical = 6.dp).clip(RoundedCornerShape(26.dp))
+                Modifier.weight(1f).fillMaxHeight().padding(vertical = 6.dp).clip(CircleShape)
                     .background(if (on) c.ink.copy(alpha = 0.06f) else c.card)
                     .clickable { onPick(t) },
                 horizontalAlignment = Alignment.CenterHorizontally,

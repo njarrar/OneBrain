@@ -25,7 +25,7 @@ sealed class Detected {
         get() = when (this) {
             is Link -> if (site == "link") "Link" else Sources.label(site)
             Note -> "Note"
-            is Pictures -> if (count == 1) "Photo" else "$count photos"
+            is Pictures -> if (count == 1) "Photo" else counted(count, "photo")
             Voice -> "Voice memo"
             Empty -> ""
         }
@@ -73,3 +73,6 @@ sealed class Detected {
 /** Tags typed as "a, b, #c" into a clean list. */
 fun parseTags(text: String): List<String> =
     text.split(',', '\n').map { it.trim().trim('#').trim() }.filter { it.isNotEmpty() }
+
+/** "1 save", "3 saves": a count with its noun in the right number. */
+fun counted(n: Int, one: String, many: String = one + "s"): String = "%,d %s".format(n, if (n == 1) one else many)

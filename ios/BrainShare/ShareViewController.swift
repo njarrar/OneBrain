@@ -221,10 +221,10 @@ struct ShareView: View {
                 Capsule().fill(Theme.lineStrong).frame(width: 36, height: 5).frame(maxWidth: .infinity)
                 HStack(spacing: 10) {
                     Image("Pocket").resizable().frame(width: 32, height: 32).clipShape(RoundedRectangle(cornerRadius: 8))
-                    Text("Save to Brain").font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.ink)
+                    Text("Save to Brain").font(.ui(17, weight: .semibold)).foregroundStyle(Theme.ink)
                     Spacer()
                     Button { model.close() } label: {
-                        Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.soft)
+                        Image(systemName: "xmark").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.soft)
                             .frame(width: 32, height: 32).background(Theme.fill, in: Circle())
                     }
                     .accessibilityLabel("Close")
@@ -237,7 +237,7 @@ struct ShareView: View {
                     if canSave { content }
                 case .saved:
                     Label(savedLabel, systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.ui(17, weight: .semibold))
                         .foregroundStyle(Theme.ok).frame(maxWidth: .infinity, minHeight: 80)
                 default:
                     content
@@ -256,7 +256,7 @@ struct ShareView: View {
     @ViewBuilder private var content: some View {
         preview
         TextField("Add a note (optional)", text: $model.note, axis: .vertical)
-            .font(.system(size: 15))
+            .font(.ui(15))
             .lineLimit(1...5)
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 14).padding(.vertical, 12)
@@ -264,11 +264,11 @@ struct ShareView: View {
             .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
         if model.tagging {
             TextField("Tags, split with commas", text: $model.tagText)
-                .font(.system(size: 15))
+                .font(.ui(15))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .padding(.horizontal, 12).frame(height: 40)
-                .background(Theme.fill, in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal, 12).frame(minHeight: 40)
+                .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
         }
         CaptureChips(sort: $model.sort, tagging: $model.tagging)
         if case .saving(let done, let total) = model.state, total > 1 {
@@ -280,7 +280,7 @@ struct ShareView: View {
             Group {
                 if case .saving = model.state { ProgressView().tint(Theme.accentInk) } else { Text("Save to inbox") }
             }
-            .font(.system(size: 17, weight: .semibold))
+            .font(.ui(17, weight: .semibold))
             .foregroundStyle(Theme.accentInk)
             .frame(maxWidth: .infinity, minHeight: 52)
             .background(Theme.accentFill, in: Capsule())
@@ -293,24 +293,24 @@ struct ShareView: View {
     @ViewBuilder private var preview: some View {
         if let audio = model.audio {
             HStack(spacing: 10) {
-                Image(systemName: "waveform").font(.system(size: 20)).foregroundStyle(Theme.accent)
+                Image(systemName: "waveform").font(.ui(20)).foregroundStyle(Theme.accent)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(audio.filename).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
+                    Text(audio.filename).font(.ui(15, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(1)
                     Text("Brain keeps the sound, writes it out and picks out names and dates.")
-                        .font(.system(size: 12)).foregroundStyle(Theme.faint)
+                        .font(.ui(12)).foregroundStyle(Theme.faint)
                 }
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.line))
         } else if model.url == nil, let first = model.images.first, let img = UIImage(data: first) {
             Image(uiImage: img).resizable().scaledToFill()
                 .frame(maxWidth: .infinity).frame(height: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(alignment: .topTrailing) {
                     if model.images.count > 1 {
                         Text("\(model.images.count) pictures, each saved on its own")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.ui(12, weight: .semibold))
                             .foregroundStyle(Theme.accentInk)
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Theme.accentFill, in: Capsule())
@@ -321,19 +321,19 @@ struct ShareView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
                     SourceMark(source: source, size: 15).foregroundStyle(Theme.ink2)
-                    Text(model.title ?? Sources.label(source)).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                    Text(model.title ?? Sources.label(source)).font(.ui(14, weight: .semibold)).lineLimit(1)
                     if let host {
-                        Text(host).font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
+                        Text(host).font(.ui(12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
                     }
                 }
                 if let body = model.text ?? model.url {
-                    Text(body).font(.system(size: 15)).lineSpacing(3).lineLimit(3).foregroundStyle(Theme.ink2)
+                    Text(body).font(.ui(15)).lineSpacing(3).lineLimit(3).foregroundStyle(Theme.ink2)
                 }
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 14).padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.line))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.line))
         }
     }
 

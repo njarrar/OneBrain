@@ -90,6 +90,6 @@ final class LocalUpload {
         }
         // Everything is on the web now, so the phone copy goes.
         try? FileManager.default.removeItem(at: folder)
-        status = rows.isEmpty ? nil : "Sent \(sent) saves from this phone to the cloud."
+        status = rows.isEmpty ? nil : "Sent \(counted(sent, "save")) from this phone to the cloud."
     }
 }

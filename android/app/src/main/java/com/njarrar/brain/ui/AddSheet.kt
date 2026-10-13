@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -63,6 +62,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -120,6 +120,9 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val recorder = remember { Recorder(context.applicationContext) }
+    val haptic = LocalHapticFeedback.current
+    // The camera button only greys out on a phone with no camera at all.
+    val hasCamera = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
     var cameraFile by remember { mutableStateOf<Uri?>(null) }
 
     val url = Detected.firstUrl(text)
@@ -223,6 +226,7 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                     // A link or a note (a link typed beside a memo is saved as its own item too).
                     Api.save(url, note.ifEmpty { null }, options = options)
                 }
+                haptic.confirm()
                 saved()
                 close()
             } catch (e: Exception) {
@@ -268,8 +272,8 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                     modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
                 Box(
-                    Modifier.height(34.dp).clip(CircleShape).background(c.accentFill).alpha(if (canSave || saving) 1f else 0.45f)
-                        .clickable(enabled = canSave) { save() }.padding(horizontal = 14.dp),
+                    Modifier.heightIn(min = 34.dp).clip(CircleShape).background(c.accentFill).alpha(if (canSave || saving) 1f else 0.45f)
+                        .clickable(enabled = canSave) { save() }.padding(horizontal = 14.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (saving) Spinner(16.dp, c.accentInk)
@@ -296,7 +300,7 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
             if (pictures.isNotEmpty()) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     pictures.toList().forEach { pic ->
-                        Box(Modifier.size(72.dp).clip(RoundedCornerShape(10.dp)).background(c.raised)) {
+                        Box(Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)).background(c.raised)) {
                             pic.thumb?.let { Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.size(72.dp)) }
                             Icon(
                                 Icons.Filled.Cancel, "Remove picture", tint = Color.White,
@@ -319,18 +323,24 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                 )
             }
             if (tagging) {
-                BasicTextField(
-                    value = tagText, onValueChange = { tagText = it }, singleLine = true,
-                    textStyle = TextStyle(fontSize = 15.sp, color = c.ink), cursorBrush = SolidColor(c.accentFill),
-                    modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(10.dp)).background(c.fill)
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    decorationBox = { inner ->
-                        Box {
-                            if (tagText.isEmpty()) Text("Tags, split with commas", fontSize = 15.sp, color = c.faint)
-                            inner()
-                        }
-                    },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Tags", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = c.soft, modifier = Modifier.padding(start = 4.dp))
+                    BasicTextField(
+                        value = tagText, onValueChange = { tagText = it }, singleLine = true,
+                        textStyle = TextStyle(fontSize = 15.sp, color = c.ink), cursorBrush = SolidColor(c.accentFill),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp).clip(RoundedCornerShape(12.dp)).background(c.fill)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        decorationBox = { inner ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("#", fontSize = 15.sp, color = c.soft, modifier = Modifier.padding(end = 6.dp))
+                                Box(Modifier.weight(1f)) {
+                                    if (tagText.isEmpty()) Text("Tags, split with commas", fontSize = 15.sp, color = c.faint)
+                                    inner()
+                                }
+                            }
+                        },
+                    )
+                }
             }
             CaptureChips(sort, { sort = it }, tagging, { tagging = it })
             error?.let { Text(it, fontSize = 13.sp, color = c.bad) }
@@ -340,7 +350,7 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                 RoundIcon(Icons.Outlined.Photo, "Photos", enabled = pictures.size < MAX_PICTURES) {
                     photos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
-                RoundIcon(Icons.Outlined.PhotoCamera, "Camera", enabled = pictures.size < MAX_PICTURES) { openCamera() }
+                RoundIcon(Icons.Outlined.PhotoCamera, "Camera", enabled = hasCamera && pictures.size < MAX_PICTURES) { openCamera() }
                 RoundIcon(
                     if (recorder.recording) Icons.Filled.Stop else Icons.Outlined.Mic,
                     if (recorder.recording) "Stop" else "Record a voice memo",
@@ -350,7 +360,7 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                 Spacer(Modifier.weight(1f))
                 if (detected != Detected.Empty) {
                     Row(
-                        Modifier.height(26.dp).clip(RoundedCornerShape(6.dp)).background(c.raised).padding(horizontal = 9.dp),
+                        Modifier.heightIn(min = 26.dp).clip(RoundedCornerShape(6.dp)).background(c.raised).padding(horizontal = 9.dp, vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
@@ -381,7 +391,7 @@ private fun LinkCard(url: String, p: LinkPreview) {
         p.image?.let {
             AsyncImage(
                 model = it, contentDescription = null, contentScale = ContentScale.Crop,
-                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)).background(c.raised),
+                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(12.dp)).background(c.raised),
             )
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {

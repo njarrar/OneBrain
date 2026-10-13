@@ -12,7 +12,7 @@ enum Route: Hashable {
     case ask(String)
 }
 
-enum Tab: Hashable { case inbox, library, search, ask }
+enum AppTab: Hashable { case inbox, library, search }
 
 /// The Library counts, shared by every screen. `changed` goes up after an add, so lists reload;
 /// `edited` and `purged` tell lists about a change made on an item's own screen.
@@ -33,78 +33,41 @@ final class MenuStore {
     }
 }
 
-/// The app once signed in: four tabs (Inbox, Library, Search, Ask Brain) under a floating glass bar, and the Add button beside it.
+/// The app once signed in: three tabs (Inbox, Library, Search) in the system tab bar, and the round Add button above it.
+/// Search also asks Brain, so there is one place to find or ask.
 struct MainView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.scenePhase) private var phase
-    @State private var tab: Tab = .inbox
+    @State private var tab: AppTab = .inbox
     @State private var inboxPath: [Route] = []
     @State private var libraryPath: [Route] = []
     @State private var searchPath: [Route] = []
-    @State private var askPath: [Route] = []
     @State private var adding = false
-    @State private var listening = false
     @State private var store = MenuStore()
     @State private var screenshots = ScreenshotSync.shared
 
     var body: some View {
-        TabView(selection: $tab) {
-            NavigationStack(path: $inboxPath) {
-                ItemList(filter: Filter(), mode: .inbox, openSearch: { listen in
-                    listening = listen
-                    tab = .search
-                })
-                .routes()
-            }
-            .tag(Tab.inbox)
-            .toolbar(.hidden, for: .tabBar)
-
-            NavigationStack(path: $libraryPath) {
-                LibraryView().routes()
-            }
-            .tag(Tab.library)
-            .toolbar(.hidden, for: .tabBar)
-
-            NavigationStack(path: $searchPath) {
-                SearchView(listening: $listening).routes()
-            }
-            .tag(Tab.search)
-            .toolbar(.hidden, for: .tabBar)
-
-            NavigationStack(path: $askPath) {
-                AskHome(path: $askPath).routes()
-            }
-            .tag(Tab.ask)
-            .toolbar(.hidden, for: .tabBar)
-        }
-        .overlay(alignment: .bottom) {
-            if showBar {
-                HStack(alignment: .bottom, spacing: 14) {
-                    TabBar(tab: $tab, reselect: popToRoot)
-                    Button { adding = true } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 26, weight: .medium))
-                            .foregroundStyle(Theme.accentInk)
-                            .frame(width: 62, height: 62)
-                            .background(Theme.accentFill, in: Circle())
-                            .shadow(color: .black.opacity(0.22), radius: 14, y: 10)
-                    }
-                    .accessibilityLabel("Add")
+        TabView(selection: pick) {
+            Tab("Inbox", systemImage: "tray", value: AppTab.inbox) {
+                NavigationStack(path: $inboxPath) {
+                    ItemList(filter: Filter(), mode: .inbox).routes()
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 4)
-                .background(alignment: .bottom) {
-                    // Rows fade out under the bar instead of showing through it.
-                    LinearGradient(colors: [Theme.bg.opacity(0), Theme.bg.opacity(0.9), Theme.bg],
-                                   startPoint: .top, endPoint: .bottom)
-                        .frame(height: 120)
-                        .offset(y: 40)
-                        .allowsHitTesting(false)
+                .overlay(alignment: .bottomTrailing) { addButton(inboxPath) }
+            }
+            Tab("Library", systemImage: "books.vertical", value: AppTab.library) {
+                NavigationStack(path: $libraryPath) {
+                    LibraryView().routes()
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .overlay(alignment: .bottomTrailing) { addButton(libraryPath) }
+            }
+            Tab(value: AppTab.search, role: .search) {
+                NavigationStack(path: $searchPath) {
+                    SearchView(path: $searchPath).routes()
+                }
             }
         }
-        .animation(.snappy(duration: 0.25), value: showBar)
+        .tint(Theme.accent)
+        .minimizeTabBarOnScroll()
         .sheet(isPresented: $adding) {
             AddSheet { store.changed += 1; await store.load(session: session) }
         }
@@ -121,29 +84,40 @@ struct MainView: View {
         }
     }
 
-    private var path: [Route] {
-        switch tab {
-        case .inbox: return inboxPath
-        case .library: return libraryPath
-        case .search: return searchPath
-        case .ask: return askPath
-        }
+    /// Tapping the open tab again goes back to its first screen.
+    private var pick: Binding<AppTab> {
+        Binding(get: { tab }, set: { new in
+            if new == tab { popToRoot(new) }
+            tab = new
+        })
     }
 
-    /// The bar hides on an item, which has its own toolbar, and in Settings.
-    private var showBar: Bool {
+    /// The round Add button, above the tab bar. It hides on an item, which has its own toolbar, and in Settings.
+    @ViewBuilder private func addButton(_ path: [Route]) -> some View {
         switch path.last {
-        case .item, .settings: return false
-        default: return true
+        case .item, .settings, .ask:
+            EmptyView()
+        default:
+            Button { adding = true } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(Theme.accentInk)
+                    .frame(width: 56, height: 56)
+                    .background(Theme.accentFill, in: Circle())
+                    .shadow(color: .black.opacity(0.22), radius: 12, y: 8)
+            }
+            .accessibilityLabel("Add")
+            .padding(.trailing, 18)
+            .padding(.bottom, 12)
+            .transition(.scale.combined(with: .opacity))
         }
     }
 
-    private func popToRoot(_ t: Tab) {
+    private func popToRoot(_ t: AppTab) {
         switch t {
         case .inbox: inboxPath = []
         case .library: libraryPath = []
         case .search: searchPath = []
-        case .ask: askPath = []
         }
     }
 
@@ -155,8 +129,7 @@ struct MainView: View {
         case "library": tab = .library
         case "trash": tab = .library; libraryPath = [.trash]
         case "settings": tab = .library; libraryPath = [.settings]
-        case "search": tab = .search
-        case "ask": tab = .ask
+        case "search", "ask": tab = .search
         case "add": adding = true
         case "item": if let first = try? Demo.page().items.first { inboxPath = [.item(first)] }
         default: break
@@ -165,42 +138,14 @@ struct MainView: View {
     #endif
 }
 
-/// The four-tab glass pill. Tapping the open tab again goes back to its first screen.
-private struct TabBar: View {
-    @Binding var tab: Tab
-    var reselect: (Tab) -> Void
-
-    var body: some View {
-        HStack(spacing: 0) {
-            item(.inbox, "Inbox", "tray", "tray.fill")
-            item(.library, "Library", "books.vertical", "books.vertical.fill")
-            item(.search, "Search", "magnifyingglass", "magnifyingglass")
-            item(.ask, "Ask", "sparkles", "sparkles")
+extension View {
+    /// On iOS 26 the tab bar shrinks while you scroll down a list.
+    @ViewBuilder func minimizeTabBarOnScroll() -> some View {
+        if #available(iOS 26.0, *) {
+            self.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
         }
-        .padding(.horizontal, 6)
-        .frame(height: 62)
-        .frame(maxWidth: .infinity)
-        .glassBar()
-    }
-
-    private func item(_ t: Tab, _ label: String, _ icon: String, _ picked: String) -> some View {
-        let on = tab == t
-        return Button {
-            if on { reselect(t) } else { tab = t }
-        } label: {
-            VStack(spacing: 2) {
-                Image(systemName: on ? picked : icon).font(.system(size: 21))
-                    .frame(height: 25)
-                Text(label).font(.system(size: 11, weight: on ? .semibold : .medium))
-            }
-            .foregroundStyle(on ? Theme.accent : Theme.ink2)
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity)
-            .background(on ? Theme.ink.opacity(0.06) : .clear, in: Capsule())
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 

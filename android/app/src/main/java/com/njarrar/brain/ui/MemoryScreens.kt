@@ -23,41 +23,28 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowCircleUp
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -74,7 +61,6 @@ import com.njarrar.brain.data.Item
 import com.njarrar.brain.data.MenuStore
 import com.njarrar.brain.data.ResurfaceCard
 import com.njarrar.brain.data.SignedOutException
-import com.njarrar.brain.data.Store
 import com.njarrar.brain.data.friendly
 import com.njarrar.brain.ui.theme.Theme
 import kotlinx.coroutines.launch
@@ -305,8 +291,8 @@ fun DigestScreen() {
     MemoryPage("Weekly digest") {
         Text("Your AI writes one every Sunday evening from what you saved that week.", fontSize = 15.sp, color = c.soft)
         Row(
-            Modifier.height(40.dp).clip(CircleShape).background(c.accentBG).clickable(enabled = !m.writing) { m.make() }
-                .padding(horizontal = 14.dp),
+            Modifier.heightIn(min = 40.dp).clip(CircleShape).background(c.accentBG).clickable(enabled = !m.writing) { m.make() }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -341,102 +327,6 @@ fun DigestScreen() {
 }
 
 // Ask Brain
-
-private val examples = listOf(
-    "What gift should I get my colleague's kids?",
-    "Whose birthday is coming up this month?",
-    "What did I save about places to visit in Tunis?",
-    "What did my landlord email me about the lease?",
-)
-
-/**
- * The Ask tab: type or say a question, or tap an example. Brain links up notes, voice memos,
- * screenshots, bookmarks, emails and pins to answer it.
- */
-@Composable
-fun AskHome() {
-    val c = Theme.colors
-    val nav = LocalNav.current
-    val focus = LocalFocusManager.current
-    var text by rememberSaveable { mutableStateOf("") }
-    fun ask(question: String) {
-        val q = question.trim()
-        if (q.isEmpty()) return
-        focus.clearFocus()
-        Store.remember(q)
-        text = ""
-        nav.go(AnswerRoute(q.take(500)))
-    }
-    val dictation = rememberDictation { spoken -> ask(spoken) }
-    LaunchedEffect(dictation.text) { if (dictation.text.isNotEmpty()) text = dictation.text }
-    val empty = text.isBlank()
-
-    Column(
-        Modifier.fillMaxSize().background(c.bg).verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = barSpace(110.dp)),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        ScreenTitle("Ask Brain")
-        Text(
-            "Answers from your own saves, and joins them up: a name in a voice memo, a screenshot, a bookmark, an email.",
-            fontSize = 14.sp, color = c.soft,
-        )
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.fill).padding(start = 12.dp, top = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicTextField(
-                value = text, onValueChange = { text = it }, singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp, color = c.ink), cursorBrush = SolidColor(c.accentFill),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { ask(text) }),
-                modifier = Modifier.weight(1f).padding(vertical = 8.dp),
-                decorationBox = { inner ->
-                    Box {
-                        if (text.isEmpty()) Text("Ask anything you've saved", fontSize = 16.sp, color = c.faint, maxLines = 1)
-                        inner()
-                    }
-                },
-            )
-            Box(Modifier.size(40.dp).clip(CircleShape).clickable { dictation.toggle() }, contentAlignment = Alignment.Center) {
-                Icon(
-                    if (dictation.listening) Icons.Filled.Mic else Icons.Outlined.Mic,
-                    if (dictation.listening) "Stop listening" else "Ask by voice",
-                    tint = if (dictation.listening) c.accent else c.faint, modifier = Modifier.size(21.dp),
-                )
-            }
-            Box(Modifier.size(40.dp).clip(CircleShape).clickable(enabled = !empty) { ask(text) }, contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.ArrowCircleUp, "Ask", tint = if (empty) c.faint else c.accent, modifier = Modifier.size(28.dp))
-            }
-        }
-        dictation.error?.let { Text(it, fontSize = 13.sp, color = c.bad) }
-        if (Store.recent.isNotEmpty()) {
-            GroupCaption("Recent")
-            Questions(Store.recent) { ask(it) }
-        }
-        GroupCaption("Try")
-        Questions(examples) { ask(it) }
-    }
-}
-
-@Composable
-private fun Questions(list: List<String>, onAsk: (String) -> Unit) {
-    val c = Theme.colors
-    OutlineBox {
-        list.forEachIndexed { n, q ->
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { onAsk(q) }.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(Icons.Outlined.AutoAwesome, null, tint = c.accent, modifier = Modifier.size(15.dp))
-                Text(q, fontSize = 15.sp, color = c.ink, modifier = Modifier.weight(1f))
-                Chevron()
-            }
-            if (n < list.size - 1) RowDivider(start = 14.dp)
-        }
-    }
-}
 
 class AnswerModel(question: String) : ViewModel() {
     var answer by mutableStateOf<Answer?>(null)

@@ -175,7 +175,7 @@ private fun VideoPlayer(file: ItemDetail.FileRef) {
         }
     }
     Box(
-        Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(14.dp)).background(c.raised),
+        Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(16.dp)).background(c.raised),
         contentAlignment = Alignment.Center,
     ) {
         val p = path

@@ -13,9 +13,8 @@ struct AISettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                Text("AI").font(.system(size: 32, weight: .bold)).tracking(-0.3).padding(.bottom, 6)
                 Text("Sorts your saves, picks out names and dates from voice memos and pictures, answers Ask Brain and writes the weekly digest. Keys are stored encrypted on the server and shown only by their last four characters.")
-                    .font(.system(size: 13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
+                    .font(.ui(13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
 
                 if let state {
                     GroupCaption("In use")
@@ -38,7 +37,9 @@ struct AISettingsView: View {
             .padding(.bottom, 40)
         }
         .background(Theme.grouped)
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("AI")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar(.hidden, for: .tabBar)
         .scrollDismissesKeyboard(.interactively)
         .task { await apply { try await API.shared.ai() } }
     }
@@ -60,7 +61,7 @@ struct AISettingsView: View {
                     }
                     .disabled((keys[p.id] ?? "").trimmingCharacters(in: .whitespaces).isEmpty || busy != nil)
                 }
-                .font(.system(size: 16))
+                .font(.ui(16))
                 .padding(.horizontal, 14).frame(minHeight: 50)
                 .overlay(alignment: .bottom) { Rectangle().fill(Theme.divider).frame(height: 1) }
                 let editedModel = (models[p.id] ?? p.model).trimmingCharacters(in: .whitespaces)
@@ -68,7 +69,7 @@ struct AISettingsView: View {
                     Text("Model").foregroundStyle(Theme.ink)
                     TextField(p.defaultModel, text: Binding(get: { models[p.id] ?? p.model }, set: { models[p.id] = $0 }))
                         .multilineTextAlignment(.trailing)
-                        .font(.system(size: 15, design: .monospaced))
+                        .font(.ui(15, design: .monospaced))
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .onSubmit {
                             Task { await apply(p.id) { try await API.shared.setAI(modelOf: p.id, model: editedModel.isEmpty ? nil : editedModel) } }
@@ -80,7 +81,7 @@ struct AISettingsView: View {
                         .disabled(busy != nil)
                     }
                 }
-                .font(.system(size: 16))
+                .font(.ui(16))
                 .padding(.horizontal, 14).frame(minHeight: 50)
                 .overlay(alignment: .bottom) { Rectangle().fill(Theme.divider).frame(height: 1) }
                 HStack(spacing: 16) {
@@ -101,10 +102,10 @@ struct AISettingsView: View {
                     }
                     Spacer()
                     if let url = URL(string: p.keyUrl) {
-                        Link("Get a key", destination: url).font(.system(size: 14))
+                        Link("Get a key", destination: url).font(.ui(14))
                     }
                 }
-                .font(.system(size: 16))
+                .font(.ui(16))
                 .padding(.horizontal, 14).frame(minHeight: 50)
             }
             .groupBox()

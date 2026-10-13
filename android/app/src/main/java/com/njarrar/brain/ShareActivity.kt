@@ -65,12 +65,14 @@ import com.njarrar.brain.data.KeyStore
 import com.njarrar.brain.data.PickedAudio
 import com.njarrar.brain.data.Pictures
 import com.njarrar.brain.data.SaveOptions
+import com.njarrar.brain.data.counted
 import com.njarrar.brain.data.Sources
 import com.njarrar.brain.data.friendly
 import com.njarrar.brain.data.mimeOf
 import com.njarrar.brain.data.parseTags
 import com.njarrar.brain.ui.CaptureChips
 import com.njarrar.brain.ui.SourceMark
+import com.njarrar.brain.ui.confirm
 import com.njarrar.brain.ui.Spinner
 import com.njarrar.brain.ui.theme.BrainTheme
 import com.njarrar.brain.ui.theme.Theme
@@ -165,6 +167,7 @@ private sealed class ShareState {
 private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
     val c = Theme.colors
     val context = androidx.compose.ui.platform.LocalContext.current
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     var state by remember {
         mutableStateOf<ShareState>(
@@ -217,6 +220,7 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
                     Api.save(shared.url, body.ifEmpty { null }, if (shared.url == null) null else shared.title, options)
                 }
                 state = ShareState.Saved
+                haptic.confirm()
                 delay(700)
                 onClose()
             } catch (e: Exception) {
@@ -261,7 +265,7 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
                     Text(
                         "  " + when {
                             shared.media != null -> "Saved. Brain is listening to it now"
-                            shared.url == null && shared.images.size > 1 -> "Saved ${shared.images.size} pictures"
+                            shared.url == null && shared.images.size > 1 -> "Saved " + counted(shared.images.size, "picture")
                             else -> "Saved to your inbox"
                         },
                         fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = c.ok,
@@ -285,18 +289,24 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
                             },
                         )
                         if (tagging) {
-                            BasicTextField(
-                                value = tagText, onValueChange = { tagText = it }, singleLine = true,
-                                textStyle = TextStyle(fontSize = 15.sp, color = c.ink), cursorBrush = SolidColor(c.accentFill),
-                                modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(10.dp)).background(c.fill)
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                decorationBox = { inner ->
-                                    Box {
-                                        if (tagText.isEmpty()) Text("Tags, split with commas", fontSize = 15.sp, color = c.faint)
-                                        inner()
-                                    }
-                                },
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Tags", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = c.soft, modifier = Modifier.padding(start = 4.dp))
+                                BasicTextField(
+                                    value = tagText, onValueChange = { tagText = it }, singleLine = true,
+                                    textStyle = TextStyle(fontSize = 15.sp, color = c.ink), cursorBrush = SolidColor(c.accentFill),
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp).clip(RoundedCornerShape(12.dp)).background(c.fill)
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    decorationBox = { inner ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("#", fontSize = 15.sp, color = c.soft, modifier = Modifier.padding(end = 6.dp))
+                                            Box(Modifier.weight(1f)) {
+                                                if (tagText.isEmpty()) Text("Tags, split with commas", fontSize = 15.sp, color = c.faint)
+                                                inner()
+                                            }
+                                        }
+                                    },
+                                )
+                            }
                         }
                         CaptureChips(sort, { sort = it }, tagging, { tagging = it })
                         if (s is ShareState.Saving && s.of > 1) {
@@ -307,7 +317,7 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
                             )
                         }
                         Box(
-                            Modifier.fillMaxWidth().height(52.dp).clip(CircleShape).background(c.accentFill)
+                            Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(CircleShape).background(c.accentFill)
                                 .clickable(enabled = canSave) { save() },
                             contentAlignment = Alignment.Center,
                         ) {
@@ -326,7 +336,7 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
 private fun Preview(shared: Shared) {
     val c = Theme.colors
     val context = androidx.compose.ui.platform.LocalContext.current
-    val box = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).border(1.dp, c.line, RoundedCornerShape(14.dp))
+    val box = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, c.line, RoundedCornerShape(16.dp))
     when {
         shared.media != null -> Row(
             box.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -349,11 +359,11 @@ private fun Preview(shared: Shared) {
                     Pictures.jpeg(context, shared.images.first())?.let { Pictures.thumbnail(it, 600) }?.asImageBitmap()
                 }
             }
-            Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(14.dp)).background(c.raised)) {
+            Box(Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(16.dp)).background(c.raised)) {
                 thumb?.let { Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                 if (shared.images.size > 1) {
                     Text(
-                        "${shared.images.size} pictures, each saved on its own", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                        counted(shared.images.size, "picture") + ", each saved on its own", fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
                         color = c.accentInk,
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).clip(CircleShape).background(c.accentFill)
                             .padding(horizontal = 8.dp, vertical = 4.dp),

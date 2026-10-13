@@ -20,25 +20,15 @@ struct SourceMark: View {
     }
 }
 
-/// The 36 pt rounded tile at the start of a row, with the unread dot on its corner.
+/// The 36 pt rounded tile at the start of a row.
 struct SourceTile: View {
     let source: String
-    var unread = false
 
     var body: some View {
         SourceMark(source: source)
             .foregroundStyle(Theme.ink2)
             .frame(width: 36, height: 36)
-            .background(Theme.fill, in: RoundedRectangle(cornerRadius: 10))
-            .overlay(alignment: .topTrailing) {
-                if unread {
-                    Circle().fill(Theme.accentFill)
-                        .frame(width: 11, height: 11)
-                        .overlay(Circle().stroke(Theme.bg, lineWidth: 2))
-                        .offset(x: 3, y: -3)
-                        .accessibilityLabel("Unread")
-                }
-            }
+            .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -52,7 +42,7 @@ struct CategoryLabel: View {
             RoundedRectangle(cornerRadius: 2).fill(Theme.swatch(color)).frame(width: 7, height: 7)
             Text(name).lineLimit(1)
         }
-        .font(.system(size: 12.5))
+        .font(.ui(12.5))
         .foregroundStyle(Theme.soft)
     }
 }
@@ -63,24 +53,29 @@ struct Chip: View {
     var icon: AnyView?
     var on = false
     var height: CGFloat = 32
+    /// Shows only the icon, for a logo that is already the name (X). The label is still read out.
+    var iconOnly = false
 
-    init(_ label: String, symbol: String? = nil, source: String? = nil, on: Bool = false, height: CGFloat = 32) {
+    init(_ label: String, symbol: String? = nil, source: String? = nil, on: Bool = false, height: CGFloat = 32, iconOnly: Bool = false) {
         self.label = label
         self.on = on
         self.height = height
+        self.iconOnly = iconOnly && (source != nil || symbol != nil)
         if let source { icon = AnyView(SourceMark(source: source, size: 15)) }
-        else if let symbol { icon = AnyView(Image(systemName: symbol).font(.system(size: 14))) }
+        else if let symbol { icon = AnyView(Image(systemName: symbol).font(.ui(14))) }
     }
 
     var body: some View {
         HStack(spacing: 6) {
             if let icon { icon }
-            Text(label).lineLimit(1)
+            if !iconOnly { Text(label).lineLimit(1) }
         }
-        .font(.system(size: 14, weight: .medium))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .font(.ui(14, weight: .medium))
         .foregroundStyle(on ? Theme.accent : Theme.ink2)
         .padding(.horizontal, 12)
-        .frame(height: height)
+        .frame(minHeight: height)
         .background(on ? Theme.accentBG : Theme.fill, in: Capsule())
     }
 }
@@ -124,7 +119,7 @@ struct GroupCaption: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.soft)
+        Text(text).font(.ui(13, weight: .medium)).foregroundStyle(Theme.soft)
             .padding(.horizontal, 4).padding(.top, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -138,24 +133,27 @@ struct GroupRow<Leading: View>: View {
     var chevron = true
     var divider = true
     var minHeight: CGFloat = 48
+    /// Long names (categories) can take two lines.
+    var lines = 1
     @ViewBuilder var leading: () -> Leading
 
     var body: some View {
         HStack(spacing: 12) {
             leading()
-            Text(label).foregroundStyle(Theme.ink).lineLimit(1)
+            Text(label).foregroundStyle(Theme.ink).lineLimit(lines).multilineTextAlignment(.leading)
             Spacer(minLength: 8)
             if let value {
                 Text(value)
-                    .font(mono ? .system(size: 13, design: .monospaced) : .system(size: 14))
+                    .font(mono ? .ui(13, design: .monospaced) : .ui(14))
                     .foregroundStyle(Theme.faint)
             }
             if chevron {
-                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.chevron)
+                Image(systemName: "chevron.right").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.chevron)
             }
         }
-        .font(.system(size: 16))
+        .font(.ui(16))
         .padding(.horizontal, 14)
+        .padding(.vertical, lines > 1 ? 6 : 0)
         .frame(minHeight: minHeight)
         .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
@@ -246,36 +244,31 @@ enum Detected: Equatable {
     }
 }
 
-/// "Let Claude sort" and "Add tags", shared by the Add sheet and Save to Brain.
+/// "Let AI sort" and "Add tags", shared by the Add sheet and Save to Brain.
 struct CaptureChips: View {
     @Binding var sort: Bool
     @Binding var tagging: Bool
 
     var body: some View {
         HStack(spacing: 8) {
-            Button { sort.toggle() } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkle").foregroundStyle(sort ? Theme.accent : Theme.faint)
-                    Text("Let AI sort").strikethrough(!sort, color: Theme.faint)
-                }
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(sort ? Theme.ink : Theme.soft)
-                .padding(.horizontal, 12).frame(height: 34)
-                .background(Theme.fill, in: Capsule())
-            }
-            .accessibilityValue(sort ? "On" : "Off")
-            Button { tagging.toggle() } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "number")
-                    Text("Add tags")
-                }
-                .font(.system(size: 14, weight: tagging ? .medium : .regular))
-                .foregroundStyle(tagging ? Theme.accent : Theme.soft)
-                .padding(.horizontal, 12).frame(height: 34)
-                .background(tagging ? Theme.accentBG : Theme.fill, in: Capsule())
-            }
+            Button { sort.toggle() } label: { chip("Let AI sort", "sparkle", on: sort) }
+                .accessibilityValue(sort ? "On" : "Off")
+            Button { tagging.toggle() } label: { chip("Add tags", "number", on: tagging) }
+                .accessibilityValue(tagging ? "On" : "Off")
         }
         .buttonStyle(.plain)
+    }
+
+    /// Both chips look the same: accent when on, plain when off.
+    private func chip(_ label: String, _ symbol: String, on: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: on ? "checkmark" : symbol)
+            Text(label)
+        }
+        .font(.ui(14, weight: .medium))
+        .foregroundStyle(on ? Theme.accent : Theme.soft)
+        .padding(.horizontal, 12).frame(minHeight: 34)
+        .background(on ? Theme.accentBG : Theme.fill, in: Capsule())
     }
 
     /// Tags typed as "a, b, #c" into a clean list.

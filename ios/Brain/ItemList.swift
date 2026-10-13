@@ -7,9 +7,6 @@ struct ItemList: View {
 
     @State var filter: Filter
     let mode: Mode
-    /// Inbox only: the search field opens the Search tab. true starts listening.
-    var openSearch: ((Bool) -> Void)?
-
     @Environment(AppSession.self) private var session
     @Environment(MenuStore.self) private var store
     @AppStorage("blurSensitive") private var blur = true
@@ -21,15 +18,14 @@ struct ItemList: View {
     @State private var error: String?
     @State private var confirmEmpty = false
 
-    init(filter: Filter, mode: Mode, openSearch: ((Bool) -> Void)? = nil) {
+    init(filter: Filter, mode: Mode) {
         _filter = State(initialValue: filter)
         self.mode = mode
-        self.openSearch = openSearch
     }
 
     var body: some View {
         List {
-            if mode != .search {
+            if mode == .inbox || mode == .trash {
                 header
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
@@ -45,7 +41,7 @@ struct ItemList: View {
                         rows(g.items)
                     } header: {
                         Text(g.title)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.ui(13, weight: .semibold))
                             .foregroundStyle(Theme.soft)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 16)
@@ -68,9 +64,9 @@ struct ItemList: View {
         .scrollContentBackground(.hidden)
         .background(Theme.bg)
         .environment(\.defaultMinListHeaderHeight, 0)
-        // Room for the floating tab bar.
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: mode == .search ? 76 : 84) }
-        .modifier(Bars(mode: mode, filter: filter, total: total, emptyTrash: { confirmEmpty = true }))
+        // Room for the Add button.
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: mode == .search ? 0 : 72) }
+        .modifier(Bars(mode: mode, filter: filter, total: total, filterMenu: AnyView(filterMenu), emptyTrash: { confirmEmpty = true }))
         .confirmationDialog("Delete everything in Trash for good?", isPresented: $confirmEmpty, titleVisibility: .visible) {
             Button("Empty Trash", role: .destructive) { Task { await emptyTrash() } }
         } message: {
@@ -84,50 +80,18 @@ struct ItemList: View {
 
     // MARK: Header
 
+    /// Under the large title: the source chips in Inbox, a hint in Trash.
     @ViewBuilder private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .bottom) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(filter.title).font(.system(size: 32, weight: .bold)).tracking(-0.3).lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    Text(total.formatted()).font(.system(size: 13, design: .monospaced)).foregroundStyle(Theme.faint)
-                }
-                Spacer()
-                if mode == .inbox || mode == .list { filterMenu }
-            }
             if mode == .trash {
                 Text("Swipe to restore an item or delete it forever.")
-                    .font(.system(size: 14)).foregroundStyle(Theme.soft)
+                    .font(.ui(14)).foregroundStyle(Theme.soft)
             }
-            if mode == .inbox {
-                searchField
-                chips
-            }
+            if mode == .inbox { chips }
         }
         .padding(.horizontal, 16)
-        .padding(.top, mode == .inbox ? 8 : 0)
         .padding(.bottom, 6)
         .foregroundStyle(Theme.ink)
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            Button { openSearch?(false) } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass").font(.system(size: 16))
-                    Text("Search").font(.system(size: 16))
-                    Spacer()
-                }
-                .contentShape(Rectangle())
-            }
-            Button { openSearch?(true) } label: { Image(systemName: "mic").font(.system(size: 16)) }
-                .accessibilityLabel("Search by voice")
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(Theme.faint)
-        .padding(.horizontal, 12)
-        .frame(height: 40)
-        .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
     }
 
     /// All, Unread, then each source that has saves.
@@ -142,7 +106,8 @@ struct ItemList: View {
                 }
                 ForEach((store.menu?.sources ?? []).filter { $0.items > 0 }) { s in
                     Button { filter.source = filter.source == s.id ? nil : s.id } label: {
-                        Chip(Sources.label(s.id), source: s.id, on: filter.source == s.id)
+                        // X's logo is the word, so its chip shows the logo alone.
+                        Chip(Sources.label(s.id), source: s.id, on: filter.source == s.id, iconOnly: s.id == "x")
                     }
                 }
             }
@@ -166,11 +131,8 @@ struct ItemList: View {
             }
             Toggle("Blur sensitive pictures", isOn: $blur)
         } label: {
-            Image(systemName: "line.3.horizontal.decrease")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(filter.media != nil || filter.lang != nil ? Theme.accentInk : Theme.ink2)
-                .frame(width: 40, height: 40)
-                .background(filter.media != nil || filter.lang != nil ? Theme.accentFill : Theme.fill, in: Circle())
+            Image(systemName: filter.media != nil || filter.lang != nil
+                  ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
         }
         .accessibilityLabel("Filter")
     }
@@ -179,7 +141,7 @@ struct ItemList: View {
         if loading {
             HStack { Spacer(); ProgressView(); Spacer() }.padding(.vertical, 12)
         } else if items.isEmpty && error == nil {
-            Text(emptyText).font(.system(size: 15)).foregroundStyle(Theme.soft)
+            Text(emptyText).font(.ui(15)).foregroundStyle(Theme.soft)
                 .frame(maxWidth: .infinity).padding(.vertical, 40)
         }
     }
@@ -222,7 +184,7 @@ struct ItemList: View {
             .swipeActions(edge: .trailing, allowsFullSwipe: false) { trailing(item) }
             .swipeActions(edge: .leading) {
                 if mode != .trash {
-                    Button { set(item, .init(read: item.isUnread)) } label: {
+                    Button { set(item, .init(read: item.isUnread)); Haptic.tap() } label: {
                         Label(item.isUnread ? "Read" : "Unread", systemImage: item.isUnread ? "envelope.open" : "envelope.badge")
                     }
                     .tint(Theme.ink2)
@@ -235,18 +197,18 @@ struct ItemList: View {
     /// The first button sits at the far right: Delete, then Archive.
     @ViewBuilder private func trailing(_ item: Item) -> some View {
         if mode == .trash {
-            Button(role: .destructive) { Task { await purge(item) } } label: { Label("Delete forever", systemImage: "trash") }
+            Button(role: .destructive) { Task { await purge(item) }; Haptic.warn() } label: { Label("Delete forever", systemImage: "trash") }
                 .tint(Theme.bad)
             Button { set(item, .init(trash: false)) } label: { Label("Restore", systemImage: "arrow.uturn.backward") }
                 .tint(Theme.accentFill)
         } else {
-            Button(role: .destructive) { set(item, .init(trash: true)) } label: { Label("Delete", systemImage: "trash") }
+            Button(role: .destructive) { set(item, .init(trash: true)); Haptic.warn() } label: { Label("Delete", systemImage: "trash") }
                 .tint(Theme.bad)
             if item.status == "archived" {
                 Button { set(item, .init(status: "inbox")) } label: { Label("Inbox", systemImage: "tray") }
                     .tint(Theme.accentFill)
             } else {
-                Button { set(item, .init(status: "archived")) } label: { Label("Archive", systemImage: "archivebox") }
+                Button { set(item, .init(status: "archived")); Haptic.done() } label: { Label("Archive", systemImage: "archivebox") }
                     .tint(Theme.accentFill)
             }
         }
@@ -359,24 +321,30 @@ struct ItemList: View {
     }
 }
 
-/// Inbox has no bar at the top; lists opened from Library show the back button, and Trash adds Empty.
+/// Every list has a large title that shrinks as you scroll, with its count under it on iOS 26.
+/// Inbox and lists add the filter button; Trash adds Empty.
 private struct Bars: ViewModifier {
     let mode: ItemList.Mode
     let filter: Filter
     let total: Int
+    let filterMenu: AnyView
     var emptyTrash: () -> Void
 
     @ViewBuilder func body(content: Content) -> some View {
         switch mode {
-        case .inbox:
-            content.toolbar(.hidden, for: .navigationBar)
         case .search:
             content
-        case .list:
-            content.navigationBarTitleDisplayMode(.inline)
+        case .inbox, .list:
+            content
+                .navigationTitle(filter.title)
+                .navigationBarTitleDisplayMode(.large)
+                .countSubtitle(counted(total, "save"))
+                .toolbar { ToolbarItem(placement: .topBarTrailing) { filterMenu } }
         case .trash:
             content
-                .navigationBarTitleDisplayMode(.inline)
+                .navigationTitle(filter.title)
+                .navigationBarTitleDisplayMode(.large)
+                .countSubtitle(counted(total, "item"))
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Empty", role: .destructive, action: emptyTrash)
@@ -385,6 +353,17 @@ private struct Bars: ViewModifier {
                             .disabled(total == 0)
                     }
                 }
+        }
+    }
+}
+
+extension View {
+    /// A line under the title, such as "3,128 saves". Only iOS 26 has the place for it.
+    @ViewBuilder func countSubtitle(_ text: String) -> some View {
+        if #available(iOS 26.0, *) {
+            self.navigationSubtitle(text)
+        } else {
+            self
         }
     }
 }
@@ -400,21 +379,28 @@ struct ItemRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            SourceTile(source: item.sourceKey, unread: item.isUnread && !trash)
+            SourceTile(source: item.sourceKey)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(item.author ?? Sources.label(item.sourceKey))
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.ink)
-                        .lineLimit(1)
+                    // The unread dot sits before the name, as in Mail.
+                    HStack(spacing: 6) {
+                        if item.isUnread && !trash {
+                            Circle().fill(Theme.accentFill).frame(width: 8, height: 8)
+                                .accessibilityLabel("Unread")
+                        }
+                        Text(item.author ?? Sources.label(item.sourceKey))
+                            .font(.ui(15, weight: .semibold))
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                    }
                     Spacer(minLength: 8)
                     Text(Dates.row(trash ? Dates.parse(item.deletedAt) : item.date))
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(.ui(12, design: .monospaced))
                         .foregroundStyle(Theme.faint)
                 }
                 VStack(alignment: .leading, spacing: 5) {
                     Text(item.mainText)
-                        .font(.system(size: 15))
+                        .font(.ui(15))
                         .lineSpacing(item.isArabic ? 6 : 3)
                         .foregroundStyle(Theme.ink2)
                         .lineLimit(2)
@@ -434,7 +420,7 @@ struct ItemRow: View {
                     }
                     if trash {
                         Text("Deleted from \(item.status == "archived" ? "Archive" : "Inbox")")
-                            .font(.system(size: 12.5)).foregroundStyle(Theme.soft)
+                            .font(.ui(12.5)).foregroundStyle(Theme.soft)
                     } else if let category = item.category {
                         CategoryLabel(name: category, color: item.categoryColor)
                     }

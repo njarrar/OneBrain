@@ -144,6 +144,8 @@ struct Palette {
 }
 
 /// The colours of the design picked in Settings. Views that read these redraw when the design changes.
+/// Corners follow one rule: category swatches 2, tag chips 6, tiles, fields and boxes 12,
+/// cards, pictures and grouped rows 16, pills and round buttons fully round.
 enum Theme {
     static var palette: Palette {
         switch Look.shared.design {
@@ -314,4 +316,32 @@ enum OKLab {
         }
         return UIColor(red: enc(r), green: enc(g), blue: enc(bl), alpha: 1)
     }
+}
+
+extension Font {
+    /// A size from the design that still follows the reader's text size setting:
+    /// the size picks the nearest text style (17 is Body, 13 is Footnote and so on).
+    static func ui(_ size: CGFloat, weight: Font.Weight? = nil, design: Font.Design? = nil) -> Font {
+        .system(textStyle(for: size), design: design, weight: weight)
+    }
+
+    static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case 30...: return .largeTitle
+        case 25..<30: return .title
+        case 21..<25: return .title2
+        case 19..<21: return .title3
+        case 17..<19: return .body
+        case 16..<17: return .callout
+        case 14..<16: return .subheadline
+        case 13..<14: return .footnote
+        case 12..<13: return .caption
+        default: return .caption2
+        }
+    }
+}
+
+/// "1 screenshot", "2 screenshots".
+func counted(_ n: Int, _ one: String, _ many: String? = nil) -> String {
+    "\(n.formatted()) \(n == 1 ? one : (many ?? one + "s"))"
 }

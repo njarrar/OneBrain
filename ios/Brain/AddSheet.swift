@@ -26,6 +26,9 @@ struct AddSheet: View {
     /// A voice memo or video picked from Files.
     @State private var pickedAudio: PickedAudio?
     @FocusState private var focused: Bool
+    /// The sheet starts just tall enough for what it holds.
+    @State private var fit: CGFloat = 330
+    @State private var detent: PresentationDetent = .height(330)
 
     private var url: String? { Detected.firstURL(in: text) }
     private var hasVoice: Bool { (dictation.recording != nil && !dictation.listening) || pickedAudio != nil }
@@ -37,25 +40,25 @@ struct AddSheet: View {
             HStack {
                 Button("Cancel") { dismiss() }.foregroundStyle(Theme.ink2)
                 Spacer()
-                Text("Add to Brain").font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.ink)
+                Text("Add to Brain").font(.ui(16, weight: .semibold)).foregroundStyle(Theme.ink)
                 Spacer()
                 Button { Task { await save() } } label: {
                     Group {
                         if saving { ProgressView().tint(Theme.accentInk) } else { Text("Save") }
                     }
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.ui(15, weight: .semibold))
                     .foregroundStyle(Theme.accentInk)
-                    .padding(.horizontal, 14).frame(height: 34)
+                    .padding(.horizontal, 14).frame(minHeight: 34)
                     .background(Theme.accentFill, in: Capsule())
                     .opacity(canSave || saving ? 1 : 0.45)
                 }
                 .disabled(!canSave)
             }
-            .font(.system(size: 16))
+            .font(.ui(16))
             .padding(.top, 14)
 
             TextField("Paste a link or write a note", text: $text, axis: .vertical)
-                .font(.system(size: 17))
+                .font(.ui(17))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1...8)
                 .focused($focused)
@@ -66,12 +69,19 @@ struct AddSheet: View {
             if !pictures.isEmpty { strip }
             if hasVoice { voiceChip }
             if tagging {
-                TextField("Tags, split with commas", text: $tagText)
-                    .font(.system(size: 15))
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding(.horizontal, 12).frame(height: 40)
-                    .background(Theme.fill, in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Tags").font(.ui(13, weight: .medium)).foregroundStyle(Theme.soft)
+                    HStack(spacing: 6) {
+                        Image(systemName: "number").foregroundStyle(Theme.faint)
+                        TextField("Tags", text: $tagText, prompt: Text("Family, Gift ideas").foregroundStyle(Theme.faint))
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    }
+                    .font(.ui(15))
+                    .padding(.horizontal, 12).frame(minHeight: 40)
+                    .background(Theme.fill, in: RoundedRectangle(cornerRadius: 12))
+                    Text("Split more than one with commas.").font(.ui(12)).foregroundStyle(Theme.faint)
+                }
             }
             CaptureChips(sort: $sort, tagging: $tagging)
             if let error = error ?? dictation.error {
@@ -83,9 +93,10 @@ struct AddSheet: View {
                     RoundIcon(symbol: "photo")
                 }
                 .accessibilityLabel("Photos")
-                Button { camera = true } label: { RoundIcon(symbol: "camera") }
+                Button {
+                    if UIImagePickerController.isSourceTypeAvailable(.camera) { camera = true } else { error = "This device has no camera." }
+                } label: { RoundIcon(symbol: "camera") }
                     .accessibilityLabel("Camera")
-                    .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 Button { Task { await dictation.toggle() } } label: {
                     RoundIcon(symbol: dictation.listening ? "mic.fill" : "mic", on: dictation.listening)
                         .symbolEffect(.pulse, isActive: dictation.listening)
@@ -99,21 +110,27 @@ struct AddSheet: View {
                         SourceMark(source: detected.source, size: 13)
                         Text(detected.label)
                     }
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.ui(12.5, weight: .medium))
                     .foregroundStyle(Theme.soft)
-                    .padding(.horizontal, 9).frame(height: 26)
+                    .padding(.horizontal, 9).frame(minHeight: 26)
                     .background(Theme.raised, in: RoundedRectangle(cornerRadius: 6))
                 }
             }
             .buttonStyle(.plain)
             .padding(.top, 12)
             .overlay(alignment: .top) { Rectangle().fill(Theme.divider).frame(height: 1) }
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 14)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { h in
+            // Follow the content while the sheet sits at its short height.
+            let wasFit = detent == .height(fit)
+            fit = max(260, ceil(h) + 30)
+            if wasFit { detent = .height(fit) }
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
         .background(Theme.bg)
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.height(fit), .large], selection: $detent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
         .onAppear {
@@ -143,12 +160,12 @@ struct AddSheet: View {
     private func linkCard(_ url: String, _ p: API.LinkPreview) -> some View {
         HStack(spacing: 12) {
             if let image = p.image, let u = URL(string: image) {
-                RemoteImage(url: u).frame(width: 60, height: 60).clipShape(RoundedRectangle(cornerRadius: 8))
+                RemoteImage(url: u).frame(width: 60, height: 60).clipShape(RoundedRectangle(cornerRadius: 12))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(p.title ?? url).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(2)
+                Text(p.title ?? url).font(.ui(15, weight: .semibold)).foregroundStyle(Theme.ink).lineLimit(2)
                 Text(URL(string: url)?.host?.replacingOccurrences(of: "www.", with: "") ?? "")
-                    .font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
+                    .font(.ui(12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
             }
             Spacer(minLength: 0)
         }
@@ -161,15 +178,15 @@ struct AddSheet: View {
             Image(systemName: "waveform").foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(pickedAudio?.filename ?? "Voice memo, \(Self.clock(dictation.seconds))")
-                    .font(.system(size: 15, weight: .medium)).foregroundStyle(Theme.ink).lineLimit(1)
+                    .font(.ui(15, weight: .medium)).foregroundStyle(Theme.ink).lineLimit(1)
                 Text("Brain keeps the sound and writes it out in full.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.faint)
+                    .font(.ui(12)).foregroundStyle(Theme.faint)
             }
             Spacer(minLength: 0)
             Button {
                 if pickedAudio != nil { pickedAudio = nil } else { dictation.discardRecording() }
             } label: {
-                Image(systemName: "xmark.circle.fill").font(.system(size: 18)).foregroundStyle(Theme.faint)
+                Image(systemName: "xmark.circle.fill").font(.ui(18)).foregroundStyle(Theme.faint)
             }
             .accessibilityLabel("Remove voice memo")
         }
@@ -188,10 +205,10 @@ struct AddSheet: View {
                 ForEach(Array(pictures.enumerated()), id: \.offset) { i, data in
                     if let img = UIImage(data: data) {
                         Image(uiImage: img).resizable().scaledToFill().frame(width: 72, height: 72)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(alignment: .topTrailing) {
                                 Button { pictures.remove(at: i) } label: {
-                                    Image(systemName: "xmark.circle.fill").font(.system(size: 18))
+                                    Image(systemName: "xmark.circle.fill").font(.ui(18))
                                         .symbolRenderingMode(.palette).foregroundStyle(.white, .black.opacity(0.55))
                                 }
                                 .padding(3)
@@ -272,6 +289,7 @@ struct AddSheet: View {
                 _ = try await API.shared.save(url: url, text: note.isEmpty ? nil : note, options: options)
             }
             await saved()
+            Haptic.done()
             dismiss()
         } catch {
             self.error = error.localizedDescription

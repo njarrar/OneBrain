@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,9 +34,7 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.MarkEmailUnread
-import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.RestoreFromTrash
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -68,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -250,13 +248,20 @@ class ItemListModel(start: Filter, private val mode: ListMode) : ViewModel() {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItemList(start: Filter, mode: ListMode, key: String? = null, openSearch: ((Boolean) -> Unit)? = null) {
+fun ItemList(start: Filter, mode: ListMode, key: String? = null) {
     val c = Theme.colors
     val nav = LocalNav.current
     val m: ItemListModel = viewModel(key = key ?: "$mode:$start") { ItemListModel(start, mode) }
     val state = rememberLazyListState()
     var confirmEmpty by remember { mutableStateOf(false) }
 
+    // Search hands in a new query as you type; the same list follows it from the top.
+    LaunchedEffect(start) {
+        if (mode == ListMode.Search && m.filter != start) {
+            m.filter = start
+            state.scrollToItem(0)
+        }
+    }
     LaunchedEffect(m.filter, MenuStore.changed) {
         val wanted = m.filter to MenuStore.changed
         if (m.loadedFor != wanted) {
@@ -289,7 +294,7 @@ fun ItemList(start: Filter, mode: ListMode, key: String? = null, openSearch: ((B
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = barSpace(if (mode == ListMode.Search) 90.dp else 100.dp)),
             ) {
-                if (mode != ListMode.Search) item(key = "header") { Header(m, mode, openSearch) }
+                if (mode != ListMode.Search) item(key = "header") { Header(m, mode) }
                 m.error?.let { e ->
                     item(key = "error") {
                         Text(e, fontSize = 13.sp, color = c.bad, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
@@ -333,7 +338,7 @@ fun ItemList(start: Filter, mode: ListMode, key: String? = null, openSearch: ((B
 }
 
 @Composable
-private fun Header(m: ItemListModel, mode: ListMode, openSearch: ((Boolean) -> Unit)?) {
+private fun Header(m: ItemListModel, mode: ListMode) {
     val c = Theme.colors
     val f = m.filter
     Column(
@@ -354,23 +359,6 @@ private fun Header(m: ItemListModel, mode: ListMode, openSearch: ((Boolean) -> U
             Text("Swipe left to restore an item, right to delete it forever.", fontSize = 14.sp, color = c.soft)
         }
         if (mode == ListMode.Inbox) {
-            // The search field opens the Search tab; the mic starts listening there.
-            Row(
-                Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(c.fill),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    Modifier.weight(1f).fillMaxSize().clickable { openSearch?.invoke(false) }.padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Icon(Icons.Outlined.Search, null, tint = c.faint, modifier = Modifier.size(20.dp))
-                    Text("Search", fontSize = 16.sp, color = c.faint)
-                }
-                Box(Modifier.size(40.dp).clickable { openSearch?.invoke(true) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.Outlined.Mic, "Search by voice", tint = c.faint, modifier = Modifier.size(20.dp))
-                }
-            }
             // All, Unread, then each source that has saves.
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Chip("All", on = f.source == null && !f.unread, icon = Icons.Outlined.ViewAgenda) {
@@ -457,16 +445,26 @@ private fun Footer(m: ItemListModel, mode: ListMode) {
 private fun SwipeRow(item: Item, m: ItemListModel, mode: ListMode, onOpen: () -> Unit) {
     val c = Theme.colors
     val trash = mode == ListMode.Trash
+    val haptic = LocalHapticFeedback.current
     var menu by remember { mutableStateOf(false) }
     var confirmPurge by remember { mutableStateOf(false) }
     val archived = item.status == "archived"
     val swipe = rememberSwipeToDismissBoxState(
         confirmValueChange = { v ->
             if (v == SwipeToDismissBoxValue.EndToStart) {
-                if (trash) m.set(item, Change(trash = false))
-                else m.set(item, Change(status = if (archived) "inbox" else "archived"))
+                if (trash) {
+                    m.set(item, Change(trash = false))
+                } else {
+                    haptic.confirm()
+                    m.set(item, Change(status = if (archived) "inbox" else "archived"))
+                }
             } else if (v == SwipeToDismissBoxValue.StartToEnd) {
-                if (trash) confirmPurge = true else m.set(item, Change(trash = true))
+                if (trash) {
+                    confirmPurge = true
+                } else {
+                    haptic.confirm()
+                    m.set(item, Change(trash = true))
+                }
             }
             // Snap back; the row leaves the list once the server agrees.
             false
@@ -502,9 +500,9 @@ private fun SwipeRow(item: Item, m: ItemListModel, mode: ListMode, onOpen: () ->
                     if (archived) {
                         MenuItem("Move to Inbox", Icons.Outlined.Inbox) { menu = false; m.set(item, Change(status = "inbox")) }
                     } else {
-                        MenuItem("Archive", Icons.Outlined.Archive) { menu = false; m.set(item, Change(status = "archived")) }
+                        MenuItem("Archive", Icons.Outlined.Archive) { menu = false; haptic.confirm(); m.set(item, Change(status = "archived")) }
                     }
-                    MenuItem("Delete", Icons.Outlined.Delete, c.bad) { menu = false; m.set(item, Change(trash = true)) }
+                    MenuItem("Delete", Icons.Outlined.Delete, c.bad) { menu = false; haptic.confirm(); m.set(item, Change(trash = true)) }
                 }
             }
         }
@@ -514,7 +512,7 @@ private fun SwipeRow(item: Item, m: ItemListModel, mode: ListMode, onOpen: () ->
             onDismissRequest = { confirmPurge = false },
             title = { Text("Delete this for good?") },
             text = { Text("This can't be undone.") },
-            confirmButton = { TextButton(onClick = { confirmPurge = false; m.purge(item) }) { Text("Delete forever", color = c.bad) } },
+            confirmButton = { TextButton(onClick = { confirmPurge = false; haptic.confirm(); m.purge(item) }) { Text("Delete forever", color = c.bad) } },
             dismissButton = { TextButton(onClick = { confirmPurge = false }) { Text("Cancel") } },
         )
     }
@@ -539,16 +537,20 @@ private fun SwipeBack(color: Color, icon: ImageVector, label: String, align: Ali
     }
 }
 
-/** One row: source tile with the unread dot, author and time, two lines of text, an optional picture, and the category. */
+/** One row: source tile, the unread dot and author, time, two lines of text, an optional picture, and the category. */
 @Composable
 fun ItemRow(item: Item, blur: Boolean, trash: Boolean = false, modifier: Modifier = Modifier) {
     val c = Theme.colors
     val hidden = blur && item.isSensitive
     Column(modifier.fillMaxWidth().background(c.bg)) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SourceTile(item.sourceKey, unread = item.isUnread && !trash)
+            SourceTile(item.sourceKey)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (item.isUnread && !trash) {
+                        UnreadDot()
+                        Spacer(Modifier.width(6.dp))
+                    }
                     Text(
                         item.author ?: Sources.label(item.sourceKey), fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                         color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
