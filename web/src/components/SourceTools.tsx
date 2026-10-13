@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import {
-  importInstagramFile, pickYouTubePlaylists, syncXNow, syncYouTubeNow,
+  disconnectConnector, importInstagramFile, pickYouTubePlaylists, syncConnectorNow, syncXNow, syncYouTubeNow,
 } from "@/lib/actions";
 
 export function CopyField({ value, label }: { value: string; label: string }) {
@@ -51,6 +51,17 @@ function SyncButton({ sync }: { sync: () => Promise<string> }) {
 
 export const YouTubeSync = () => <SyncButton sync={syncYouTubeNow} />;
 export const XSync = () => <SyncButton sync={syncXNow} />;
+
+// Sync now and Disconnect for Gmail, Outlook and Pinterest.
+export function ConnectorTools({ id }: { id: string }) {
+  const [pending, start] = useTransition();
+  return (
+    <div className="inline-actions">
+      <SyncButton sync={() => syncConnectorNow(id)} />
+      <button className="link-btn" disabled={pending} onClick={() => start(() => disconnectConnector(id))}>Disconnect</button>
+    </div>
+  );
+}
 
 export function YouTubePicker({ lists, picked }: { lists: { id: string; title: string; count: number }[]; picked: string[] }) {
   const [message, action, pending] = useActionState(pickYouTubePlaylists, null);

@@ -656,3 +656,21 @@ kbd {
 .ai-key { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); }
 .ai-key.active { border-color: var(--line-strong); background: var(--raised); }
 .ai-key .inline-form input { font-family: var(--mono, ui-monospace, monospace); }
+
+/* Ask Brain page */
+.ask-box { display: grid; gap: 14px; margin-top: 12px; }
+.ask-form { display: flex; gap: 8px; align-items: flex-end; }
+.ask-form textarea {
+  flex: 1; min-width: 0; resize: vertical; font: 15px/1.45 var(--sans); padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink);
+}
+.ask-form textarea:focus { outline: 2px solid var(--memory); outline-offset: -1px; }
+.ask-examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-examples .chip { cursor: pointer; border: 1px solid var(--line); font-size: 13px; padding: 7px 11px; }
+.ask-examples .chip:hover { color: var(--memory); border-color: var(--memory); }
+.ask-answer { border: 1px solid var(--line); border-radius: 12px; }
+.ask-searched { margin: 0 0 8px; }
+.answer-sources a {
+  display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; color: var(--ink); font: 13px var(--sans);
+}
+.answer-sources a:hover { background: var(--card); text-decoration: none; }

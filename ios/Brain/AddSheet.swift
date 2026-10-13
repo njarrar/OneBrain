@@ -116,7 +116,18 @@ struct AddSheet: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(28)
-        .onAppear { focused = true }
+        .onAppear {
+            #if DEBUG
+            // -demoScreen add fills in a note and opens tags, so the README shot shows every option.
+            if Demo.on, UserDefaults.standard.string(forKey: "demoScreen") == "add" {
+                text = "Sara's kids: Lina is 7 and loves Lego, Adam is 4 and loves dinosaurs. Party on the 14th."
+                tagging = true
+                tagText = "Family, Gift ideas"
+                return
+            }
+            #endif
+            focused = true
+        }
         .task(id: url) { await loadPreview() }
         .onChange(of: picks) { _, items in Task { await load(items) } }
         .onChange(of: dictation.text) { _, spoken in if !spoken.isEmpty { text = spoken } }

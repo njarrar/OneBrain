@@ -53,7 +53,7 @@ export async function resurfaceToday(limit = DAILY_COUNT): Promise<ResurfaceCard
   if (cards.length < limit) {
     const onThisDay = await all<RawItem>(
       `select ${ITEM_COLUMNS} from items i
-       where i.deleted_at is null
+       where i.deleted_at is null and i.kind <> 'email'
          and strftime('%m-%d', i.sort_at) = strftime('%m-%d', ?1)
          and strftime('%Y', i.sort_at) < strftime('%Y', ?1)
          and not exists (select 1 from reminders r where r.item_id = i.id)

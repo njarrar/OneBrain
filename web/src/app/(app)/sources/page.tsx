@@ -11,7 +11,8 @@ import { SortPanel } from "@/components/SortPanel";
 import { ReadPanel } from "@/components/ReadPanel";
 import { aiName } from "@/lib/ai";
 import { unreadTextCount } from "@/lib/memory/read";
-import { CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
+import { ConnectorTools, CopyField, InstagramImport, XSync, YouTubePicker, YouTubeSync } from "@/components/SourceTools";
+import { CONNECTORS, connectorStatus, type ConnectorId } from "@/lib/connect";
 
 const STATUS: Record<string, { label: string; tone: string }> = {
   connected: { label: "Connected", tone: "ok" },
@@ -24,6 +25,25 @@ export default async function SourcesPage() {
   const [sources, ready, unsorted, key, e, ytOn, xOn, unreadText, ai] = await Promise.all([
     listSources(), sorterReady(), unsortedCount(), hookKey(), env(), youtubeConnected(), xConnected(), unreadTextCount(), aiName(),
   ]);
+  const linked = await connectorStatus();
+  const KEYS: Record<ConnectorId, string> = { gmail: "Google", outlook: "Microsoft", pinterest: "Pinterest" };
+  const connectorRow = (id: ConnectorId) => {
+    const c = linked[id];
+    if (c.connected) return <ConnectorTools id={id} />;
+    return (
+      <>
+        {c.keys ? (
+          <a className="btn small" href={`/api/connect/${id}`} style={{ alignSelf: "flex-start" }}>Connect {CONNECTORS[id].name}</a>
+        ) : (
+          <p className="small muted">Needs the {KEYS[id]} keys first.</p>
+        )}
+        <details className="how">
+          <summary>Sign-in link for the {KEYS[id]} app settings</summary>
+          <CopyField label={`${CONNECTORS[id].name} sign-in link`} value={c.redirect} />
+        </details>
+      </>
+    );
+  };
   const base = e.BETTER_AUTH_URL ?? "http://localhost:3000";
   const feedlyHook = `${base}/api/ingest/feedly?key=${key}`;
   const googleReady = !!(e.GOOGLE_CLIENT_ID && e.GOOGLE_CLIENT_SECRET);
@@ -84,6 +104,9 @@ export default async function SourcesPage() {
     ) : (
       <p className="small muted">Needs the X keys first.</p>
     ),
+    gmail: connectorRow("gmail"),
+    outlook: connectorRow("outlook"),
+    pinterest: connectorRow("pinterest"),
     youtube: ytOn ? (
       <>
         <div className="inline-actions">
@@ -111,6 +134,9 @@ export default async function SourcesPage() {
     photos: "The iPhone app will read your Screenshots album.",
     feedly: "Each article you save for later in Feedly arrives here through IFTTT.",
     manual: "Links, notes and photos you add yourself.",
+    gmail: "Reads your mail, never sends or changes it. Brings in your whole history, newest first, then new mail every six hours. Spam, Promotions and Social stay out.",
+    outlook: "Outlook, Hotmail and Live mail. Reads only. Whole history newest first, then new mail every six hours. Junk and the Other tab stay out.",
+    pinterest: "Brings in the pins on your boards, each tagged with its board name, then checks again every six hours.",
   };
 
   return (

@@ -1,4 +1,4 @@
-// The Worker entry: the Next.js app, plus a timer that runs /api/cron every six hours.
+// The Worker entry: the Next.js app, plus a timer that runs /api/cron every hour.
 // Built by `opennextjs-cloudflare build` into .open-next/worker.js first.
 // @ts-expect-error: made at build time
 import { default as app } from "./.open-next/worker.js";

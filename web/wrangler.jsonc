@@ -20,6 +20,6 @@
   "ai": { "binding": "AI" },
   "vectorize": [{ "binding": "VECTORS", "index_name": "digital-brain-items" }],
   "vars": { "BETTER_AUTH_URL": "https://brain.example.workers.dev" },
-  "triggers": { "crons": ["0 */6 * * *"] },
+  "triggers": { "crons": ["0 * * * *"] },
   "observability": { "enabled": true }
 }

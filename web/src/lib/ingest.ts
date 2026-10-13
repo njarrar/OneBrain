@@ -19,6 +19,8 @@ export type Incoming = {
   authorHandle?: string | null;
   media?: string[];
   kind?: string;
+  // Where a new item starts. Email starts as "read", so it shows under All but not in the Inbox.
+  status?: "inbox" | "read" | "archived";
   postedAt?: string | null;
   savedAt?: string | null;
   raw?: unknown;
@@ -68,10 +70,10 @@ export async function saveStatements(x: Incoming, d?: D1Database): Promise<Plann
   const media = JSON.stringify((x.media ?? []).filter(Boolean).slice(0, 8));
   const stmts = [
     d.prepare(
-      `insert into items (id, title, body, url, kind, author, author_handle, posted_at, media, canon)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `insert into items (id, title, body, url, kind, author, author_handle, posted_at, media, canon, status)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        on conflict do nothing`,
-    ).bind(id, title, body, url, x.kind ?? "link", author, handle, posted, media, key),
+    ).bind(id, title, body, url, x.kind ?? "link", author, handle, posted, media, key, x.status ?? "inbox"),
     // Fill what the item is missing. "or ignore" leaves the key alone if another item already has it.
     d.prepare(
       `update or ignore items set title = coalesce(title, ?4), body = coalesce(body, ?5), author = coalesce(author, ?6),
@@ -104,6 +106,15 @@ export async function saveOne(x: Incoming): Promise<string> {
   const planned = await saveStatements(x);
   await (await db()).batch(planned.stmts);
   return resolveId(planned, x.url);
+}
+
+// Saves many items, 40 to a database batch.
+export async function saveMany(incoming: Incoming[]) {
+  const d = await db();
+  for (let i = 0; i < incoming.length; i += 40) {
+    const stmts = (await Promise.all(incoming.slice(i, i + 40).map((x) => saveStatements(x, d)))).flatMap((s) => s.stmts);
+    if (stmts.length) await d.batch(stmts);
+  }
 }
 
 export async function markSynced(source: string, added: number, error: string | null = null, status = "connected") {

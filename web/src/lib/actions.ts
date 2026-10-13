@@ -17,8 +17,10 @@ import { makeDigest } from "@/lib/memory/digest";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
+import { connectorFor } from "@/lib/connect";
 import { keyProblem, setApiKey } from "@/lib/secrets";
-import { isProvider, saveAiSettings, testProvider, type Provider } from "@/lib/ai";
+import { aiName, isProvider, saveAiSettings, testProvider, type Provider } from "@/lib/ai";
+import { sourceLabel } from "@/lib/sources";
 import { isDesign, isMode, savePrefs } from "@/lib/theme";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -180,6 +182,28 @@ export async function syncXNow(): Promise<string> {
   }
 }
 
+// Gmail, Outlook and Pinterest: one more slice now, without waiting for the timer.
+export async function syncConnectorNow(id: string): Promise<string> {
+  await requireUser();
+  const c = connectorFor(id);
+  if (!c) return "Unknown source.";
+  try {
+    const r = await c.sync();
+    sortLater(r.added);
+    revalidatePath("/", "layout");
+    const what = c.id === "pinterest" ? "pins" : "emails";
+    return `Done. ${r.added.toLocaleString()} new ${what}.${r.more ? " Older ones keep coming in every six hours, or tap again." : ""}`;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+export async function disconnectConnector(id: string) {
+  await requireUser();
+  await connectorFor(id)?.disconnect();
+  revalidatePath("/sources");
+}
+
 export async function disconnectX() {
   await requireUser();
   await disconnectXApi();
@@ -299,7 +323,7 @@ export async function addItem(_: string | null, form: FormData): Promise<string 
 
 // ───────────── ⌘K box and Ask ─────────────
 
-export type Hit = { id: string; title: string; category: string | null; color: string | null; date: string; rtl: boolean };
+export type Hit = { id: string; title: string; category: string | null; color: string | null; date: string; rtl: boolean; from: string };
 
 function hit(i: ItemRow): Hit {
   const text = i.title ?? i.body?.trim() ?? i.url ?? "Untitled";
@@ -310,6 +334,7 @@ function hit(i: ItemRow): Hit {
     color: i.category_color,
     date: (i.posted_at ?? i.created_at).slice(0, 10),
     rtl: i.lang === "ar",
+    from: sourceLabel(i.sources[0] ?? "manual"),
   };
 }
 
@@ -327,15 +352,15 @@ export async function paletteSearch(q: string): Promise<{ words: Hit[]; meaning:
   return { words, meaning: close.filter((c) => !seen.has(c.id)).slice(0, 4).map(hit) };
 }
 
-export async function askBrain(q: string): Promise<{ answer: string | null; sources: Hit[]; error?: string }> {
+export async function askBrain(q: string): Promise<{ answer: string | null; sources: Hit[]; searched?: string[]; error?: string }> {
   await requireUser();
   const parsed = Question.safeParse({ q });
   if (!parsed.success) return { answer: null, sources: [], error: "Ask in 500 characters or fewer." };
   try {
     const r = await ask(parsed.data.q);
-    return { answer: r.answer, sources: r.sources.map(hit) };
+    return { answer: r.answer, sources: r.sources.map(hit), searched: r.searched };
   } catch (err) {
-    return { answer: null, sources: [], error: `Claude couldn't answer: ${errorMessage(err)}` };
+    return { answer: null, sources: [], error: `${await aiName()} couldn't answer: ${errorMessage(err)}` };
   }
 }
 
