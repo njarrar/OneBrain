@@ -13,6 +13,7 @@ type Row =
   | { kind: "ask"; q: string };
 
 const GO: { label: string; href: string; hint?: string }[] = [
+  { label: "Ask Brain", href: "/ask" },
   { label: "Inbox", href: "/" },
   { label: "Unread", href: "/?unread=1" },
   { label: "Resurface", href: "/resurface" },

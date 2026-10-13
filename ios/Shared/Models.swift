@@ -230,6 +230,7 @@ struct Filter: Hashable {
 enum Sources {
     static func label(_ id: String) -> String {
         ["x": "X", "youtube": "YouTube", "instagram": "Instagram", "photos": "Screenshots", "feedly": "RSS",
+         "gmail": "Gmail", "outlook": "Outlook", "pinterest": "Pinterest", "email": "Email", "pin": "Pins",
          "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos"][id] ?? id
     }
 
@@ -244,6 +245,8 @@ enum Sources {
         case "instagram": return "camera"
         case "x": return "xmark"
         case "audio": return "mic"
+        case "gmail", "outlook", "email": return "envelope"
+        case "pinterest", "pin": return "pin"
         default: return "link"
         }
     }
@@ -321,9 +324,11 @@ struct ResurfaceCard: Codable, Identifiable, Hashable {
 
 /// An answer from your own saves, citing them as [1], [2] …
 struct Answer: Codable {
-    /// nil without a Claude key; the sources are still worth showing then.
+    /// nil without an AI key; the sources are still worth showing then.
     let answer: String?
     let sources: [Item]
+    /// What Brain looked for to link saves up. Older servers send none.
+    var searched: [String]?
 }
 
 /// One week's write-up of what was saved, with [n] pointing at items[n-1].

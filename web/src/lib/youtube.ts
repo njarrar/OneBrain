@@ -32,7 +32,8 @@ export async function authUrl(state: string) {
   return `https://accounts.google.com/o/oauth2/v2/auth?${p}`;
 }
 
-async function tokenRequest(body: Record<string, string>) {
+// Google's token endpoint, shared with the Gmail import.
+export async function tokenRequest(body: Record<string, string>) {
   const e = await env();
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",

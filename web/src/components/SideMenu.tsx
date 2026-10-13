@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/lib/actions";
 import { PaletteButton } from "@/components/CommandPalette";
+import { AskButton } from "@/components/AskBox";
 
 type Count = { name: string; count: number };
 type CategoryCount = Count & { color: string | null };
@@ -60,19 +61,28 @@ export function SideMenu({
           </svg>
         </button>
         <Link href="/" className="brand">Brain</Link>
-        <Link href="/add" className="btn small">Add</Link>
+        <div className="inline-actions">
+          <AskButton />
+          <Link href="/add" className="btn small">Add</Link>
+        </div>
       </div>
       {open && <div className="scrim" onClick={() => setOpen(false)} />}
       <nav className={open ? "menu open" : "menu"} aria-label="Main">
         <div className="menu-head">
           <Link href="/" className="brand">Brain</Link>
-          <Link href="/add" className="btn small">Add</Link>
+          <div className="inline-actions">
+            <AskButton />
+            <Link href="/add" className="btn small">Add</Link>
+          </div>
         </div>
         <div className="menu-search">
           <PaletteButton />
         </div>
 
         <div className="menu-group">
+          <Link href="/ask" className={pathname === "/ask" ? "menu-row resurface active" : "menu-row resurface"} aria-current={pathname === "/ask" ? "page" : undefined}>
+            <span>✦ Ask Brain</span>
+          </Link>
           <Link href="/resurface" className={pathname === "/resurface" ? "menu-row resurface active" : "menu-row resurface"} aria-current={pathname === "/resurface" ? "page" : undefined}>
             <span>✦ Resurface</span>
             {views.resurface > 0 && <span className="memory-count">{views.resurface}</span>}

@@ -80,11 +80,11 @@ export async function makeDigest(start: string = weekStart()): Promise<MakeResul
   if (!(await aiReady())) return { made: false, reason: "Add an AI key in Settings first." };
   const end = weekEnd(start);
   const saved = (await first<{ n: number }>(
-    `select count(*) as n from items where deleted_at is null and created_at >= ? and created_at < ?`, start, end,
+    `select count(*) as n from items where deleted_at is null and kind <> 'email' and created_at >= ? and created_at < ?`, start, end,
   ))?.n ?? 0;
   if (!saved) return { made: false, reason: "Nothing was saved that week." };
   const rows = await all<RawItem>(
-    `select ${ITEM_COLUMNS} from items i where i.deleted_at is null and i.created_at >= ? and i.created_at < ?
+    `select ${ITEM_COLUMNS} from items i where i.deleted_at is null and i.kind <> 'email' and i.created_at >= ? and i.created_at < ?
      order by (i.summary is not null) desc, i.created_at desc limit ?`,
     start, end, MAX_ITEMS,
   );

@@ -3,6 +3,51 @@
 Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.5.0 "Connect" (2026-10-13)
+
+Brain reads your email and your Pinterest boards, and Ask Brain joins up what's spread
+across your saves.
+
+### New, on the web
+
+- **Gmail:** connect on the Sources page. Read only. Brings in your whole history, newest
+  first, a slice every six hours (or on Sync now), then new mail. Spam, Trash, Drafts, chats
+  and the Promotions, Social and Forums tabs stay out.
+- **Outlook:** Outlook, Hotmail and Live mail through Microsoft Graph, read only. Junk,
+  Deleted, Drafts and the Other tab stay out.
+- Email lands under All and its source, not in the Inbox, and stays out of the weekly
+  digest and Resurface, so thousands of emails don't crowd them.
+- **Pinterest:** connect on the Sources page. Brings in the pins on your boards, each tagged
+  with its board name.
+- **Ask Brain page** (`/ask`) with an Ask button in the top bar and the side menu, examples,
+  and links from each [n] to the save it cites.
+
+### New, on the web and the iPhone
+
+- **The AI reads everything:** bookmarks, posts, emails and pins too, not only notes,
+  pictures and voice memos. It picks out people, dates and labels from each, and reads the
+  first picture on a post or pin. This uses the chosen AI's key.
+- **Categories grow:** when nothing fits, the AI adds a new broad category (up to 24 in all).
+  Email is sorted too.
+- **Faster:** the AI work runs every hour; syncing sources stays every six hours.
+
+- **Ask Brain links saves up.** It works out what to look for, searches for each part, then
+  searches again for the people it finds. So "what gift should I get my colleague's kids?"
+  finds the kids' names in a voice memo, then the screenshots, bookmarks, pins and emails
+  about them, and suggests ideas built on them. It says what it looked for under the answer.
+- **iPhone: an Ask tab** in the tab bar. Type or say a question, tap an example, or pick a
+  recent one. Email and Pinterest saves show with their own marks.
+- README: a screenshot of the Add sheet with every option, and of the Ask tab.
+
+### Under the hood
+
+- `web/src/lib/connect/` holds Gmail, Outlook and Pinterest behind one shape. Sign-in goes
+  through `/api/connect/<source>` and `/api/connect/<source>/callback`. Tokens are stored
+  encrypted.
+- Migration `0012_mail_pinterest.sql` adds the three sources.
+- New Worker secrets: `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `PINTEREST_APP_ID`,
+  `PINTEREST_APP_SECRET`. Gmail uses the Google keys.
+
 ## 0.4.0 "Choice" (2026-10-02)
 
 Pick the AI that does Brain's work: Claude, ChatGPT or Gemini.

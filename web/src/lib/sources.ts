@@ -1,6 +1,6 @@
 // Every place a save can come from: one list for labels and link detection, used by the web
 // pages and the save route. The iPhone app keeps the same ids (see contracts/README.md).
-export type SourceId = "x" | "youtube" | "instagram" | "photos" | "feedly" | "manual";
+export type SourceId = "x" | "youtube" | "instagram" | "photos" | "feedly" | "gmail" | "outlook" | "pinterest" | "manual";
 
 type SourceInfo = { label: string; hosts?: RegExp };
 
@@ -10,6 +10,9 @@ export const SOURCES: Record<SourceId, SourceInfo> = {
   instagram: { label: "Instagram", hosts: /(^|\.)instagram\.com$/ },
   photos: { label: "Screenshots" },
   feedly: { label: "Feedly", hosts: /(^|\.)feedly\.com$/ },
+  gmail: { label: "Gmail" },
+  outlook: { label: "Outlook" },
+  pinterest: { label: "Pinterest", hosts: /(^|\.)pinterest\.[a-z.]+$|(^|\.)pin\.it$/ },
   manual: { label: "Added by hand" },
 };
 

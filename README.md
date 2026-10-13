@@ -24,7 +24,12 @@ Voice memos, screenshots, photos and notes get **written out**: Brain writes dow
 was said and reads the text in pictures, and the AI picks out the people and dates in
 them. Say a colleague's birthday into a voice memo and Ask Brain can tell you later.
 
-**Version 0.4.0 "Choice".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+Brain can also read your **Gmail** or **Outlook** mail (read only) and bring in your
+**Pinterest** boards. **Ask Brain** joins things up across all of it: ask "what gift should I
+get my colleague's kids?" and it finds the kids' names in a voice memo, then the screenshots,
+bookmarks, pins and emails about them, and suggests ideas.
+
+**Version 0.5.0 "Connect".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -139,6 +144,9 @@ Each source shows its status on the Sources page (`/sources`).
 | Feedly | Each article you save for later reaches Brain through an IFTTT webhook. The Sources page shows the link and the body to paste into IFTTT. |
 | YouTube | Its own Google connection with read-only YouTube access. Tick Liked videos and any of your playlists on the Sources page, and Brain brings in those, then checks again every six hours. Needs the Google keys. |
 | Instagram | Upload Instagram's "Download your information" export (the zip or `saved_posts.json`) on the Sources page. Instagram gives only the link, the account and the date. You can also share a post to Brain from the iPhone share sheet. |
+| Gmail | Click Connect Gmail on the Sources page. Read only (`gmail.readonly`). Brings in your whole history, newest first, a slice every six hours (or on Sync now), then new mail. Spam, Trash, Drafts, chats and the Promotions, Social and Forums tabs stay out. Email lands under All, not the Inbox. The AI sorts and reads it like everything else. Needs the Google keys and the Gmail API turned on. |
+| Outlook | Outlook, Hotmail and Live mail, through Microsoft Graph (`Mail.Read`). Works like Gmail. Junk, Deleted, Drafts and the Other tab stay out. Needs the Microsoft keys. |
+| Pinterest | Click Connect Pinterest. Brings in the pins on your boards, each tagged with its board name, then checks again every six hours. Needs the Pinterest keys. |
 | Screenshots | The iPhone app sends your Screenshots album. Claude looks at each picture to sort it. |
 | Added by hand | The `/add` page, or "Save to Brain" in any iPhone app. |
 | Voice memos | Share a memo from Voice Memos to Save to Brain, pick a sound file in the iPhone Add sheet, speak in the Add sheet, or add a sound file on `/add`. |
@@ -186,33 +194,35 @@ structured outputs, so all three return the same shapes.
 
 ## Sorting
 
-The AI sorts items in batches of 20. It reuses sub-topics already in use so they stay
-tidy, and it never overwrites a category, sub-topic or summary you already have.
+The AI sorts items (email included) in batches of 20. Categories aren't fixed: when nothing
+fits, the AI adds a new broad one, up to 24 in all. It reuses sub-topics already in use so
+they stay tidy, and it never overwrites a category, sub-topic or summary you already have.
 
 - New items from Feedly, the `/add` page, the share sheet and screenshots are sorted as
   they arrive.
 - **Sort now** on the Sources page sorts everything still unsorted and shows progress.
-- A timer in `web/worker.ts` runs every six hours. It syncs YouTube, reads new voice memos and pictures, sorts up to 10
-  batches of unsorted items, reads new and changed items for search by meaning, and on
-  Sunday's 18:00 UTC run writes the weekly digest.
+- A timer in `web/worker.ts` runs every hour. Every sixth hour it syncs X, YouTube, Gmail,
+  Outlook and Pinterest. Every hour it reads up to 80 saves, sorts up to 10 batches of
+  unsorted items, makes meaning vectors for new and changed items, and on Sunday evening
+  (UTC) writes the weekly digest.
 
 Without a key for the chosen AI, items still save, and the Sources page says it needs one.
 
-## Voice memos, pictures and notes
+## Reading every save
 
-Brain reads each of your own saves once, as it arrives (`web/src/lib/memory/read.ts`):
+The AI reads every save once (`web/src/lib/memory/read.ts`): voice memos, screenshots,
+notes, bookmarks, posts, emails and pins.
 
 - **Sound and video** are written out by Workers AI Whisper
   (`@cf/openai/whisper-large-v3-turbo`), in the language spoken. Files up to 20 MB.
-- **Screenshots and photos:** the AI reads the text in the picture.
+- **Screenshots and photos**, and the first picture on a post or pin: the AI reads the text in the picture.
 - Then the AI lists the **people** and the **dates** (birthdays, meetings, trips; yearly
   ones marked), gives voice memos and pictures a short title, and adds up to five labels,
   such as "Birthday" and the people's names.
 
 The transcript and the facts go into word search, search by meaning and Ask Brain.
-Saves already in Brain are read a few batches at each six-hour run, or all at once with
-**Read now** on the Sources page. **Read again** on an item starts over. Posts and links
-are not read this way; they come with their own text.
+Saves already in Brain are read a few batches every hour, or all at once with
+**Read now** on the Sources page. **Read again** on an item starts over.
 
 ## Search by meaning
 
@@ -253,7 +263,7 @@ It reads and writes the same cloud data as the web app, so a note, tag or archiv
 shows up on the other. You sign in with the same account as the web, Google included.
 Sources are set once on the web and shared; the AI choice and its keys can be set on either. Screenshots from the
 Screenshots album and anything shared to Save to Brain go straight to the cloud.
-Library opens Resurface and the weekly digest, Search can Ask Brain, and each item has a
+The fourth tab, **Ask**, asks Brain a question by typing or speaking. Library opens Resurface and the weekly digest, Search can Ask Brain too, and each item has a
 bell for Remind me and a list of related saves. Speaking in the Add sheet keeps the voice
 memo, and an item shows a player, what was said and what Brain found in it. See
 [ios/README.md](ios/README.md) to build it.
@@ -263,10 +273,26 @@ memo, and an item shows a player, what was said and what Brain found in it. See
   <img src="docs/images/iphone-list.png" width="180" alt="Inbox grouped by day">
   <img src="docs/images/iphone-library.png" width="180" alt="Library with Resurface, the weekly digest and Unread">
   <img src="docs/images/iphone-item.png" width="180" alt="Item page with the Remind me bell">
+  <img src="docs/images/iphone-ask.png" width="180" alt="The Ask tab with example questions">
   <img src="docs/images/iphone-settings.png" width="180" alt="Settings with sources">
 </p>
 
-Sign in, the inbox, Library, an item and Settings, with made-up sample data.
+Sign in, the inbox, Library, an item, Ask Brain and Settings, with made-up sample data.
+
+### Adding a note
+
+<img src="docs/images/iphone-add.png" width="260" alt="The Add to Brain sheet with a note, tags and every option">
+
+Tap **+** on any screen to open **Add to Brain**:
+
+- **The text box** takes a link or a note. Brain shows what it found (Note, Link, Photo,
+  Voice) at the bottom right.
+- **Let AI sort** lets the chosen AI pick the category, summary and tags. Tap it to turn
+  that off.
+- **Add tags** opens a box for your own tags, split with commas.
+- **Photos** picks up to 10 pictures, **Camera** takes one, **Microphone** writes down what
+  you say and keeps it as a voice memo, and **Files** adds pictures, sound or video files.
+- **Save** sends it to the cloud. The web and the phone both see it at once.
 
 ## Deploys
 
@@ -299,6 +325,8 @@ npx wrangler secret put NAME
 | `ALLOWED_EMAILS` | Who may make an account, comma separated. Unset means only the first account. |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Optional. Used when no key for that AI is saved in Settings. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional. Shows "Continue with Google" and lets you connect YouTube. |
+| `MS_CLIENT_ID`, `MS_CLIENT_SECRET` | Optional. Lets you connect Outlook mail. From an app registration in the Microsoft Entra admin center. |
+| `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET` | Optional. Lets you connect Pinterest. From an app at developers.pinterest.com. |
 | `APPLE_CLIENT_ID`, `APPLE_CLIENT_SECRET`, `APPLE_APP_BUNDLE_ID` | Optional. Shows "Continue with Apple". |
 
 `BETTER_AUTH_URL` is not a secret. It is set in `web/wrangler.jsonc`.
@@ -307,6 +335,9 @@ Redirect URLs to add in Google and Apple:
 
 - `https://<your app>/api/auth/callback/google` (Google sign in)
 - `https://<your app>/api/youtube/callback` (YouTube)
+- `https://<your app>/api/connect/gmail/callback` (Gmail)
+- `https://<your app>/api/connect/outlook/callback` (Outlook, in the Microsoft app registration)
+- `https://<your app>/api/connect/pinterest/callback` (Pinterest, in the Pinterest app)
 - `https://<your app>/api/auth/callback/apple` (Apple sign in)
 
 ## Run it locally

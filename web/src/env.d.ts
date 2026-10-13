@@ -8,6 +8,11 @@ interface CloudflareEnv {
   GOOGLE_CLIENT_SECRET?: string;
   X_CLIENT_ID?: string;
   X_CLIENT_SECRET?: string;
+  // Outlook (Microsoft Graph) and Pinterest sign-in.
+  MS_CLIENT_ID?: string;
+  MS_CLIENT_SECRET?: string;
+  PINTEREST_APP_ID?: string;
+  PINTEREST_APP_SECRET?: string;
   APPLE_CLIENT_ID?: string;
   APPLE_CLIENT_SECRET?: string;
   APPLE_APP_BUNDLE_ID?: string;

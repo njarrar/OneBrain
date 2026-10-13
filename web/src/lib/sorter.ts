@@ -7,6 +7,10 @@ import { base64 } from "@/lib/memory/read";
 // a one-line summary, a few tags, the language, and whether it is sensitive.
 
 export const BATCH = 20;
+// New categories the AI may add, so the list stays short enough to scan.
+const MAX_CATEGORIES = 24;
+// Colors for categories the AI adds, in turn.
+const NEW_COLORS = ["#0ea5e9", "#f97316", "#14b8a6", "#e11d48", "#84cc16", "#8b5cf6", "#f59e0b", "#06b6d4"];
 const MAX_TEXT = 1500;
 
 type Pending = {
@@ -105,6 +109,8 @@ export async function sortItems(ids?: string[]): Promise<number> {
       z.object({
         id: z.string(),
         category: z.string(),
+        // Only when category is a new one: a short line on what belongs in it. Empty otherwise.
+        new_category_about: z.string(),
         subtopic: z.string(),
         summary: z.string(),
         tags: z.array(z.string()),
@@ -117,13 +123,14 @@ export async function sortItems(ids?: string[]): Promise<number> {
   const response = await askJson({
     name: "sorted_items",
     maxTokens: 8000,
-    system: `You sort saved bookmarks for one person, who reads English and Arabic.
+    system: `You sort one person's saved items (bookmarks, posts, emails, Pinterest pins, notes, screenshots and voice memos), in English or Arabic.
 
 Categories:
 ${text}
 
 For every item give:
-- category: the best fit, written exactly as it appears in the list.
+- category: the best fit, written exactly as it appears in the list. The list isn't fixed: when nothing fits well, make a new broad category (1 to 3 words, Title Case, like "Family", "Bills & Receipts", "Work Email") that other items could share too. Reuse a new category you made earlier in this batch rather than making near-copies.${names.length >= MAX_CATEGORIES ? " The list is full, so pick the closest existing category." : ""}
+- new_category_about: for a new category only, one short line saying what belongs in it. Empty for an existing one.
 - subtopic: reuse a sub-topic already in use for that category when one fits; otherwise write a short new one in the same style.
 - summary: one plain English line (under 20 words) saying what the item is about, even when the item is in Arabic.
 - tags: 2 to 4 short English tags in Title Case.
@@ -136,10 +143,25 @@ For every item give:
 
   const d = await db();
   const known = new Set(pending.map((p) => p.id));
-  const valid = new Set(names);
+  const valid = new Map(names.map((n) => [n.toLowerCase(), n]));
   const stmts: D1PreparedStatement[] = [];
+  let sorted = 0;
   for (const r of out) {
-    if (!known.has(r.id) || !valid.has(r.category)) continue;
+    if (!known.has(r.id)) continue;
+    const asked = r.category.trim().replace(/\s+/g, " ");
+    let category = valid.get(asked.toLowerCase());
+    // A new category, when there's room and the name looks like one.
+    if (!category && valid.size < MAX_CATEGORIES && /^[\p{L}\p{N}][\p{L}\p{N} &',-]{1,38}$/u.test(asked)) {
+      category = asked;
+      stmts.push(
+        d.prepare(`insert or ignore into categories (name, description, color) values (?, ?, ?)`)
+          .bind(category, r.new_category_about.trim().slice(0, 200), NEW_COLORS[valid.size % NEW_COLORS.length]),
+      );
+      valid.set(asked.toLowerCase(), category);
+    }
+    if (!category) continue;
+    sorted++;
+    r.category = category;
     stmts.push(
       d.prepare(
         `update items set category = coalesce(category, ?), subtopic = coalesce(subtopic, ?), summary = coalesce(summary, ?),
@@ -156,5 +178,5 @@ For every item give:
     }
   }
   if (stmts.length) await d.batch(stmts);
-  return out.filter((r) => known.has(r.id) && valid.has(r.category)).length;
+  return sorted;
 }

@@ -12,7 +12,7 @@ enum Route: Hashable {
     case ask(String)
 }
 
-enum Tab: Hashable { case inbox, library, search }
+enum Tab: Hashable { case inbox, library, search, ask }
 
 /// The Library counts, shared by every screen. `changed` goes up after an add, so lists reload;
 /// `edited` and `purged` tell lists about a change made on an item's own screen.
@@ -33,7 +33,7 @@ final class MenuStore {
     }
 }
 
-/// The app once signed in: three tabs under a floating glass bar, and the Add button beside it.
+/// The app once signed in: four tabs (Inbox, Library, Search, Ask Brain) under a floating glass bar, and the Add button beside it.
 struct MainView: View {
     @Environment(AppSession.self) private var session
     @Environment(\.scenePhase) private var phase
@@ -41,6 +41,7 @@ struct MainView: View {
     @State private var inboxPath: [Route] = []
     @State private var libraryPath: [Route] = []
     @State private var searchPath: [Route] = []
+    @State private var askPath: [Route] = []
     @State private var adding = false
     @State private var listening = false
     @State private var store = MenuStore()
@@ -68,6 +69,12 @@ struct MainView: View {
                 SearchView(listening: $listening).routes()
             }
             .tag(Tab.search)
+            .toolbar(.hidden, for: .tabBar)
+
+            NavigationStack(path: $askPath) {
+                AskHome(path: $askPath).routes()
+            }
+            .tag(Tab.ask)
             .toolbar(.hidden, for: .tabBar)
         }
         .overlay(alignment: .bottom) {
@@ -119,6 +126,7 @@ struct MainView: View {
         case .inbox: return inboxPath
         case .library: return libraryPath
         case .search: return searchPath
+        case .ask: return askPath
         }
     }
 
@@ -135,11 +143,12 @@ struct MainView: View {
         case .inbox: inboxPath = []
         case .library: libraryPath = []
         case .search: searchPath = []
+        case .ask: askPath = []
         }
     }
 
     #if DEBUG
-    /// `-demoScreen library|trash|settings|item|add|search` opens a screen at launch, for screenshots.
+    /// `-demoScreen library|trash|settings|item|add|search|ask` opens a screen at launch, for screenshots.
     private func demoStart() {
         guard Demo.on, let screen = UserDefaults.standard.string(forKey: "demoScreen") else { return }
         switch screen {
@@ -147,6 +156,7 @@ struct MainView: View {
         case "trash": tab = .library; libraryPath = [.trash]
         case "settings": tab = .library; libraryPath = [.settings]
         case "search": tab = .search
+        case "ask": tab = .ask
         case "add": adding = true
         case "item": if let first = try? Demo.page().items.first { inboxPath = [.item(first)] }
         default: break
@@ -155,7 +165,7 @@ struct MainView: View {
     #endif
 }
 
-/// The three-tab glass pill. Tapping the open tab again goes back to its first screen.
+/// The four-tab glass pill. Tapping the open tab again goes back to its first screen.
 private struct TabBar: View {
     @Binding var tab: Tab
     var reselect: (Tab) -> Void
@@ -165,6 +175,7 @@ private struct TabBar: View {
             item(.inbox, "Inbox", "tray", "tray.fill")
             item(.library, "Library", "books.vertical", "books.vertical.fill")
             item(.search, "Search", "magnifyingglass", "magnifyingglass")
+            item(.ask, "Ask", "sparkles", "sparkles")
         }
         .padding(.horizontal, 6)
         .frame(height: 62)
