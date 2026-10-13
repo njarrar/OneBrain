@@ -355,6 +355,7 @@ textarea { resize: vertical; }
 .add-rec .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; animation: add-blink 1s infinite; }
 @keyframes add-blink { 50% { opacity: .3; } }
 .add-voice audio { width: 100%; max-width: 420px; }
+.add-audio-preview { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 480px; }
 .add-pick { font-size: 13px; color: var(--soft); display: flex; flex-direction: column; gap: 6px; }
 .add-pictures { margin-top: 8px; }
 .add-thumbs { display: flex; flex-wrap: wrap; gap: 10px; }

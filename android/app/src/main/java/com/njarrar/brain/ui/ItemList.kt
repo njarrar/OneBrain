@@ -226,7 +226,9 @@ class ItemListModel(start: Filter, private val mode: ListMode) : ViewModel() {
                 (f.view == "inbox" && changed.status != "inbox") ||
                 (f.view == "all" && changed.status == "archived") ||
                 (f.view == "archived" && changed.status != "archived") ||
-                (f.unread && !changed.isUnread)
+                (f.unread && !changed.isUnread) ||
+                (f.category != null && changed.category != f.category) ||
+                (f.tag != null && changed.tags != null && f.tag !in changed.tags)
         }
         if (leaves) {
             drop(changed.id)
@@ -251,7 +253,7 @@ class ItemListModel(start: Filter, private val mode: ListMode) : ViewModel() {
 fun ItemList(start: Filter, mode: ListMode, key: String? = null, openSearch: ((Boolean) -> Unit)? = null) {
     val c = Theme.colors
     val nav = LocalNav.current
-    val m: ItemListModel = viewModel(key = key) { ItemListModel(start, mode) }
+    val m: ItemListModel = viewModel(key = key ?: "$mode:$start") { ItemListModel(start, mode) }
     val state = rememberLazyListState()
     var confirmEmpty by remember { mutableStateOf(false) }
 

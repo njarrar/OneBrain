@@ -78,10 +78,24 @@ class PickedAudio(val data: ByteArray, val filename: String, val mime: String) {
     }
 }
 
+private val fallbackMimes = mapOf(
+    "m4a" to "audio/mp4", "mp3" to "audio/mpeg", "wav" to "audio/wav", "aac" to "audio/aac",
+    "caf" to "audio/x-caf", "ogg" to "audio/ogg", "oga" to "audio/ogg", "opus" to "audio/opus",
+    "flac" to "audio/flac", "webm" to "audio/webm", "amr" to "audio/amr", "3gp" to "video/3gpp",
+    "mp4" to "video/mp4", "mov" to "video/quicktime", "m4v" to "video/x-m4v",
+    "jpg" to "image/jpeg", "jpeg" to "image/jpeg", "png" to "image/png", "webp" to "image/webp",
+    "gif" to "image/gif", "heic" to "image/heic", "heif" to "image/heif",
+)
+
 /** A shared or picked file's type, from the app that has it or from its name. */
-fun mimeOf(context: Context, uri: Uri): String? =
-    context.contentResolver.getType(uri)
-        ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
+fun mimeOf(context: Context, uri: Uri): String? {
+    val reported = context.contentResolver.getType(uri)?.takeIf { it != "application/octet-stream" }
+    if (reported != null) return reported
+    val name = nameOf(context, uri).orEmpty()
+    val ext = name.substringAfterLast('.', "").ifEmpty { MimeTypeMap.getFileExtensionFromUrl(uri.toString()) }.lowercase()
+    if (ext.isEmpty()) return context.contentResolver.getType(uri)
+    return MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: fallbackMimes[ext]
+}
 
 fun nameOf(context: Context, uri: Uri): String? = runCatching {
     context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
@@ -89,7 +103,7 @@ fun nameOf(context: Context, uri: Uri): String? = runCatching {
     }
 }.getOrNull() ?: uri.lastPathSegment
 
-private fun sizeOf(context: Context, uri: Uri): Long? = runCatching {
+fun sizeOf(context: Context, uri: Uri): Long? = runCatching {
     context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
         if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else null
     }

@@ -343,6 +343,8 @@ struct ItemList: View {
                 || (filter.view == .all && changed.status == "archived")
                 || (filter.view == .archived && changed.status != "archived")
                 || (filter.unread && !changed.isUnread)
+                || (filter.category != nil && changed.category != filter.category)
+                || (filter.tag != nil && changed.tags != nil && !(changed.tags?.contains(filter.tag!) ?? true))
         }
         if leaves {
             withAnimation { drop(changed.id) }

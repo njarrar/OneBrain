@@ -3,6 +3,32 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.6.2 (2026-10-13)
+
+### Web
+- A sync you start by hand, and an Instagram import, now read, sort and index the new saves
+  for search right away, not only sort them.
+- A file sent with no type is named by its ending, so a video plays as a video and a picture
+  shows as a picture. A voice memo or file saved with no title takes its file name.
+- Add page: paste a screenshot to add it as a picture, remove a recording before saving, and
+  a failed upload of several pictures retries only the ones still left.
+
+### iPhone and Android
+- **No category** in the category menu clears an item's category.
+- **Read again** in the item's more menu.
+- An item leaves a category or tag list as soon as you change its category or tag.
+- A **Save** button beside the AI model name, so an edit isn't lost when the keyboard closes.
+- Saving several pictures again after a failure doesn't save the first ones twice.
+- Videos stored as plain data play as videos; files show their own label and icon.
+
+### Android only
+- Voice memos, emails, pins and files show their own label and icon.
+- "Text in the picture" vs "What was said" now follows whether the save has sound.
+- Picked or shared files find their type from the file name, and an unreadable file says so
+  instead of "too big".
+- Lists opened from a filter no longer share state, and the voice player frees itself when a
+  file fails to load.
+
 ## 0.6.1 (2026-10-13)
 
 - On a phone, the Ask Brain page no longer runs off the right edge; long source titles shorten

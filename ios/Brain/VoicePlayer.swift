@@ -14,7 +14,7 @@ struct VoicePlayer: View {
     @State private var length: Double = 0
     @State private var done: NSObjectProtocol?
 
-    private var isVideo: Bool { file.mime.hasPrefix("video/") }
+    private var isVideo: Bool { file.isVideo }
 
     var body: some View {
         Group {

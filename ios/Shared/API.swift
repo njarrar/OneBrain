@@ -67,6 +67,8 @@ struct API {
         /// true moves to Trash, false brings back.
         var trash: Bool?
         var category: String?
+        /// true sends category: null, which clears the category.
+        var clearCategory = false
         var note: String?
         var addTags: [String]?
         var removeTags: [String]?
@@ -83,7 +85,11 @@ struct API {
             try c.encodeIfPresent(status, forKey: .status)
             try c.encodeIfPresent(read, forKey: .read)
             try c.encodeIfPresent(trash, forKey: .trash)
-            try c.encodeIfPresent(category, forKey: .category)
+            if clearCategory {
+                try c.encodeNil(forKey: .category)
+            } else {
+                try c.encodeIfPresent(category, forKey: .category)
+            }
             try c.encodeIfPresent(note, forKey: .note)
             try c.encodeIfPresent(addTags, forKey: .addTags)
             try c.encodeIfPresent(removeTags, forKey: .removeTags)

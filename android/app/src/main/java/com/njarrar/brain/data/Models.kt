@@ -58,6 +58,10 @@ data class Item(
                 "image" -> "image"
                 "note" -> "note"
                 "video" -> "video"
+                "audio" -> "audio"
+                "email" -> "email"
+                "pin" -> "pin"
+                "file" -> "file"
                 else -> if (url == null) "note" else "link"
             }
         }
@@ -94,10 +98,19 @@ data class ItemDetail(
     data class Tag(val name: String, val addedBy: String = "user")
 
     @Serializable
-    data class FileRef(val id: String, val filename: String = "", val mime: String = "")
+    data class FileRef(val id: String, val filename: String = "", val mime: String = "") {
+        private val ext: String get() = filename.substringAfterLast('.', "").lowercase()
+        val isVideo: Boolean get() = mime.startsWith("video/") || (mime == "application/octet-stream" && ext in VIDEO_EXTENSIONS)
+        val isSound: Boolean get() = isVideo || mime.startsWith("audio/") || (mime == "application/octet-stream" && ext in AUDIO_EXTENSIONS)
+    }
 
     /** Voice memos and videos, to play. */
-    val sounds: List<FileRef> get() = files.filter { it.mime.startsWith("audio/") || it.mime.startsWith("video/") }
+    val sounds: List<FileRef> get() = files.filter { it.isSound }
+
+    companion object {
+        private val VIDEO_EXTENSIONS = setOf("mp4", "mov", "m4v")
+        private val AUDIO_EXTENSIONS = setOf("m4a", "mp3", "wav", "aac", "caf", "ogg", "oga", "opus", "flac", "webm", "3gp", "amr")
+    }
 }
 
 /** The people and dates the AI found in a save. */

@@ -229,6 +229,7 @@ fun ItemScreen(id: String) {
     }
     val hidden = Store.blur && item.isSensitive && !reveal
     val detail = m.detail
+    val heard = detail?.sounds?.isNotEmpty() == true || item.kind == "audio" || item.kind == "video"
 
     Box(Modifier.fillMaxSize().background(c.bg)) {
         Column(Modifier.fillMaxSize()) {
@@ -244,7 +245,7 @@ fun ItemScreen(id: String) {
                 detail?.sounds?.forEach { VoicePlayer(it) }
                 item.facts?.takeIf { !it.isEmpty }?.let { FactsCard(it) }
                 if (!item.transcript.isNullOrEmpty() || detail?.textError != null || detail?.sounds?.isNotEmpty() == true) {
-                    TranscriptCard(item, detail?.textError) { m.reread() }
+                    TranscriptCard(item, heard, detail?.textError) { m.reread() }
                 }
                 item.summary?.takeIf { it.isNotEmpty() }?.let { SummaryCard(it) }
                 m.error?.let { Text(it, fontSize = 13.sp, color = c.bad) }
@@ -296,6 +297,9 @@ private fun TopActions(item: Item, m: ItemModel) {
             MenuItem("Copy text", Icons.Outlined.ContentCopy) {
                 more = false
                 clipboard.setText(AnnotatedString(item.body ?: item.mainText))
+            }
+            if (!item.inTrash) {
+                MenuItem("Read again", Icons.Outlined.AutoAwesome) { more = false; m.reread() }
             }
             if (item.status != "inbox" && !item.inTrash) {
                 MenuItem("Move to Inbox", Icons.Outlined.Inbox) { more = false; m.set(Change(status = "inbox")) }
@@ -484,12 +488,11 @@ private fun FactsCard(facts: Facts) {
 
 /** What was said in a voice memo or video, or the text in a picture, with Read again. */
 @Composable
-private fun TranscriptCard(item: Item, textError: String?, onReread: () -> Unit) {
+private fun TranscriptCard(item: Item, heard: Boolean, textError: String?, onReread: () -> Unit) {
     val c = Theme.colors
-    val picture = item.kind == "image"
     Card(
-        if (picture) Icons.AutoMirrored.Outlined.TextSnippet else Icons.Outlined.RecordVoiceOver,
-        if (picture) "Text in the picture" else "What was said",
+        if (heard) Icons.Outlined.RecordVoiceOver else Icons.AutoMirrored.Outlined.TextSnippet,
+        if (heard) "What was said" else "Text in the picture",
         action = {
             Text(
                 "Read again", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
@@ -598,6 +601,12 @@ private fun CategoryRow(item: Item, m: ItemModel) {
             Chevron()
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (item.category != null) {
+                DropdownMenuItem(
+                    text = { Text("No category", color = c.soft) },
+                    onClick = { open = false; m.set(Change(clearCategory = true)) },
+                )
+            }
             MenuStore.menu?.categories.orEmpty().forEach { cat ->
                 DropdownMenuItem(
                     text = { Text(cat.name) },

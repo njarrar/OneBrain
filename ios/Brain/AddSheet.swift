@@ -260,9 +260,12 @@ struct AddSheet: View {
             }
             if !pictures.isEmpty {
                 // Each picture is its own save, with the text as its caption.
-                for (i, data) in pictures.enumerated() {
-                    _ = try await API.shared.save(image: data, filename: "added-\(i + 1).jpg", mime: "image/jpeg",
+                var n = 0
+                while let data = pictures.first {
+                    n += 1
+                    _ = try await API.shared.save(image: data, filename: "added-\(n).jpg", mime: "image/jpeg",
                                                   externalId: nil, takenAt: nil, text: note.isEmpty ? nil : note, options: options)
+                    pictures.removeFirst()
                 }
             } else if memo == nil || url != nil {
                 // A link or a note (a link spoken into a memo is saved as its own item too).

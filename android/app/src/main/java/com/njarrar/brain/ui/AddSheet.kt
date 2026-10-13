@@ -154,7 +154,12 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                 val mime = mimeOf(context, u).orEmpty()
                 if (mime.startsWith("audio/") || mime.startsWith("video/")) {
                     val a = withContext(Dispatchers.IO) { PickedAudio.from(context, u) }
-                    if (a != null) picked = a else error = "That file is too big. Brain takes up to 20 MB."
+                    if (a != null) {
+                        picked = a
+                    } else {
+                        val tooBig = (com.njarrar.brain.data.sizeOf(context, u) ?: 0L) > PickedAudio.MAX_BYTES
+                        error = if (tooBig) "That file is too big. Brain takes up to 20 MB." else "Couldn't read that file."
+                    }
                 } else if (mime.startsWith("image/")) {
                     addPictures(listOf(u))
                 }
@@ -208,8 +213,11 @@ fun AddSheet(onDismiss: () -> Unit, saved: suspend () -> Unit) {
                 }
                 if (pictures.isNotEmpty()) {
                     // Each picture is its own save, with the text as its caption.
-                    pictures.forEachIndexed { i, p ->
-                        Api.saveFile(p.jpeg, "added-${i + 1}.jpg", "image/jpeg", note.ifEmpty { null }, options)
+                    var n = 0
+                    while (pictures.isNotEmpty()) {
+                        n += 1
+                        Api.saveFile(pictures.first().jpeg, "added-$n.jpg", "image/jpeg", note.ifEmpty { null }, options)
+                        pictures.removeAt(0)
                     }
                 } else if (memo == null || url != null) {
                     // A link or a note (a link typed beside a memo is saved as its own item too).

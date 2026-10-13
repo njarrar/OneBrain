@@ -196,7 +196,11 @@ private fun ShareSheet(shared: Shared, onClose: () -> Unit) {
                     // (often just the file's name) become the note only when nothing was typed.
                     state = ShareState.Saving(0, 1)
                     val audio = withContext(Dispatchers.IO) { PickedAudio.from(context, shared.media) }
-                        ?: throw IllegalStateException("That file is too big. Brain takes up to 20 MB.")
+                        ?: throw IllegalStateException(
+                            if ((com.njarrar.brain.data.sizeOf(context, shared.media) ?: 0L) > PickedAudio.MAX_BYTES)
+                                "That file is too big. Brain takes up to 20 MB."
+                            else "Couldn't read that file.",
+                        )
                     Api.saveFile(audio.data, audio.filename, audio.mime, extra.ifEmpty { shared.text }, options)
                 } else if (shared.url == null && shared.images.isNotEmpty()) {
                     // Each picture becomes its own item, with the note on each.
