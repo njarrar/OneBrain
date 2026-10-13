@@ -9,11 +9,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -91,6 +93,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -215,6 +218,8 @@ fun ItemScreen(id: String) {
     val m: ItemModel = viewModel { ItemModel(id) }
     var reveal by remember { mutableStateOf(false) }
     var confirmPurge by remember { mutableStateOf(false) }
+    var confirmTrash by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
     LaunchedEffect(id) { m.load() }
 
     val item = m.item
@@ -258,7 +263,7 @@ fun ItemScreen(id: String) {
                 }
             }
         }
-        Toolbar(item, m, onPurge = { confirmPurge = true }, modifier = Modifier.align(Alignment.BottomCenter))
+        Toolbar(item, m, onTrash = { confirmTrash = true }, onPurge = { confirmPurge = true }, modifier = Modifier.align(Alignment.BottomCenter))
     }
 
     if (confirmPurge) {
@@ -267,30 +272,52 @@ fun ItemScreen(id: String) {
             title = { Text("Delete this for good?") },
             text = { Text("This can't be undone.") },
             confirmButton = {
-                TextButton(onClick = { confirmPurge = false; m.purge { nav.back() } }) { Text("Delete forever", color = c.bad) }
+                TextButton(onClick = { confirmPurge = false; haptic.confirm(); m.purge { nav.back() } }) { Text("Delete forever", color = c.bad) }
             },
             dismissButton = { TextButton(onClick = { confirmPurge = false }) { Text("Cancel") } },
         )
     }
+    if (confirmTrash) {
+        AlertDialog(
+            onDismissRequest = { confirmTrash = false },
+            title = { Text("Move this to Trash?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmTrash = false
+                    haptic.confirm()
+                    m.set(Change(trash = true)) { nav.back() }
+                }) { Text("Delete", color = c.bad) }
+            },
+            dismissButton = { TextButton(onClick = { confirmTrash = false }) { Text("Cancel") } },
+        )
+    }
 }
 
-/** Share, the bell and more, at the top right. */
+/** Share and More, at the top right. Remind me lives in More. */
 @Composable
 private fun TopActions(item: Item, m: ItemModel) {
     val c = Theme.colors
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     var more by remember { mutableStateOf(false) }
+    var remind by remember { mutableStateOf(false) }
     item.url?.let { link ->
         IconButton(onClick = {
             val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, link)
             context.startActivity(Intent.createChooser(send, null))
         }) { Icon(Icons.Outlined.Share, "Share", tint = c.ink2) }
     }
-    if (!item.inTrash) RemindMenu(item, m)
     Box {
         IconButton(onClick = { more = true }) { Icon(Icons.Outlined.MoreVert, "More", tint = c.ink2) }
         DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
+            if (!item.inTrash) {
+                val due = Dates.parse(item.remindAt)
+                MenuItem(
+                    if (due == null) "Remind me…" else "Reminder set…",
+                    if (due == null) Icons.Outlined.Notifications else Icons.Filled.Notifications,
+                    if (due == null) c.ink else c.accent,
+                ) { more = false; remind = true }
+            }
             item.url?.let { link ->
                 MenuItem("Copy link", Icons.Outlined.Link) { more = false; clipboard.setText(AnnotatedString(link)) }
             }
@@ -305,47 +332,39 @@ private fun TopActions(item: Item, m: ItemModel) {
                 MenuItem("Move to Inbox", Icons.Outlined.Inbox) { more = false; m.set(Change(status = "inbox")) }
             }
         }
+        if (!item.inTrash) RemindMenu(item, m, open = remind, onClose = { remind = false })
     }
 }
 
-/** The bell: when this save should come back in Resurface. */
+/** Remind me, opened from More: when this save should come back in Resurface. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RemindMenu(item: Item, m: ItemModel) {
+private fun RemindMenu(item: Item, m: ItemModel, open: Boolean, onClose: () -> Unit) {
     val c = Theme.colors
+    val haptic = LocalHapticFeedback.current
     val due = Dates.parse(item.remindAt)
-    var open by remember { mutableStateOf(false) }
     var picking by remember { mutableStateOf(false) }
     fun remind(at: Instant) {
-        open = false
-        m.set(Change(remindAt = at))
+        onClose()
+        m.set(Change(remindAt = at)) { haptic.confirm() }
     }
-    Box {
-        IconButton(onClick = { open = true }) {
-            Icon(
-                if (due == null) Icons.Outlined.Notifications else Icons.Filled.Notifications,
-                if (due == null) "Remind me" else "Reminder set",
-                tint = if (due == null) c.ink2 else c.accent,
+    DropdownMenu(expanded = open, onDismissRequest = onClose) {
+        if (due != null) {
+            Text(
+                "Comes back ${Dates.longDay(due)}", fontSize = 13.sp, color = c.soft,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            HorizontalDivider(color = c.divider)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            if (due != null) {
-                Text(
-                    "Comes back ${Dates.longDay(due)}", fontSize = 13.sp, color = c.soft,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-                HorizontalDivider(color = c.divider)
-            }
-            MenuItem("Tomorrow", Icons.Outlined.WbSunny) { remind(Dates.inDays(1)) }
-            MenuItem("This weekend", Icons.Outlined.Weekend) { remind(Dates.weekend()) }
-            MenuItem("Next week", Icons.Outlined.Event) { remind(Dates.inDays(7)) }
-            MenuItem("Next month", Icons.Outlined.CalendarMonth) { remind(Dates.inDays(30)) }
-            MenuItem("Pick a day…", Icons.Outlined.CalendarMonth) { open = false; picking = true }
-            if (due != null) {
-                MenuItem("Don't remind me", Icons.Outlined.NotificationsOff, c.bad) {
-                    open = false
-                    m.set(Change(clearReminder = true))
-                }
+        MenuItem("Tomorrow", Icons.Outlined.WbSunny) { remind(Dates.inDays(1)) }
+        MenuItem("This weekend", Icons.Outlined.Weekend) { remind(Dates.weekend()) }
+        MenuItem("Next week", Icons.Outlined.Event) { remind(Dates.inDays(7)) }
+        MenuItem("Next month", Icons.Outlined.CalendarMonth) { remind(Dates.inDays(30)) }
+        MenuItem("Pick a day…", Icons.Outlined.CalendarMonth) { onClose(); picking = true }
+        if (due != null) {
+            MenuItem("Don't remind me", Icons.Outlined.NotificationsOff, c.bad) {
+                onClose()
+                m.set(Change(clearReminder = true))
             }
         }
     }
@@ -362,7 +381,7 @@ private fun RemindMenu(item: Item, m: ItemModel) {
             confirmButton = {
                 TextButton(onClick = {
                     picking = false
-                    state.selectedDateMillis?.let { m.set(Change(remindAt = Dates.morning(Dates.pickedDay(it)))) }
+                    state.selectedDateMillis?.let { m.set(Change(remindAt = Dates.morning(Dates.pickedDay(it)))) { haptic.confirm() } }
                 }) { Text("Set") }
             },
             dismissButton = { TextButton(onClick = { picking = false }) { Text("Cancel") } },
@@ -430,7 +449,7 @@ private fun Pictures(item: Item, hidden: Boolean, onReveal: () -> Unit) {
                 contentScale = if (i == 0) ContentScale.Crop else ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth()
                     .then(if (i == 0) Modifier.aspectRatio(16f / 10f) else Modifier.heightIn(min = 120.dp))
-                    .clip(RoundedCornerShape(14.dp)).background(c.raised).hidden(hidden, 22.dp),
+                    .clip(RoundedCornerShape(16.dp)).background(c.raised).hidden(hidden, 22.dp),
             )
             if (hidden && i == 0) {
                 Text(
@@ -447,7 +466,7 @@ private fun Pictures(item: Item, hidden: Boolean, onReveal: () -> Unit) {
 private fun Card(icon: ImageVector, title: String, action: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
     val c = Theme.colors
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(c.fill).padding(horizontal = 14.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.fill).padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -548,7 +567,7 @@ private fun NoteRow(m: ItemModel) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(Icons.AutoMirrored.Outlined.Notes, null, tint = c.faint, modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Outlined.Notes, null, tint = c.accent, modifier = Modifier.size(18.dp))
         BasicTextField(
             value = m.note,
             onValueChange = { m.note = it },
@@ -564,7 +583,7 @@ private fun NoteRow(m: ItemModel) {
             },
             decorationBox = { inner ->
                 Box {
-                    if (m.note.isEmpty()) Text("Add a note", fontSize = 15.sp, color = c.faint)
+                    if (m.note.isEmpty()) Text("Add a note", fontSize = 15.sp, color = c.soft)
                     inner()
                 }
             },
@@ -624,6 +643,7 @@ private fun CategoryRow(item: Item, m: ItemModel) {
 @Composable
 private fun TagsRow(detail: ItemDetail?, m: ItemModel) {
     val c = Theme.colors
+    val haptic = LocalHapticFeedback.current
     var adding by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 14.dp, vertical = 10.dp)) {
@@ -635,16 +655,16 @@ private fun TagsRow(detail: ItemDetail?, m: ItemModel) {
                 Box {
                     Text(
                         "#${t.name}", fontSize = 14.sp, color = if (suggested) c.soft else c.ink,
-                        modifier = Modifier.height(28.dp).clip(RoundedCornerShape(6.dp))
+                        modifier = Modifier.heightIn(min = 28.dp).clip(RoundedCornerShape(6.dp))
                             .then(if (suggested) Modifier.dashedBorder(c.lineStrong, 6.dp) else Modifier.background(c.raised))
                             .combinedClickable(
-                                onClick = { if (suggested) m.set(Change(addTags = listOf(t.name))) },
+                                onClick = { if (suggested) m.set(Change(addTags = listOf(t.name))) { haptic.confirm() } },
                                 onLongClick = { menu = true },
                             )
                             .padding(horizontal = 10.dp, vertical = 4.dp),
                     )
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        if (suggested) MenuItem("Keep tag", Icons.Outlined.Check) { menu = false; m.set(Change(addTags = listOf(t.name))) }
+                        if (suggested) MenuItem("Keep tag", Icons.Outlined.Check) { menu = false; m.set(Change(addTags = listOf(t.name))) { haptic.confirm() } }
                         MenuItem("Remove tag", Icons.Outlined.Close, c.bad) { menu = false; m.set(Change(removeTags = listOf(t.name))) }
                     }
                 }
@@ -670,7 +690,7 @@ private fun TagsRow(detail: ItemDetail?, m: ItemModel) {
                     val tags = parseTags(text)
                     adding = false
                     text = ""
-                    if (tags.isNotEmpty()) m.set(Change(addTags = tags))
+                    if (tags.isNotEmpty()) m.set(Change(addTags = tags)) { haptic.confirm() }
                 }) { Text("Add") }
             },
             dismissButton = { TextButton(onClick = { adding = false; text = "" }) { Text("Cancel") } },
@@ -701,14 +721,16 @@ private fun SavedRow(s: ItemDetail.Save) {
     }
 }
 
-/** The floating toolbar: Open, Read, Archive, Delete; Restore and Delete forever in Trash. */
+/** The floating toolbar: Open, Read, Archive, Delete (after asking); Restore and Delete forever in Trash. */
 @Composable
-private fun Toolbar(item: Item, m: ItemModel, onPurge: () -> Unit, modifier: Modifier = Modifier) {
+private fun Toolbar(item: Item, m: ItemModel, onTrash: () -> Unit, onPurge: () -> Unit, modifier: Modifier = Modifier) {
     val c = Theme.colors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
+    val haptic = LocalHapticFeedback.current
     Row(
-        modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth().height(62.dp)
+        modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 8.dp).fillMaxWidth()
+            .heightIn(min = 62.dp).height(IntrinsicSize.Min)
             .clip(CircleShape).background(c.card).border(1.dp, c.line, CircleShape),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -724,9 +746,9 @@ private fun Toolbar(item: Item, m: ItemModel, onPurge: () -> Unit, modifier: Mod
             if (item.status == "archived") {
                 Tool("Inbox", Icons.Outlined.Inbox, c.accent) { m.set(Change(status = "inbox")) }
             } else {
-                Tool("Archive", Icons.Outlined.Archive, c.accent) { m.set(Change(status = "archived")) { nav.back() } }
+                Tool("Archive", Icons.Outlined.Archive, c.accent) { haptic.confirm(); m.set(Change(status = "archived")) { nav.back() } }
             }
-            Tool("Delete", Icons.Outlined.Delete, c.bad) { m.set(Change(trash = true)) { nav.back() } }
+            Tool("Delete", Icons.Outlined.Delete, c.bad, onClick = onTrash)
         }
     }
 }
@@ -739,7 +761,7 @@ private fun androidx.compose.foundation.layout.RowScope.Tool(
     onClick: () -> Unit,
 ) {
     Column(
-        Modifier.weight(1f).fillMaxSize().clickable(onClick = onClick),
+        Modifier.weight(1f).fillMaxHeight().clickable(onClick = onClick).padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

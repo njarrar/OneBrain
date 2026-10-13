@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -52,10 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -80,7 +82,7 @@ fun sourceIcon(id: String): ImageVector = when (id) {
 
 /** A source's mark: the X, YouTube and Instagram logos, a Material icon for the rest. */
 @Composable
-fun SourceMark(source: String, size: Dp = 18.dp, tint: Color = Theme.colors.ink2) {
+fun SourceMark(source: String, size: Dp = 18.dp, tint: Color = Theme.colors.ink2, contentDescription: String? = null) {
     val mark = when (source) {
         "x" -> R.drawable.mark_x to 0.82f
         "youtube" -> R.drawable.mark_youtube to 1f
@@ -88,28 +90,25 @@ fun SourceMark(source: String, size: Dp = 18.dp, tint: Color = Theme.colors.ink2
         else -> null
     }
     if (mark != null) {
-        Icon(painterResource(mark.first), contentDescription = null, tint = tint, modifier = Modifier.size(size * mark.second))
+        Icon(painterResource(mark.first), contentDescription = contentDescription, tint = tint, modifier = Modifier.size(size * mark.second))
     } else {
-        Icon(sourceIcon(source), contentDescription = null, tint = tint, modifier = Modifier.size(size))
+        Icon(sourceIcon(source), contentDescription = contentDescription, tint = tint, modifier = Modifier.size(size))
     }
 }
 
-/** The 36 dp rounded tile at the start of a row, with the unread dot on its corner. */
+/** The 36 dp rounded tile at the start of a row. */
 @Composable
-fun SourceTile(source: String, unread: Boolean = false) {
-    val c = Theme.colors
-    Box {
-        Box(
-            Modifier.size(36.dp).background(c.fill, RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center,
-        ) { SourceMark(source) }
-        if (unread) {
-            Box(
-                Modifier.align(Alignment.TopEnd).offset(x = 3.dp, y = (-3).dp).size(11.dp)
-                    .background(c.bg, CircleShape).padding(2.dp).background(c.accentFill, CircleShape),
-            )
-        }
-    }
+fun SourceTile(source: String) {
+    Box(
+        Modifier.size(36.dp).background(Theme.colors.fill, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
+    ) { SourceMark(source) }
+}
+
+/** The small accent dot before an unread save's author, as in Mail. */
+@Composable
+fun UnreadDot() {
+    Box(Modifier.size(7.dp).background(Theme.colors.accentFill, CircleShape))
 }
 
 /** A category's small square. */
@@ -127,7 +126,7 @@ fun CategoryLabel(name: String, color: String?) {
     }
 }
 
-/** A pill chip, 32 dp tall. On: accent tint. */
+/** A pill chip, at least 32 dp tall. On: accent tint. A one-letter source such as X shows its logo alone. */
 @Composable
 fun Chip(
     label: String,
@@ -138,15 +137,16 @@ fun Chip(
 ) {
     val c = Theme.colors
     val ink = if (on) c.accent else c.ink2
+    val markOnly = source != null && label.length == 1
     Row(
-        Modifier.height(32.dp).clip(CircleShape).background(if (on) c.accentBG else c.fill).clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
+        Modifier.heightIn(min = 32.dp).clip(CircleShape).background(if (on) c.accentBG else c.fill).clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (source != null) SourceMark(source, 15.dp, ink)
+        if (source != null) SourceMark(source, 15.dp, ink, contentDescription = if (markOnly) label else null)
         else if (icon != null) Icon(icon, null, tint = ink, modifier = Modifier.size(16.dp))
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ink, maxLines = 1)
+        if (!markOnly) Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ink, maxLines = 1)
     }
 }
 
@@ -202,6 +202,7 @@ fun GroupRow(
     divider: Boolean = true,
     minHeight: Dp = 48.dp,
     labelColor: Color = Theme.colors.ink,
+    labelLines: Int = 1,
     onClick: (() -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null,
 ) {
@@ -210,12 +211,12 @@ fun GroupRow(
         Row(
             Modifier.fillMaxWidth().heightIn(min = minHeight)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 14.dp, vertical = if (labelLines > 1) 6.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             leading?.invoke()
-            Text(label, fontSize = 16.sp, color = labelColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(label, fontSize = 16.sp, color = labelColor, maxLines = labelLines, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             if (value != null) {
                 Text(
                     value, color = c.faint, maxLines = 1,
@@ -247,7 +248,7 @@ fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun TopBar(title: String = "", onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
     val c = Theme.colors
-    Row(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = c.accent) }
         Text(
             title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = c.ink, maxLines = 1,
@@ -257,34 +258,29 @@ fun TopBar(title: String = "", onBack: () -> Unit, actions: @Composable RowScope
     }
 }
 
-/** "Let AI sort" and "Add tags", shared by the Add sheet and Save to Brain. */
+/** "Let AI sort" and "Add tags", shared by the Add sheet and Save to Brain. Both look the same: accent when on. */
 @Composable
 fun CaptureChips(sort: Boolean, onSort: (Boolean) -> Unit, tagging: Boolean, onTagging: (Boolean) -> Unit) {
-    val c = Theme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            Modifier.height(34.dp).clip(CircleShape).background(c.fill).clickable { onSort(!sort) }.padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Icon(Icons.Outlined.AutoAwesome, null, tint = if (sort) c.accent else c.faint, modifier = Modifier.size(16.dp))
-            Text(
-                "Let AI sort", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (sort) c.ink else c.soft,
-                textDecoration = if (sort) null else TextDecoration.LineThrough,
-            )
-        }
-        Row(
-            Modifier.height(34.dp).clip(CircleShape).background(if (tagging) c.accentBG else c.fill).clickable { onTagging(!tagging) }
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Icon(Icons.Outlined.Tag, null, tint = if (tagging) c.accent else c.soft, modifier = Modifier.size(16.dp))
-            Text(
-                "Add tags", fontSize = 14.sp, fontWeight = if (tagging) FontWeight.Medium else FontWeight.Normal,
-                color = if (tagging) c.accent else c.soft,
-            )
-        }
+        ToggleChip("Let AI sort", Icons.Outlined.AutoAwesome, sort) { onSort(!sort) }
+        ToggleChip("Add tags", Icons.Outlined.Tag, tagging) { onTagging(!tagging) }
+    }
+}
+
+/** A pill that turns on and off: accent fill and text when on, the plain fill and secondary text when off. */
+@Composable
+private fun ToggleChip(label: String, icon: ImageVector, on: Boolean, onClick: () -> Unit) {
+    val c = Theme.colors
+    val ink = if (on) c.accent else c.soft
+    Row(
+        Modifier.heightIn(min = 34.dp).clip(CircleShape).background(if (on) c.accentBG else c.fill)
+            .toggleable(value = on, role = Role.Switch, onValueChange = { onClick() })
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, null, tint = ink, modifier = Modifier.size(16.dp))
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ink)
     }
 }
 
@@ -319,6 +315,9 @@ fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, icon: ((T
         }
     }
 }
+
+/** One short buzz when an action lands. Compose UI 1.7 has no Confirm type yet, so this uses LongPress. */
+fun HapticFeedback.confirm() = performHapticFeedback(HapticFeedbackType.LongPress)
 
 /** A small spinner in the soft colour. */
 @Composable

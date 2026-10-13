@@ -3,6 +3,7 @@ import Foundation
 /// Debug builds only: `-demo` fills the app with made-up posts so screenshots can be taken on the
 /// simulator without signing in. Add `-lookDesign sunroom` and `-lookMode light` (or `brain`, `vault`,
 /// `dark`) to pick the look, and `-demoScreen library` (or trash, settings, item, add, search) to open a screen.
+/// The picture URLs are fixed picsum seeds; the post texts are written to match what each seed shows.
 enum Demo {
     static var on: Bool {
         #if DEBUG
@@ -47,10 +48,10 @@ enum Demo {
       "category":"AI, Code & Dev Tools","categoryColor":"#3b82f6","author":"Lina Haddad","authorHandle":"@linabuilds",
       "createdAt":"\(ago(1))","postedAt":"\(ago(1))","url":"https://x.com/linabuilds/status/1",
       "media":[],"sources":["x"],"tags":["agents","costs"]},
-     {"id":"d2","kind":"post","status":"inbox","body":"Soft-shoulder navy double-breasted jacket, and how to size the lapel to your frame.",
-      "category":"Menswear, Design & Travel","categoryColor":"#a855f7","author":"savile.notes","authorHandle":"@savile.notes",
+     {"id":"d2","kind":"post","status":"inbox","body":"A coyote at golden hour in Griffith Park, shot on a 400mm from the fire road. Settings and the trail map in the comments.",
+      "category":"Menswear, Design & Travel","categoryColor":"#a855f7","author":"wild.frames","authorHandle":"@wild.frames",
       "createdAt":"\(ago(26))","postedAt":"\(ago(26))","url":"https://instagram.com/p/demo",
-      "media":["https://picsum.photos/seed/navy-tailoring-jacket/700/467"],"sources":["instagram"],"tags":["tailoring"]},
+      "media":["https://picsum.photos/seed/navy-tailoring-jacket/700/467"],"sources":["instagram"],"tags":["photography","hikes"]},
      {"id":"d3","kind":"post","status":"inbox","readAt":"\(ago(40))","lang":"ar",
       "body":"سلسلة عن تاريخ وسط البلد في عمّان: كيف تغيّرت شوارع الرضا والسلط خلال مئة عام، مع صور قديمة من أرشيف العائلات.",
       "summary":"A thread on how downtown Amman's streets changed over a hundred years, with old family photos.",

@@ -12,8 +12,14 @@ struct SignInView: View {
     var body: some View {
         VStack(spacing: 20) {
             Spacer()
-            Text("Brain").font(.system(size: 40, weight: .bold))
-            Text("Everything you save, in one place.").foregroundStyle(Theme.soft)
+            Image("Pocket").resizable().scaledToFit().frame(width: 96, height: 96)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: .black.opacity(0.12), radius: 10, y: 6)
+                .accessibilityHidden(true)
+            Text("Brain").font(.ui(34, weight: .bold)).foregroundStyle(Theme.ink)
+            Text("Your X bookmarks, screenshots, voice memos, emails and notes in one place. Ask it anything, like whose birthday is next or what you saved about Lisbon.")
+                .font(.ui(16)).foregroundStyle(Theme.soft).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer()
             Button(action: start) {
                 Text("Sign in").font(.headline).frame(maxWidth: .infinity).padding(.vertical, 14)

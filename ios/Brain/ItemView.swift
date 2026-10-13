@@ -19,6 +19,7 @@ struct ItemView: View {
     @State private var reveal = false
     @State private var error: String?
     @State private var confirmPurge = false
+    @State private var confirmTrash = false
     @State private var related: [Item] = []
     @State private var pickingDate = false
     @State private var remindDate = Calendar.current.date(byAdding: .day, value: 7, to: .now) ?? .now
@@ -55,8 +56,8 @@ struct ItemView: View {
                 if let link = item.url, let url = URL(string: link) {
                     ShareLink(item: url) { Image(systemName: "square.and.arrow.up") }
                 }
-                if !item.inTrash { remindMenu }
                 Menu {
+                    if !item.inTrash { remindMenu }
                     if let link = item.url {
                         Button { UIPasteboard.general.string = link } label: { Label("Copy link", systemImage: "link") }
                     }
@@ -67,12 +68,30 @@ struct ItemView: View {
                     if item.status != "inbox" && !item.inTrash {
                         Button { Task { await change(.init(status: "inbox")) } } label: { Label("Move to Inbox", systemImage: "tray") }
                     }
-                } label: { Image(systemName: "ellipsis") }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .overlay(alignment: .topTrailing) {
+                            // A reminder is set: a small accent dot on More, where the bell now lives.
+                            if Dates.parse(item.remindAt) != nil {
+                                Circle().fill(Theme.accentFill).frame(width: 6, height: 6).offset(x: 4, y: -3)
+                            }
+                        }
+                }
+                .accessibilityLabel("More")
             }
         }
         .overlay(alignment: .bottom) { toolbar }
+        .toolbar(.hidden, for: .tabBar)
         .confirmationDialog("Delete this for good?", isPresented: $confirmPurge, titleVisibility: .visible) {
             Button("Delete forever", role: .destructive) { Task { await purge() } }
+        }
+        .confirmationDialog("Move this to Trash?", isPresented: $confirmTrash, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Haptic.warn()
+                Task { await change(.init(trash: true)); dismiss() }
+            }
+        } message: {
+            Text("You can restore it from Trash.")
         }
         .sheet(isPresented: $pickingDate) {
             NavigationStack {
@@ -86,7 +105,7 @@ struct ItemView: View {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Set") {
                                 pickingDate = false
-                                Task { await change(.init(remindAt: Self.morning(of: remindDate))) }
+                                Task { await remind(Self.morning(of: remindDate)) }
                             }
                         }
                     }
@@ -108,14 +127,14 @@ struct ItemView: View {
     private var author: some View {
         HStack(spacing: 12) {
             Text(initial)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.ui(15, weight: .semibold))
                 .foregroundStyle(Theme.ink)
                 .frame(width: 40, height: 40)
                 .background(Theme.fill, in: Circle())
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.author ?? Sources.label(item.sourceKey)).font(.system(size: 16, weight: .semibold)).lineLimit(1)
+                Text(item.author ?? Sources.label(item.sourceKey)).font(.ui(16, weight: .semibold)).lineLimit(1)
                 Text([item.authorHandle, Dates.short(item.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "  "))
-                    .font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
+                    .font(.ui(12, design: .monospaced)).foregroundStyle(Theme.faint).lineLimit(1)
             }
             Spacer()
             SourceMark(source: item.sourceKey, size: 17).foregroundStyle(Theme.faint)
@@ -128,21 +147,21 @@ struct ItemView: View {
         let frame: Alignment = item.isArabic ? .trailing : .leading
         if let title = item.title, !title.isEmpty {
             Text(title)
-                .font(.system(size: 19, weight: item.body?.isEmpty == false ? .semibold : .regular))
+                .font(.ui(19, weight: item.body?.isEmpty == false ? .semibold : .regular))
                 .lineSpacing(item.isArabic ? 14 : 9)
                 .multilineTextAlignment(align).frame(maxWidth: .infinity, alignment: frame)
                 .textSelection(.enabled)
         }
         if let body = item.body, !body.isEmpty {
             Text(body)
-                .font(.system(size: item.title?.isEmpty == false ? 16 : 19))
+                .font(.ui(item.title?.isEmpty == false ? 16 : 19))
                 .lineSpacing(item.isArabic ? 14 : 8)
                 .foregroundStyle(item.title?.isEmpty == false ? Theme.ink2 : Theme.ink)
                 .multilineTextAlignment(align).frame(maxWidth: .infinity, alignment: frame)
                 .textSelection(.enabled)
         }
         if (item.title ?? "").isEmpty && (item.body ?? "").isEmpty, let link = item.url {
-            Text(link).font(.system(size: 17)).foregroundStyle(Theme.accent).lineLimit(3)
+            Text(link).font(.ui(17)).foregroundStyle(Theme.accent).lineLimit(3)
         }
     }
 
@@ -157,12 +176,12 @@ struct ItemView: View {
                     RemoteImage(url: url, contentMode: .fit).frame(maxWidth: .infinity).frame(minHeight: 120)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .blur(radius: hidden ? 22 : 0)
             .overlay {
                 if hidden && i == 0 {
                     Button("Show picture") { reveal = true }
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.ui(14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14).padding(.vertical, 8)
                         .background(.black.opacity(0.5), in: Capsule())
@@ -178,18 +197,18 @@ struct ItemView: View {
                 Image(systemName: "person.text.rectangle").foregroundStyle(Theme.accent)
                 Text("What Brain found")
             }
-            .font(.system(size: 12.5, weight: .medium))
+            .font(.ui(12.5, weight: .medium))
             .foregroundStyle(Theme.soft)
             ForEach(Array(facts.dates.enumerated()), id: \.offset) { _, d in
                 HStack(alignment: .firstTextBaseline) {
-                    Text([d.person, d.what].compactMap { $0 }.joined(separator: ": ")).font(.system(size: 15, weight: .semibold))
+                    Text([d.person, d.what].compactMap { $0 }.joined(separator: ": ")).font(.ui(15, weight: .semibold))
                     Spacer(minLength: 8)
-                    Text(Facts.dayLabel(d.date) + (d.yearly ? ", yearly" : "")).font(.system(size: 14)).foregroundStyle(Theme.ink2)
+                    Text(Facts.dayLabel(d.date) + (d.yearly ? ", yearly" : "")).font(.ui(14)).foregroundStyle(Theme.ink2)
                 }
             }
             ForEach(Array(facts.people.enumerated()), id: \.offset) { _, p in
                 (Text(p.name).fontWeight(.semibold) + Text(p.about.isEmpty ? "" : "  \(p.about)").foregroundStyle(Theme.ink2))
-                    .font(.system(size: 15))
+                    .font(.ui(15))
             }
         }
         .foregroundStyle(Theme.ink)
@@ -205,12 +224,12 @@ struct ItemView: View {
                 Image(systemName: heard ? "quote.bubble" : "text.viewfinder").foregroundStyle(Theme.accent)
                 Text(heard ? "What was said" : "Text in the picture")
                 Spacer()
-                Button("Read again") { Task { await reread() } }.font(.system(size: 12.5, weight: .semibold))
+                Button("Read again") { Task { await reread() } }.font(.ui(12.5, weight: .semibold))
             }
-            .font(.system(size: 12.5, weight: .medium))
+            .font(.ui(12.5, weight: .medium))
             .foregroundStyle(Theme.soft)
             if let t = item.transcript, !t.isEmpty {
-                Text(t).font(.system(size: 15)).lineSpacing(4).foregroundStyle(Theme.ink2).textSelection(.enabled)
+                Text(t).font(.ui(15)).lineSpacing(4).foregroundStyle(Theme.ink2).textSelection(.enabled)
                     .multilineTextAlignment(item.isArabic ? .trailing : .leading)
                     .frame(maxWidth: .infinity, alignment: item.isArabic ? .trailing : .leading)
             } else if let e = detail?.textError {
@@ -230,9 +249,9 @@ struct ItemView: View {
                 Image(systemName: "sparkle").foregroundStyle(Theme.accent)
                 Text("Summary")
             }
-            .font(.system(size: 12.5, weight: .medium))
+            .font(.ui(12.5, weight: .medium))
             .foregroundStyle(Theme.soft)
-            Text(summary).font(.system(size: 15)).lineSpacing(4).foregroundStyle(Theme.ink2)
+            Text(summary).font(.ui(15)).lineSpacing(4).foregroundStyle(Theme.ink2)
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -253,7 +272,7 @@ struct ItemView: View {
                 }
             }
         }
-        .font(.system(size: 15))
+        .font(.ui(15))
         .foregroundStyle(Theme.ink)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
     }
@@ -262,8 +281,8 @@ struct ItemView: View {
 
     private var noteRow: some View {
         HStack(alignment: .center, spacing: 10) {
-            Image(systemName: "note.text").font(.system(size: 16)).foregroundStyle(Theme.faint)
-            TextField("Add a note", text: $note, axis: .vertical)
+            Image(systemName: "note.text").font(.ui(16)).foregroundStyle(Theme.accent)
+            TextField("Note", text: $note, prompt: Text("Add a note").foregroundStyle(Theme.ink2), axis: .vertical)
                 .lineLimit(1...8)
                 .focused($noteFocus)
                 .submitLabel(.done)
@@ -272,10 +291,10 @@ struct ItemView: View {
                     if v.hasSuffix("\n") { note = String(v.dropLast()); noteFocus = false }
                 }
             if noteFocus || note != (detail?.item.note ?? "") {
-                Button("Save") { saveNote() }.font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accent)
+                Button("Save") { saveNote() }.font(.ui(14, weight: .semibold)).foregroundStyle(Theme.accent)
                     .disabled(note == (detail?.item.note ?? ""))
             } else if !(detail?.item.note ?? "").isEmpty {
-                Text("Saved").font(.system(size: 12)).foregroundStyle(Theme.faint)
+                Text("Saved").font(.ui(12)).foregroundStyle(Theme.faint)
             }
         }
         .padding(.horizontal, 14).padding(.vertical, 14)
@@ -300,7 +319,7 @@ struct ItemView: View {
                     Text("Pick one").foregroundStyle(Theme.faint)
                 }
                 Spacer(minLength: 4)
-                Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.chevron)
+                Image(systemName: "chevron.right").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.chevron)
             }
             .padding(.horizontal, 14)
             .frame(minHeight: 48)
@@ -317,12 +336,12 @@ struct ItemView: View {
                 ForEach(detail?.tags ?? [], id: \.self) { t in
                     let suggested = t.addedBy != "user"
                     Button {
-                        if suggested { Task { await change(.init(addTags: [t.name])) } }
+                        if suggested { Haptic.tap(); Task { await change(.init(addTags: [t.name])) } }
                     } label: {
                         Text("#\(t.name)")
-                            .font(.system(size: 14))
+                            .font(.ui(14))
                             .foregroundStyle(suggested ? Theme.soft : Theme.ink)
-                            .padding(.horizontal, 10).frame(height: 28)
+                            .padding(.horizontal, 10).frame(minHeight: 28)
                             .background(suggested ? Color.clear : Theme.raised, in: RoundedRectangle(cornerRadius: 6))
                             .overlay {
                                 if suggested {
@@ -342,7 +361,7 @@ struct ItemView: View {
                     .accessibilityHint(suggested ? "Suggested by the AI. Tap to keep." : "")
                 }
                 Button { addingTag = true } label: {
-                    Image(systemName: "plus").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.soft)
+                    Image(systemName: "plus").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.soft)
                         .frame(width: 28, height: 28)
                         .background(Theme.fill, in: RoundedRectangle(cornerRadius: 6))
                 }
@@ -362,7 +381,7 @@ struct ItemView: View {
             Spacer(minLength: 4)
             if let link = s.originalUrl, let url = URL(string: link) {
                 Button { openURL(url) } label: {
-                    Image(systemName: "arrow.up.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.chevron)
+                    Image(systemName: "arrow.up.right").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.chevron)
                 }
                 .accessibilityLabel("See it there")
             }
@@ -388,17 +407,17 @@ struct ItemView: View {
         return morning(of: next)
     }
 
-    /// The bell: when this save should come back in Resurface.
+    /// Remind me, inside More: when this save should come back in Resurface.
     private var remindMenu: some View {
         let due = Dates.parse(item.remindAt)
         return Menu {
             if let due {
                 Text("Comes back \(due.formatted(.dateTime.weekday(.wide).month().day()))")
             }
-            Button { Task { await change(.init(remindAt: Self.inDays(1))) } } label: { Label("Tomorrow", systemImage: "sunrise") }
-            Button { Task { await change(.init(remindAt: Self.weekend)) } } label: { Label("This weekend", systemImage: "sofa") }
-            Button { Task { await change(.init(remindAt: Self.inDays(7))) } } label: { Label("Next week", systemImage: "calendar") }
-            Button { Task { await change(.init(remindAt: Self.inDays(30))) } } label: { Label("Next month", systemImage: "calendar.badge.clock") }
+            Button { Task { await remind(Self.inDays(1)) } } label: { Label("Tomorrow", systemImage: "sunrise") }
+            Button { Task { await remind(Self.weekend) } } label: { Label("This weekend", systemImage: "sofa") }
+            Button { Task { await remind(Self.inDays(7)) } } label: { Label("Next week", systemImage: "calendar") }
+            Button { Task { await remind(Self.inDays(30)) } } label: { Label("Next month", systemImage: "calendar.badge.clock") }
             Button { pickingDate = true } label: { Label("Pick a day…", systemImage: "calendar.day.timeline.left") }
             if due != nil {
                 Button(role: .destructive) { Task { await change(.init(clearReminder: true)) } } label: {
@@ -406,10 +425,8 @@ struct ItemView: View {
                 }
             }
         } label: {
-            Image(systemName: due == nil ? "bell" : "bell.fill")
-                .foregroundStyle(due == nil ? Theme.ink2 : Theme.accent)
+            Label(due == nil ? "Remind me" : "Reminder set", systemImage: due == nil ? "bell" : "bell.fill")
         }
-        .accessibilityLabel(due == nil ? "Remind me" : "Reminder set")
     }
 
     private var relatedList: some View {
@@ -441,12 +458,11 @@ struct ItemView: View {
                     tool("Inbox", "tray", color: Theme.accent) { Task { await change(.init(status: "inbox")) } }
                 } else {
                     tool("Archive", "archivebox", color: Theme.accent) {
+                        Haptic.done()
                         Task { await change(.init(status: "archived")); dismiss() }
                     }
                 }
-                tool("Delete", "trash", color: Theme.bad) {
-                    Task { await change(.init(trash: true)); dismiss() }
-                }
+                tool("Delete", "trash", color: Theme.bad) { confirmTrash = true }
             }
         }
         .frame(height: 62)
@@ -459,8 +475,8 @@ struct ItemView: View {
     private func tool(_ label: String, _ symbol: String, color: Color? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
-                Image(systemName: symbol).font(.system(size: 20)).frame(height: 24)
-                Text(label).font(.system(size: 11, weight: color == Theme.accent ? .semibold : .medium)).lineLimit(1)
+                Image(systemName: symbol).font(.ui(20)).frame(height: 24)
+                Text(label).font(.ui(11, weight: color == Theme.accent ? .semibold : .medium)).lineLimit(1)
             }
             .foregroundStyle(color ?? Theme.ink2)
             .frame(maxWidth: .infinity)
@@ -480,6 +496,7 @@ struct ItemView: View {
         let tags = CaptureChips.tags(newTag)
         newTag = ""
         guard !tags.isEmpty else { return }
+        Haptic.tap()
         Task { await change(.init(addTags: tags)) }
     }
 
@@ -517,6 +534,11 @@ struct ItemView: View {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    private func remind(_ day: Date) async {
+        await change(.init(remindAt: day))
+        if error == nil { Haptic.done() }
     }
 
     private func reread() async {

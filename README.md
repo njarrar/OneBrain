@@ -36,7 +36,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.6.2.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.7.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -326,33 +326,39 @@ It reads and writes the same cloud data as the web app, so a note, tag or archiv
 shows up on the other. You sign in with the same account as the web, Google included.
 Sources are set once on the web and shared; the AI choice and its keys can be set on either. Screenshots from the
 Screenshots album and anything shared to Save to Brain go straight to the cloud.
-The fourth tab, **Ask**, asks Brain a question by typing or speaking. Library opens Resurface and the weekly digest, Search can Ask Brain too, and each item has a
-bell for Remind me and a list of related saves. Speaking in the Add sheet keeps the voice
+It has three tabs in the system tab bar: **Inbox**, **Library** and **Search**. Search finds
+saves as you type, and its top row, **Ask Brain**, turns the same words into an answer from
+your saves. Before you type it offers questions drawn from your own saves. Library opens
+Resurface and the weekly digest, and each item has **Remind me** in its More menu and a list
+of related saves. Text follows the phone's text size setting, and saving, archiving, deleting,
+tagging and setting a reminder each give a small buzz. Speaking in the Add sheet keeps the voice
 memo, and an item shows a player, what was said and what Brain found in it. See
 [ios/README.md](ios/README.md) to build it.
 
 <p>
-  <img src="docs/images/iphone-signin.png" width="180" alt="Sign in with Apple or Google">
+  <img src="docs/images/iphone-signin.png" width="180" alt="Sign in, with the app icon and what Brain does">
   <img src="docs/images/iphone-list.png" width="180" alt="Inbox grouped by day">
-  <img src="docs/images/iphone-library.png" width="180" alt="Library with Resurface, the weekly digest and Unread">
-  <img src="docs/images/iphone-item.png" width="180" alt="Item page with the Remind me bell">
-  <img src="docs/images/iphone-ask.png" width="180" alt="The Ask tab with example questions">
-  <img src="docs/images/iphone-settings.png" width="180" alt="Settings with sources">
+  <img src="docs/images/iphone-library.png" width="180" alt="Library with Resurface, the weekly digest, Unread and categories">
+  <img src="docs/images/iphone-item.png" width="180" alt="An item with its summary, note, category and tags">
+  <img src="docs/images/iphone-ask.png" width="180" alt="The Search tab with Ask Brain questions drawn from your saves">
+  <img src="docs/images/iphone-settings.png" width="180" alt="Settings with the look, AI and storage">
 </p>
 
-Sign in, the inbox, Library, an item, Ask Brain and Settings, with made-up sample data.
+Sign in, the inbox, Library, an item, Search with Ask Brain, and Settings, with made-up sample data.
 
 ### Adding a note
 
 <img src="docs/images/iphone-add.png" width="260" alt="The Add to Brain sheet with a note, tags and every option">
 
-Tap **+** on any screen to open **Add to Brain**:
+Tap **+** at the top right of Inbox or Library to open **Add to Brain**. The sheet opens just tall enough for
+what it holds:
 
 - **The text box** takes a link or a note. Brain shows what it found (Note, Link, Photo,
   Voice) at the bottom right.
 - **Let AI sort** lets the chosen AI pick the category, summary and tags. Tap it to turn
   that off.
-- **Add tags** opens a box for your own tags, split with commas.
+- **Add tags** opens a **Tags** box for your own tags, split with commas. Both chips turn
+  blue when on.
 - **Photos** picks up to 10 pictures, **Camera** takes one, **Microphone** writes down what
   you say and keeps it as a voice memo, and **Files** adds pictures, sound or video files.
 - **Save** sends it to the cloud. The web and the phone both see it at once.
@@ -360,7 +366,7 @@ Tap **+** on any screen to open **Add to Brain**:
 ## The Android app
 
 `android/` holds a native Android app (Kotlin, Jetpack Compose) that does what the iPhone app
-does: Inbox, Library, Search, Ask Brain, the Add sheet and "Save to Brain" from the share sheet.
+does: Inbox, Library, Search with Ask Brain, the Add sheet and "Save to Brain" from the share sheet.
 It talks to the same web app with the same app key. GitHub builds it on every change; to install
 it, open **Actions**, pick **android**, and download **brain-android-apk** from the latest run.
 Set your own server under **Server** on the sign-in screen. See [android/README.md](android/README.md).

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,9 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.MarkEmailUnread
 import androidx.compose.material.icons.outlined.Newspaper
-import androidx.compose.material.icons.outlined.RadioButtonChecked
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tag
@@ -82,7 +81,7 @@ fun LibraryScreen() {
             GroupBox {
                 menu.categories.forEachIndexed { i, cat ->
                     GroupRow(
-                        cat.name, count(cat.count), divider = i < menu.categories.size - 1, minHeight = 44.dp,
+                        cat.name, count(cat.count), divider = i < menu.categories.size - 1, minHeight = 44.dp, labelLines = 2,
                         onClick = { nav.list(Filter(view = "all", category = cat.name)) },
                     ) { Box(Modifier.padding(horizontal = 5.dp)) { Swatch(cat.color, 10.dp) } }
                 }
@@ -126,8 +125,7 @@ private fun Views(menu: MenuData) {
     val nav = LocalNav.current
     val v = menu.views
     val rows: List<Triple<String, ImageVector, Pair<Int?, Any>>> = listOf(
-        Triple("Inbox", Icons.Outlined.Inbox, v.inbox to Filter()),
-        Triple("Unread", Icons.Outlined.RadioButtonChecked, v.unread to Filter(unread = true)),
+        Triple("Unread", Icons.Outlined.MarkEmailUnread, v.unread to Filter(unread = true)),
         Triple("All saves", Icons.Outlined.ViewAgenda, v.all to Filter(view = "all")),
         Triple("Archive", Icons.Outlined.Archive, v.archived to Filter(view = "archived")),
         Triple("Trash", Icons.Outlined.Delete, v.trash to TrashRoute),
@@ -150,8 +148,8 @@ fun TagsScreen() {
     Column(Modifier.fillMaxSize().background(c.grouped)) {
         TopBar("Tags", onBack = { nav.back() })
         Row(
-            Modifier.padding(horizontal = 16.dp).fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(c.fill)
-                .padding(horizontal = 12.dp),
+            Modifier.padding(horizontal = 16.dp).fillMaxWidth().heightIn(min = 40.dp).clip(RoundedCornerShape(12.dp)).background(c.fill)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {

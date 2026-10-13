@@ -20,13 +20,13 @@ struct VoicePlayer: View {
         Group {
             if isVideo, let player {
                 VideoPlayer(player: player).aspectRatio(16 / 9, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
             } else {
                 HStack(spacing: 12) {
                     Button { Task { await toggle() } } label: {
                         Group {
                             if loading { ProgressView() } else {
-                                Image(systemName: playing ? "pause.fill" : "play.fill").font(.system(size: 16, weight: .semibold))
+                                Image(systemName: playing ? "pause.fill" : "play.fill").font(.ui(16, weight: .semibold))
                             }
                         }
                         .foregroundStyle(Theme.accentInk)
@@ -36,9 +36,9 @@ struct VoicePlayer: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(playing ? "Pause" : "Play")
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(isVideo ? "Video" : "Voice memo").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink)
+                        Text(isVideo ? "Video" : "Voice memo").font(.ui(15, weight: .semibold)).foregroundStyle(Theme.ink)
                         Text(failed ? "Couldn't load the sound." : length > 0 ? Self.clock(length) : file.filename)
-                            .font(.system(size: 12, design: .monospaced)).foregroundStyle(failed ? Theme.bad : Theme.faint).lineLimit(1)
+                            .font(.ui(12, design: .monospaced)).foregroundStyle(failed ? Theme.bad : Theme.faint).lineLimit(1)
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "waveform").foregroundStyle(Theme.faint)

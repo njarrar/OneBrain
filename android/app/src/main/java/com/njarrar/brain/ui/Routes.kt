@@ -1,11 +1,9 @@
 package com.njarrar.brain.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CollectionsBookmark
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CollectionsBookmark
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.Search
@@ -22,7 +20,6 @@ import kotlinx.serialization.Serializable
 @Serializable object InboxRoute
 @Serializable object LibraryRoute
 @Serializable object SearchRoute
-@Serializable object AskRoute
 @Serializable data class ItemRoute(val id: String)
 @Serializable object TrashRoute
 @Serializable object TagsRoute
@@ -36,7 +33,6 @@ enum class Tab(val route: Any, val label: String, val icon: ImageVector, val pic
     Inbox(InboxRoute, "Inbox", Icons.Outlined.Inbox, Icons.Filled.Inbox),
     Library(LibraryRoute, "Library", Icons.Outlined.CollectionsBookmark, Icons.Filled.CollectionsBookmark),
     Search(SearchRoute, "Search", Icons.Outlined.Search, Icons.Filled.Search),
-    Ask(AskRoute, "Ask", Icons.Outlined.AutoAwesome, Icons.Filled.AutoAwesome),
 }
 
 /** Moves between screens. Each tab keeps its own back stack, as on the iPhone. */
@@ -59,7 +55,7 @@ class Nav(val controller: NavHostController) {
 
     /** The tab whose screens are showing. Only Inbox and one other tab are ever on the stack. */
     fun currentTab(): Tab =
-        listOf(Tab.Library, Tab.Search, Tab.Ask).firstOrNull { has(it.route) } ?: Tab.Inbox
+        listOf(Tab.Library, Tab.Search).firstOrNull { has(it.route) } ?: Tab.Inbox
 
     private fun has(route: Any) = runCatching { controller.getBackStackEntry(route) }.isSuccess
 

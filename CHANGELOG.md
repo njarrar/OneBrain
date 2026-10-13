@@ -3,6 +3,37 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.7.0 (2026-10-13)
+
+A design pass on the phone apps, from a review of the iPhone app.
+
+### iPhone and Android
+- **Search and Ask Brain are one tab.** Saves that match show as you type, and the top row,
+  **Ask Brain**, turns the same words into an answer. Before you type it shows recent
+  questions and questions built from your own saves, so the first tap finds something.
+  The tab bar is back to three tabs: Inbox, Library and Search.
+- The search box at the top of the Inbox is gone; the Search tab does that job.
+- Text follows the phone's text size setting, and rows and chips grow with it.
+- A small buzz when you save, archive, delete, add a tag or set a reminder.
+- Inbox: the X chip shows the X logo alone, and the unread dot sits before the name.
+- Item: Remind me moves into the More menu, Delete asks first, and "Add a note" no longer
+  looks greyed out.
+- Add sheet: the tags box has a label, "Let AI sort" and "Add tags" look the same, every
+  attach button has the same weight, and the iPhone sheet opens just tall enough.
+- Library: no Inbox row (it has its own tab), a new Unread icon, and long category names
+  take two lines.
+- Sign in shows the app icon and a line on what Brain does.
+- Counts read "1 screenshot", not "1 screenshots".
+- Corners follow one rule: swatches 2, tag chips 6, fields and tiles 12, cards 16, pills round.
+
+### iPhone only
+- The system tab bar (Liquid Glass on iOS 26, shrinks while you scroll), with Search in its
+  own place on the right. **+** sits at the top right of Inbox and Library, so it never
+  covers a row.
+- Inbox, Library, Search and Settings use the system large title, which shrinks as you
+  scroll; on iOS 26 the count sits under it.
+- Needs iOS 18 or later.
+
 ## 0.6.2 (2026-10-13)
 
 ### Web

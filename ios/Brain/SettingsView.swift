@@ -14,11 +14,9 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Settings").font(.system(size: 32, weight: .bold)).tracking(-0.3).padding(.bottom, 6)
-
                 GroupCaption("Appearance")
                 modePicker
-                Text("Syncs with the web app.").font(.system(size: 13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
+                Text("Syncs with the web app.").font(.ui(13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
                 VStack(spacing: 0) {
                     Menu {
                         Picker("Design", selection: Binding(get: { look.design }, set: { look.set(design: $0) })) {
@@ -58,7 +56,7 @@ struct SettingsView: View {
                 .groupBox()
                 .buttonStyle(.plain)
                 ForEach([screenshots.status, LocalUpload.shared.status].compactMap { $0 }, id: \.self) { s in
-                    Text(s).font(.system(size: 13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
+                    Text(s).font(.ui(13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
                 }
 
                 GroupCaption("Storage")
@@ -73,13 +71,13 @@ struct SettingsView: View {
                 .groupBox()
                 .buttonStyle(.plain)
                 Text("To save from any app, tap Share, then Save to Brain.")
-                    .font(.system(size: 13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
+                    .font(.ui(13)).foregroundStyle(Theme.faint).padding(.horizontal, 4)
 
                 GroupCaption("Account")
                 VStack(spacing: 0) {
                     GroupRow(label: "Signed in on this iPhone", chevron: false)
                     Button { session.signOut() } label: {
-                        Text("Sign out").font(.system(size: 16)).foregroundStyle(Theme.bad)
+                        Text("Sign out").font(.ui(16)).foregroundStyle(Theme.bad)
                             .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
                             .contentShape(Rectangle())
                     }
@@ -94,7 +92,9 @@ struct SettingsView: View {
             .padding(.bottom, 40)
         }
         .background(Theme.grouped)
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar(.hidden, for: .tabBar)
         .task { server = try? await API.shared.serverBuild() }
         .task { aiName = (try? await API.shared.ai())?.current?.name }
     }
@@ -117,7 +117,7 @@ struct SettingsView: View {
             Text(app)
             Text(web ?? "Web app: checking…")
         }
-        .font(.system(size: 12, design: .monospaced))
+        .font(.ui(12, design: .monospaced))
         .foregroundStyle(Theme.faint)
         .textSelection(.enabled)
         .padding(.horizontal, 4)
@@ -140,10 +140,10 @@ struct SettingsView: View {
                         Image(systemName: m == .light ? "sun.max" : m == .dark ? "moon" : "iphone")
                         Text(m.label)
                     }
-                    .font(.system(size: 15, weight: on ? .semibold : .medium))
+                    .font(.ui(15, weight: on ? .semibold : .medium))
                     .foregroundStyle(on ? Theme.ink : Theme.soft)
                     .frame(maxWidth: .infinity, minHeight: 36)
-                    .background(on ? Theme.selected : .clear, in: RoundedRectangle(cornerRadius: 9))
+                    .background(on ? Theme.selected : .clear, in: RoundedRectangle(cornerRadius: 9)) // 12 less the 3 pt inset
                     .shadow(color: .black.opacity(on ? 0.12 : 0), radius: 2, y: 1)
                     .contentShape(Rectangle())
                 }
@@ -163,7 +163,7 @@ struct SettingsView: View {
 
     private func toggleRow(_ label: String, isOn: Binding<Bool>, divider: Bool = true) -> some View {
         Toggle(label, isOn: isOn)
-            .font(.system(size: 16))
+            .font(.ui(16))
             .tint(Theme.accentFill)
             .padding(.horizontal, 14)
             .frame(minHeight: 50)

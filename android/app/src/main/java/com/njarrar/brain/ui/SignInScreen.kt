@@ -4,16 +4,22 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,11 +33,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.njarrar.brain.R
 import com.njarrar.brain.data.Config
 import com.njarrar.brain.data.Detected
 import com.njarrar.brain.data.Store
@@ -53,13 +63,24 @@ fun SignInScreen(error: String?) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.weight(1f))
+        // The launcher icon: its pocket drawing on the icon's own background, cropped to the safe zone as a launcher shows it.
+        Box(
+            Modifier.size(88.dp).clip(RoundedCornerShape(22.dp)).background(colorResource(R.color.icon_bg)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.requiredSize(132.dp))
+        }
+        Spacer(Modifier.height(18.dp))
         Text("Brain", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = c.ink)
         Spacer(Modifier.height(12.dp))
-        Text("Everything you save, in one place.", fontSize = 16.sp, color = c.soft)
+        Text(
+            "Keeps your X bookmarks, screenshots, voice memos, emails and notes in one place, and answers questions about them.",
+            fontSize = 16.sp, lineHeight = 22.sp, color = c.soft, textAlign = TextAlign.Center,
+        )
         Spacer(Modifier.weight(1f))
         Button(
             onClick = { failed = openSignIn(context) },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(containerColor = c.accentFill, contentColor = c.accentInk),
         ) { Text("Sign in", fontSize = 17.sp, fontWeight = FontWeight.SemiBold) }
