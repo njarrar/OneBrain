@@ -300,25 +300,27 @@ export async function reviewCard(id: string, how: "keep" | "later" | "done") {
 }
 
 // The Add page: a link, a note, tags and an optional picture. Opens the item when saved.
-export async function addItem(_: string | null, form: FormData): Promise<string | null> {
+// One save from the Add page: a link, a note, a voice memo, a picture or a file. The page calls
+// this once per picture, so ten photos stay under the upload limit and each becomes its own save.
+export async function addOne(form: FormData): Promise<{ id?: string; error?: string }> {
   await requireUser();
   const file = form.get("file");
-  let id: string;
   try {
-    ({ id } = await captureItem({
+    const { id } = await captureItem({
       url: String(form.get("url") ?? "").slice(0, 2000),
       text: String(form.get("note") ?? "").slice(0, 20000),
       title: String(form.get("title") ?? "").slice(0, 500),
       tags: tagList(form.get("tags")),
       file: file instanceof File ? file : null,
+      sort: form.get("sort") !== "off",
       source: "manual",
-    }));
+    });
+    revalidatePath("/", "layout");
+    return { id };
   } catch (err) {
-    if (err instanceof InputError) return err.message;
+    if (err instanceof InputError) return { error: err.message };
     throw err;
   }
-  revalidatePath("/", "layout");
-  redirect(`/item/${id}`);
 }
 
 // ───────────── ⌘K box and Ask ─────────────
