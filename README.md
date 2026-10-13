@@ -45,7 +45,7 @@ The screenshots below use sample data on a local copy of the app.
 ![The inbox as a card grid, with the side menu on the left](docs/images/grid.png)
 *The inbox. The menu starts with Resurface (with today's count) and the weekly digest,
 then Inbox, Unread, All, Archive and Trash. Each card shows who posted it, the sub-topic,
-the text, Claude's summary, the category, tags and any reminder.*
+the text, AI's summary, the category, tags and any reminder.*
 
 ![The List layout with an item open in the reading pane](docs/images/reading-pane.png)
 *The List layout. A card opens in the reading pane beside the list; j and k move through
@@ -71,7 +71,7 @@ save.*
 *Remind me on an item page: pick when it comes back.*
 
 ![A weekly digest with numbered links to the saves](docs/images/digest.png)
-*The weekly digest, written by Claude, with numbered links to the saves.*
+*The weekly digest, written by your chosen AI, with numbered links to the saves.*
 
 ![One category opened from the side menu](docs/images/category.png)
 *One category, picked from the side menu. Arabic posts read right to left.*
@@ -81,7 +81,7 @@ save.*
 remove tags.*
 
 ![The Sources page](docs/images/sources.png)
-*Sources: Claude sorting with a "Sort now" button, then each source with its status and
+*Sources: Your chosen AI sorting with a "Sort now" button, then each source with its status and
 setup steps.*
 
 <p>
@@ -138,7 +138,7 @@ What you can do in it:
   (Tomorrow, This weekend, Next week, Next month or a day you pick), then ones from this
   day in past years. Keep brings a card back later and then less often; Tomorrow brings it
   back tomorrow; Done lets it go. Keys 1, 2 and 3 answer.
-- **Weekly digest:** every Sunday evening Claude writes a short note on what you saved
+- **Weekly digest:** every Sunday evening your AI writes a short note on what you saved
   that week, grouped by theme, with links to the items. "Write this week's now" makes one
   at once.
 - **Related:** each item page lists saves about the same thing.
@@ -150,7 +150,7 @@ What you can do in it:
 - **Grid or list** layout.
 - **Item page:** read the full text and pictures, see where and when you saved it, write a
   note, set the category, add or remove tags. Tags you add look different from the ones
-  Claude suggests; press ✓ to keep a suggestion.
+  your AI suggests; press ✓ to keep a suggestion.
 - **Add by hand** at `/add`: a link (the title and picture are filled in from the page), a
   note, tags, and a photo or file up to 10 MB.
 
@@ -167,7 +167,7 @@ Each source shows its status on the Sources page (`/sources`).
 | Gmail | Click Connect Gmail on the Sources page. Read only (`gmail.readonly`). Brings in your whole history, newest first, a slice every six hours (or on Sync now), then new mail. Spam, Trash, Drafts, chats and the Promotions, Social and Forums tabs stay out. Email lands under All, not the Inbox. The AI sorts and reads it like everything else. Needs the Google keys and the Gmail API turned on. |
 | Outlook | Outlook, Hotmail and Live mail, through Microsoft Graph (`Mail.Read`). Works like Gmail. Junk, Deleted, Drafts and the Other tab stay out. Needs the Microsoft keys. |
 | Pinterest | Click Connect Pinterest. Brings in the pins on your boards, each tagged with its board name, then checks again every six hours. Needs the Pinterest keys. |
-| Screenshots | The iPhone app sends your Screenshots album. Claude looks at each picture to sort it. |
+| Screenshots | The iPhone app sends your Screenshots album. Your AI looks at each picture to sort it. |
 | Added by hand | The `/add` page, or "Save to Brain" in any iPhone app. |
 | Voice memos | Share a memo from Voice Memos to Save to Brain, pick a sound file in the iPhone Add sheet, speak in the Add sheet, or add a sound file on `/add`. |
 
@@ -209,7 +209,7 @@ simpler than). Search by meaning and writing out voice memos stay on Workers AI,
 switching AI never means building the search index again.
 
 The code is in `web/src/lib/ai.ts`: one `askJson` and one `askText` call that every
-feature uses. ChatGPT gets a strict JSON schema, Gemini a response schema, and Claude
+feature uses. ChatGPT gets a strict JSON schema, Gemini a response schema, and Your AI
 structured outputs, so all three return the same shapes.
 
 ## Sorting
