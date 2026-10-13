@@ -10,7 +10,7 @@ const RETURNS = new Set(["/", "/connect-app"]);
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next: asked } = await searchParams;
-  const next = asked && RETURNS.has(asked) ? asked : "/";
+  const next = asked && (RETURNS.has(asked) || /^\/connect-app\?device=[\w%.-]{1,200}$/.test(asked)) ? asked : "/";
   if (await (await getAuth()).api.getSession({ headers: await headers() })) redirect(next);
   const providers = await enabledProviders();
   return (

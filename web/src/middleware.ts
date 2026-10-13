@@ -5,7 +5,9 @@ import { getSessionCookie } from "better-auth/cookies";
 export function middleware(req: NextRequest) {
   if (getSessionCookie(req)) return NextResponse.next();
   const url = req.nextUrl.clone();
-  const back = req.nextUrl.pathname === "/connect-app" ? "/connect-app" : null;
+  // The app's sign-in page keeps the phone's name, so the key is named after it.
+  const device = req.nextUrl.searchParams.get("device");
+  const back = req.nextUrl.pathname === "/connect-app" ? `/connect-app${device ? `?device=${encodeURIComponent(device.slice(0, 60))}` : ""}` : null;
   url.pathname = "/login";
   url.search = back ? `?next=${encodeURIComponent(back)}` : "";
   return NextResponse.redirect(url);

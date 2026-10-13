@@ -1,0 +1,60 @@
+name: android
+on:
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+
+      # A real release key, when the repository has one. Without it the release APK is signed
+      # with the debug key kept in android/app, so it still installs (and updates over itself).
+      - name: Release key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "BRAIN_KEYSTORE=$RUNNER_TEMP/release.jks"
+              echo "BRAIN_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+              echo "BRAIN_KEY_ALIAS=$KEY_ALIAS"
+              echo "BRAIN_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "Signing with the release key."
+          else
+            echo "No release key set; signing with the debug key."
+          fi
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brain-android-apk
+          path: android/app/build/outputs/apk/release/brain-*.apk
+          if-no-files-found: error

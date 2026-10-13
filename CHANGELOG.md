@@ -29,6 +29,8 @@ tag, such as `v0.2.0`.
   **Other** instead of staying unsorted for good. At most 4 pictures go with each sorting batch.
 - X and YouTube sign-in tokens are now stored encrypted, like the rest.
 - Voice memos and videos play from any point (range requests), and odd ranges get a proper error.
+- Signing in from a phone keeps the phone's name on its key, even when you weren't signed in
+  on the web yet.
 - "What was said" shows for any save with sound, and "Text in the picture" for the rest.
 - The Read and Sort panels show the right count after the page updates.
 - Digest errors name the AI you picked.
