@@ -87,7 +87,7 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
             <img key={m} src={m} alt="" loading="lazy" referrerPolicy="no-referrer" />
           ))}
           {sounds.map((f) => (
-            f.mime.startsWith("video/")
+            f.mime.startsWith("video/") || /\.(mp4|mov|m4v)$/i.test(f.filename)
               ? <video key={f.id} src={`/files/${f.id}`} controls preload="metadata" />
               : <audio key={f.id} src={`/files/${f.id}`} controls preload="metadata" />
           ))}

@@ -57,7 +57,8 @@ fun clock(seconds: Int): String = "%d:%02d".format(seconds / 60, seconds % 60)
 
 /** Loads one of Brain's files into a copy on the phone, once, so a player can read it. */
 private suspend fun localCopy(context: Context, file: ItemDetail.FileRef): File {
-    val ext = file.filename.substringAfterLast('.', "").ifEmpty { if (file.mime.startsWith("video/")) "mp4" else "m4a" }
+    val ext = file.filename.substringAfterLast('.', "").lowercase().takeIf { it.all(Char::isLetterOrDigit) }
+        .orEmpty().ifEmpty { if (file.isVideo) "mp4" else "m4a" }
     val out = File(context.cacheDir, "brain-${file.id}.$ext")
     if (out.exists() && out.length() > 0) return out
     val data = Api.fileBytes(file.id)
@@ -68,7 +69,7 @@ private suspend fun localCopy(context: Context, file: ItemDetail.FileRef): File 
 /** Plays a voice memo or video saved in Brain. The file needs the key, so it is loaded first. */
 @Composable
 fun VoicePlayer(file: ItemDetail.FileRef) {
-    if (file.mime.startsWith("video/")) VideoPlayer(file) else AudioPlayer(file)
+    if (file.isVideo) VideoPlayer(file) else AudioPlayer(file)
 }
 
 @Composable
@@ -106,22 +107,27 @@ private fun AudioPlayer(file: ItemDetail.FileRef) {
         }
         loading = true
         scope.launch {
+            var mp: MediaPlayer? = null
             try {
                 val local = localCopy(context, file)
-                val mp = MediaPlayer()
-                mp.setDataSource(local.absolutePath)
-                withContext(Dispatchers.IO) { mp.prepare() }
-                mp.setOnCompletionListener {
+                val created = MediaPlayer()
+                mp = created
+                created.setDataSource(local.absolutePath)
+                withContext(Dispatchers.IO) { created.prepare() }
+                created.setOnCompletionListener {
                     playing = false
                     it.seekTo(0)
                     at = 0
                 }
-                length = mp.duration / 1000
-                player = mp
-                mp.start()
+                length = created.duration / 1000
+                player = created
+                mp = null
+                created.start()
                 playing = true
                 failed = false
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                mp?.release()
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 failed = true
             }
             loading = false

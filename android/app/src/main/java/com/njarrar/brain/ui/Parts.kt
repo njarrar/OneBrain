@@ -68,7 +68,7 @@ fun sourceIcon(id: String): ImageVector = when (id) {
     "photos" -> Icons.Outlined.PhoneAndroid
     "feedly" -> Icons.Outlined.RssFeed
     "image" -> Icons.Outlined.Image
-    "note" -> Icons.Outlined.Description
+    "note", "file" -> Icons.Outlined.Description
     "video", "youtube" -> Icons.Outlined.PlayCircle
     "instagram" -> Icons.Outlined.PhotoCamera
     "x" -> Icons.Outlined.Close

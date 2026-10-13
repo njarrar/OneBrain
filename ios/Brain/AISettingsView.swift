@@ -63,6 +63,7 @@ struct AISettingsView: View {
                 .font(.system(size: 16))
                 .padding(.horizontal, 14).frame(minHeight: 50)
                 .overlay(alignment: .bottom) { Rectangle().fill(Theme.divider).frame(height: 1) }
+                let editedModel = (models[p.id] ?? p.model).trimmingCharacters(in: .whitespaces)
                 HStack {
                     Text("Model").foregroundStyle(Theme.ink)
                     TextField(p.defaultModel, text: Binding(get: { models[p.id] ?? p.model }, set: { models[p.id] = $0 }))
@@ -70,9 +71,14 @@ struct AISettingsView: View {
                         .font(.system(size: 15, design: .monospaced))
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .onSubmit {
-                            let name = models[p.id]?.trimmingCharacters(in: .whitespaces)
-                            Task { await apply(p.id) { try await API.shared.setAI(modelOf: p.id, model: name?.isEmpty == false ? name : nil) } }
+                            Task { await apply(p.id) { try await API.shared.setAI(modelOf: p.id, model: editedModel.isEmpty ? nil : editedModel) } }
                         }
+                    if editedModel != p.model {
+                        Button("Save") {
+                            Task { await apply(p.id) { try await API.shared.setAI(modelOf: p.id, model: editedModel.isEmpty ? nil : editedModel) } }
+                        }
+                        .disabled(busy != nil)
+                    }
                 }
                 .font(.system(size: 16))
                 .padding(.horizontal, 14).frame(minHeight: 50)

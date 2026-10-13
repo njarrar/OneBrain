@@ -50,6 +50,8 @@ data class Change(
     /** true moves to Trash, false brings back. */
     val trash: Boolean? = null,
     val category: String? = null,
+    /** true sends category: null, which clears the category. */
+    val clearCategory: Boolean = false,
     val note: String? = null,
     val addTags: List<String>? = null,
     val removeTags: List<String>? = null,
@@ -62,7 +64,7 @@ data class Change(
         status?.let { put("status", it) }
         read?.let { put("read", it) }
         trash?.let { put("trash", it) }
-        category?.let { put("category", it) }
+        if (clearCategory) put("category", JsonNull) else category?.let { put("category", it) }
         note?.let { put("note", it) }
         addTags?.let { t -> put("addTags", JsonArray(t.map { JsonPrimitive(it) })) }
         removeTags?.let { t -> put("removeTags", JsonArray(t.map { JsonPrimitive(it) })) }

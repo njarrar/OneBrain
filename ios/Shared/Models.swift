@@ -61,6 +61,7 @@ struct Item: Codable, Identifiable, Hashable {
         case "audio": return "audio"
         case "email": return "email"
         case "pin": return "pin"
+        case "file": return "file"
         default: return url == nil ? "note" : "link"
         }
     }
@@ -92,6 +93,12 @@ struct ItemDetail: Codable {
         let id: String
         let filename: String
         let mime: String
+
+        var isVideo: Bool {
+            if mime.hasPrefix("video/") { return true }
+            guard mime == "application/octet-stream" else { return false }
+            return ItemDetail.videoTypes.contains((filename as NSString).pathExtension.lowercased())
+        }
     }
     var item: Item
     let saves: [Save]
@@ -101,7 +108,8 @@ struct ItemDetail: Codable {
     var textError: String?
 
     /// Voice memos and videos, to play.
-    private static let soundTypes: Set<String> = ["m4a", "mp3", "wav", "aac", "ogg", "opus", "webm", "caf", "mp4", "mov", "m4v"]
+    private static let videoTypes: Set<String> = ["mp4", "mov", "m4v"]
+    private static let soundTypes: Set<String> = ["m4a", "mp3", "wav", "aac", "ogg", "oga", "opus", "flac", "webm", "caf", "3gp", "amr", "mp4", "mov", "m4v"]
 
     var sounds: [File] {
         files.filter { f in
@@ -241,7 +249,8 @@ enum Sources {
     static func label(_ id: String) -> String {
         ["x": "X", "youtube": "YouTube", "instagram": "Instagram", "photos": "Screenshots", "feedly": "RSS",
          "gmail": "Gmail", "outlook": "Outlook", "pinterest": "Pinterest", "email": "Email", "pin": "Pins",
-         "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos", "audio": "Voice memos"][id] ?? id
+         "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos",
+         "audio": "Voice memos", "file": "Files"][id] ?? id
     }
 
     /// An SF Symbol for each source. X, YouTube and Instagram have no symbol, so they use a letter mark (see SourceMark).
@@ -250,7 +259,7 @@ enum Sources {
         case "photos": return "iphone"
         case "feedly": return "dot.radiowaves.up.forward"
         case "image": return "photo"
-        case "note": return "note.text"
+        case "note", "file": return "note.text"
         case "video", "youtube": return "play.rectangle"
         case "instagram": return "camera"
         case "x": return "xmark"

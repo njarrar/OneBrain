@@ -7,7 +7,7 @@ object Sources {
         "x" to "X", "youtube" to "YouTube", "instagram" to "Instagram", "photos" to "Screenshots", "feedly" to "RSS",
         "gmail" to "Gmail", "outlook" to "Outlook", "pinterest" to "Pinterest", "email" to "Email", "pin" to "Pins",
         "manual" to "Added by hand", "image" to "Pictures", "note" to "Notes", "link" to "Links", "video" to "Videos",
-        "audio" to "Voice memos",
+        "audio" to "Voice memos", "file" to "Files",
     )
 
     fun label(id: String): String = labels[id] ?: id

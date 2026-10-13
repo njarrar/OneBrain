@@ -191,7 +191,7 @@ private fun Provider(
             }
             RowDivider()
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 50.dp).padding(horizontal = 14.dp),
+                Modifier.fillMaxWidth().heightIn(min = 50.dp).padding(start = 14.dp, end = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Model", fontSize = 16.sp, color = c.ink)
@@ -202,7 +202,7 @@ private fun Provider(
                     cursorBrush = SolidColor(c.accentFill),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { focus.clearFocus(); onSaveModel() }),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
                     decorationBox = { inner ->
                         Box(contentAlignment = Alignment.CenterEnd) {
                             if (model.isEmpty()) Text(p.defaultModel, fontSize = 15.sp, color = c.faint, fontFamily = FontFamily.Monospace)
@@ -210,6 +210,11 @@ private fun Provider(
                         }
                     },
                 )
+                if (model.trim() != p.model) {
+                    TextButton(onClick = { focus.clearFocus(); onSaveModel() }, enabled = busy == null) {
+                        Text("Save")
+                    }
+                }
             }
             RowDivider()
             Row(

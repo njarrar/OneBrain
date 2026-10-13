@@ -132,6 +132,7 @@ export async function importInstagramFile(_: string | null, form: FormData): Pro
   if (file.size > MAX_IMPORT_BYTES) return "That file is too big. Ask Instagram for JSON with low media quality, or upload only saved_posts.json.";
   try {
     const r = await importInstagram(file.name, new Uint8Array(await file.arrayBuffer()));
+    processLater(r.added);
     revalidatePath("/", "layout");
     return `Found ${r.found.toLocaleString()} saved posts, ${r.added.toLocaleString()} of them new.`;
   } catch (err) {
@@ -139,16 +140,23 @@ export async function importInstagramFile(_: string | null, form: FormData): Pro
   }
 }
 
-// Claude sorts what a sync brought in, in the background.
-function sortLater(added: number) {
-  if (added) getCloudflareContext().ctx.waitUntil(sortItems().catch((err) => console.error("sort failed", err)));
+// Hears or reads, sorts and embeds what a sync or import brought in, in the background.
+function processLater(added: number) {
+  if (!added) return;
+  getCloudflareContext().ctx.waitUntil(
+    (async () => {
+      await readItems().catch((err) => console.error("read failed", err));
+      await sortItems().catch((err) => console.error("sort failed", err));
+      await embedItems().catch((err) => console.error("embed failed", err));
+    })(),
+  );
 }
 
 export async function syncYouTubeNow(): Promise<string> {
   await requireUser();
   try {
     const added = await syncYouTube();
-    sortLater(added);
+    processLater(added);
     revalidatePath("/", "layout");
     return `Done. ${added.toLocaleString()} new YouTube saves.`;
   } catch (err) {
@@ -175,7 +183,7 @@ export async function syncXNow(): Promise<string> {
   await requireUser();
   try {
     const added = await syncX();
-    sortLater(added);
+    processLater(added);
     revalidatePath("/", "layout");
     return `Done. ${added.toLocaleString()} new X bookmarks.`;
   } catch (err) {
@@ -190,7 +198,7 @@ export async function syncConnectorNow(id: string): Promise<string> {
   if (!c) return "Unknown source.";
   try {
     const r = await c.sync();
-    sortLater(r.added);
+    processLater(r.added);
     revalidatePath("/", "layout");
     const what = c.id === "pinterest" ? "pins" : "emails";
     return `Done. ${r.added.toLocaleString()} new ${what}.${r.more ? " Older ones keep coming in every six hours, or tap again." : ""}`;

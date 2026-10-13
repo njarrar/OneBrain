@@ -251,6 +251,17 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
     const hash = await sha256Hex(bytes);
     const key = `img:${hash}`;
     const source: SourceId = x.source ?? (x.externalId ? "photos" : "manual");
+    // Some apps send a voice memo, video or picture with no type; name it by its ending so it plays on the page.
+    const mime = file.type && file.type !== "application/octet-stream" ? file.type
+      : /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name) ? `image/${file.name.split(".").pop()!.toLowerCase().replace("jpg", "jpeg")}`
+      : isAudioFile("", file.name) ? (/\.(mp4|mov|m4v)$/i.test(file.name) ? "video/mp4" : "audio/mp4")
+      : "application/octet-stream";
+    const kind = mime.startsWith("image/") ? "image"
+      : mime.startsWith("video/") ? "video"
+      : isAudioFile(mime, file.name) ? "audio" : "file";
+    const fallbackTitle = kind === "audio" || kind === "file"
+      ? file.name.replace(/\.[^.]+$/, "").trim().slice(0, 120) || null
+      : null;
     // A link sent with the file stays on the item.
     existed = !!(await first(TARGET, key, url));
     id = await saveOne({
@@ -259,10 +270,8 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
       key,
       url,
       imageHash: hash,
-      kind: file.type.startsWith("image/") ? "image"
-        : file.type.startsWith("video/") ? "video"
-        : isAudioFile(file.type, file.name) ? "audio" : "file",
-      title: title ?? words?.split("\n")[0].slice(0, 120) ?? null,
+      kind,
+      title: title ?? words?.split("\n")[0].slice(0, 120) ?? fallbackTitle,
       postedAt: x.takenAt ?? null,
       savedAt: x.takenAt ?? t,
       raw: { filename: file.name, url },
@@ -271,10 +280,6 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
     if (!hasCopy) {
       const fileId = crypto.randomUUID();
       const r2Key = `files/${fileId}`;
-      // Some apps send a voice memo with no type; name it by its ending so it plays in the page.
-      const mime = file.type && file.type !== "application/octet-stream" ? file.type
-        : isAudioFile("", file.name) ? (/\.(mp4|mov|m4v)$/i.test(file.name) ? "video/mp4" : "audio/mp4")
-        : "application/octet-stream";
       await (await env()).FILES.put(r2Key, bytes, { httpMetadata: { contentType: mime } });
       await run(
         `insert into files (id, item_id, filename, mime, size, r2_key, sha256) select ?, ?, ?, ?, ?, ?, ?

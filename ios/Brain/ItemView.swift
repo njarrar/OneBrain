@@ -61,6 +61,9 @@ struct ItemView: View {
                         Button { UIPasteboard.general.string = link } label: { Label("Copy link", systemImage: "link") }
                     }
                     Button { UIPasteboard.general.string = item.body ?? item.mainText } label: { Label("Copy text", systemImage: "doc.on.doc") }
+                    if !item.inTrash {
+                        Button { Task { await reread() } } label: { Label("Read again", systemImage: "sparkles") }
+                    }
                     if item.status != "inbox" && !item.inTrash {
                         Button { Task { await change(.init(status: "inbox")) } } label: { Label("Move to Inbox", systemImage: "tray") }
                     }
@@ -281,6 +284,9 @@ struct ItemView: View {
 
     private var categoryRow: some View {
         Menu {
+            if item.category != nil {
+                Button("No category") { Task { await change(.init(clearCategory: true)) } }
+            }
             ForEach(store.menu?.categories ?? []) { c in
                 Button(c.name) { Task { await change(.init(category: c.name)) } }
             }

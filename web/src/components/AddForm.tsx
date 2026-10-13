@@ -87,7 +87,12 @@ function Recorder({ audio, onAudio }: { audio: File | null; onAudio: (f: File | 
           <Icon d={KINDS[2].icon} /> {audio ? "Record again" : "Record"}
         </button>
       )}
-      {url && !recording && <audio controls src={url} />}
+      {url && !recording && (
+        <div className="add-audio-preview">
+          <audio controls src={url} />
+          <button type="button" className="link-btn" onClick={() => onAudio(null)}>Remove</button>
+        </div>
+      )}
       {error && <p className="small muted">{error}</p>}
       <label className="add-pick">
         Or pick a recording
@@ -114,9 +119,18 @@ export function AddForm() {
   const previews = useMemo(() => pictures.map((p) => URL.createObjectURL(p)), [pictures]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
-  function addPictures(list: FileList | null) {
+  function addPictures(list: FileList | File[] | null) {
     const picked = Array.from(list ?? []).filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"));
     setPictures((p) => [...p, ...picked].slice(0, MAX_PICTURES));
+  }
+
+  function paste(e: React.ClipboardEvent) {
+    const pasted = Array.from(e.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    if (!pasted.length) return;
+    e.preventDefault();
+    setKind("picture");
+    setError(null);
+    addPictures(pasted);
   }
 
   // What gets sent, one save per entry.
@@ -164,12 +178,16 @@ export function AddForm() {
         }
       }
       setProgress(null);
-      if (ids.length === list.length) router.push(ids.length === 1 ? `/item/${ids[0]}` : "/?view=all");
+      if (ids.length === list.length) {
+        router.push(ids.length === 1 ? `/item/${ids[0]}` : "/?view=all");
+      } else if (kind === "picture" && ids.length > 0) {
+        setPictures((p) => p.slice(ids.length));
+      }
     });
   }
 
   return (
-    <form onSubmit={save} className="add-form">
+    <form onSubmit={save} onPaste={paste} className="add-form">
       <div className="add-kinds" role="tablist" aria-label="What are you adding?">
         {KINDS.map((k) => (
           <button
