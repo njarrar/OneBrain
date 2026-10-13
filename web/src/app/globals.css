@@ -574,7 +574,7 @@ kbd {
 .answer { padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--memory-bg); }
 .answer-label { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--memory); margin-bottom: 6px; }
 .answer p { margin: 0 0 10px; line-height: 1.55; color: var(--ink); white-space: pre-wrap; }
-.answer-sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.answer-sources { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .answer-sources button {
   display: flex; gap: 8px; align-items: center; width: 100%; text-align: start; background: none; border: 0;
   padding: 5px 6px; border-radius: 6px; color: var(--ink); font: 13px var(--sans); cursor: pointer;
@@ -582,7 +582,7 @@ kbd {
 .answer-sources button:hover { background: var(--card); }
 .answer-sources .n { font: 600 11px var(--mono); color: var(--memory); width: 16px; }
 .answer-sources .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.answer-sources .d { color: var(--faint); font-size: 12px; }
+.answer-sources .d { color: var(--faint); font-size: 12px; white-space: nowrap; }
 
 /* Resurface */
 .resurface-page .page-head { flex-direction: column; align-items: flex-start; gap: 2px; }
@@ -678,7 +678,7 @@ kbd {
 .ai-key .inline-form input { font-family: var(--mono, ui-monospace, monospace); }
 
 /* Ask Brain page */
-.ask-box { display: grid; gap: 14px; margin-top: 12px; }
+.ask-box { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 12px; }
 .ask-form { display: flex; gap: 8px; align-items: flex-end; }
 .ask-form textarea {
   flex: 1; min-width: 0; resize: vertical; font: 15px/1.45 var(--sans); padding: 10px 12px;

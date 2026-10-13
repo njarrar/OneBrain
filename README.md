@@ -36,60 +36,101 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.6.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.6.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
-The screenshots below use sample data on a local copy of the app.
+The screenshots below use sample data on a local copy of the app. Each desktop page has the
+same page on a phone beside it.
 
-![The inbox as a card grid, with the side menu on the left](docs/images/grid.png)
+<p>
+  <img src="docs/images/grid.png" width="600" alt="The inbox as a card grid, with the side menu on the left">
+  <img src="docs/images/mobile-grid.png" width="180" alt="The same page on a phone">
+</p>
+
 *The inbox. The menu starts with Resurface (with today's count) and the weekly digest,
 then Inbox, Unread, All, Archive and Trash. Each card shows who posted it, the sub-topic,
 the text, AI's summary, the category, tags and any reminder.*
 
-![The List layout with an item open in the reading pane](docs/images/reading-pane.png)
+<p>
+  <img src="docs/images/reading-pane.png" width="600" alt="The List layout with an item open in the reading pane">
+  <img src="docs/images/mobile-reading-pane.png" width="180" alt="The same page on a phone">
+</p>
+
 *The List layout. A card opens in the reading pane beside the list; j and k move through
 it.*
 
-![The ⌘K box with word matches and Ask Brain](docs/images/palette.png)
+<p>
+  <img src="docs/images/palette.png" width="600" alt="The ⌘K box with word matches and Ask Brain">
+  <img src="docs/images/mobile-palette.png" width="180" alt="The same page on a phone">
+</p>
+
 *⌘K: word matches and things about the same idea, and Ask Brain for a written answer.*
 
-![The Ask Brain page with an answer that links a voice memo, an email, a screenshot, a pin and a bookmark](docs/images/ask.png)
+<p>
+  <img src="docs/images/ask.png" width="600" alt="The Ask Brain page with an answer that links a voice memo, an email, a screenshot, a pin and a bookmark">
+  <img src="docs/images/mobile-ask.png" width="180" alt="The same page on a phone">
+</p>
+
 *Ask Brain. Type a question and the AI answers from your own saves. Here it finds the kids'
 names in a voice memo, the party in an email, then a screenshot, a pin and a bookmark, and
 suggests gifts. "Looked for" shows what it searched, and each number opens the save it used.*
 
-![The Add to Brain page with Link, Note, Voice memo, Pictures and File, a recorded voice memo, a note and tags](docs/images/add.png)
+<p>
+  <img src="docs/images/add.png" width="600" alt="The Add to Brain page with Link, Note, Voice memo, Pictures and File, a recorded voice memo, a note and tags">
+  <img src="docs/images/mobile-add.png" width="180" alt="The same page on a phone">
+</p>
+
 *Add to Brain on the web. Pick what you're adding: a **Link**, a **Note**, a **Voice memo**
 (record it in the browser or pick a recording), up to 10 **Pictures** (each its own save) or
 any **File** up to 20 MB. Add a note and your own tags if you like. **Let AI sort** lets the
 chosen AI pick the category, summary and tags after you save.*
 
-![A Resurface card with Done, Tomorrow and Keep](docs/images/resurface.png)
+<p>
+  <img src="docs/images/resurface.png" width="600" alt="A Resurface card with Done, Tomorrow and Keep">
+  <img src="docs/images/mobile-resurface.png" width="180" alt="The same page on a phone">
+</p>
+
 *Resurface: a few saves a day. Keys 1, 2 and 3 answer.*
 
-![The Remind me menu on an item page](docs/images/remind.png)
+<p>
+  <img src="docs/images/remind.png" width="600" alt="The Remind me menu on an item page">
+  <img src="docs/images/mobile-remind.png" width="180" alt="The same page on a phone">
+</p>
+
 *Remind me on an item page: pick when it comes back.*
 
-![A weekly digest with numbered links to the saves](docs/images/digest.png)
+<p>
+  <img src="docs/images/digest.png" width="600" alt="A weekly digest with numbered links to the saves">
+  <img src="docs/images/mobile-digest.png" width="180" alt="The same page on a phone">
+</p>
+
 *The weekly digest, written by your chosen AI, with numbered links to the saves.*
 
-![One category opened from the side menu](docs/images/category.png)
+<p>
+  <img src="docs/images/category.png" width="600" alt="One category opened from the side menu">
+  <img src="docs/images/mobile-category.png" width="180" alt="The same page on a phone">
+</p>
+
 *One category, picked from the side menu. Arabic posts read right to left.*
 
-![An Arabic item page with its note, category and tags](docs/images/item.png)
+<p>
+  <img src="docs/images/item.png" width="600" alt="An Arabic item page with its note, category and tags">
+  <img src="docs/images/mobile-item.png" width="180" alt="The same page on a phone">
+</p>
+
 *An item page: open the original, archive it, write a note, change the category, add or
 remove tags.*
 
-![The Sources page](docs/images/sources.png)
+<p>
+  <img src="docs/images/sources.png" width="600" alt="The Sources page">
+  <img src="docs/images/mobile-sources.png" width="180" alt="The same page on a phone">
+</p>
+
 *Sources: Your chosen AI sorting with a "Sort now" button, then each source with its status and
 setup steps.*
 
-<p>
-  <img src="docs/images/mobile-grid.png" width="260" alt="The inbox on a phone">
-  <img src="docs/images/mobile-resurface.png" width="260" alt="Resurface on a phone">
-  <img src="docs/images/mobile-menu.png" width="260" alt="The side menu open on a phone">
-</p>
+<img src="docs/images/mobile-menu.png" width="180" alt="The side menu open on a phone">
 
 *On a phone the side menu slides in from the left.*
 

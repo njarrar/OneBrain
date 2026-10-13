@@ -3,6 +3,12 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.6.1 (2026-10-13)
+
+- On a phone, the Ask Brain page no longer runs off the right edge; long source titles shorten
+  instead.
+- README: each desktop screenshot now has the same page on a phone beside it.
+
 ## 0.6.0 "Android" (2026-10-13)
 
 ### New
