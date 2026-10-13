@@ -3,6 +3,14 @@
 Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.5.1 (2026-10-13)
+
+- **Add to Brain on the web** works like the iPhone's Add sheet. Pick a **Link**, a **Note**, a
+  **Voice memo** (record it in the browser, or pick a recording), up to 10 **Pictures** (each
+  its own save) or a **File**. Add a note and tags if you like, and turn **Let AI sort** off
+  to sort it yourself. A voice memo with no note takes its recording's name, not "Untitled".
+- README: screenshots of the Ask Brain page and the new Add page.
+
 ## 0.5.0 "Connect" (2026-10-13)
 
 Brain reads your email and your Pinterest boards, and Ask Brain joins up what's spread

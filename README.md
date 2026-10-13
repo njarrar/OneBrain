@@ -36,7 +36,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.5.0 "Connect".** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.5.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -59,10 +59,11 @@ it.*
 names in a voice memo, the party in an email, then a screenshot, a pin and a bookmark, and
 suggests gifts. "Looked for" shows what it searched, and each number opens the save it used.*
 
-![The Add to Brain page with a link, title, note, tags and a file](docs/images/add.png)
-*Add to Brain on the web: a link, a title (filled in from the link when left empty), a note,
-your own tags split with commas, and a photo or file up to 20 MB. The AI sorts it after you
-save.*
+![The Add to Brain page with Link, Note, Voice memo, Pictures and File, a recorded voice memo, a note and tags](docs/images/add.png)
+*Add to Brain on the web. Pick what you're adding: a **Link**, a **Note**, a **Voice memo**
+(record it in the browser or pick a recording), up to 10 **Pictures** (each its own save) or
+any **File** up to 20 MB. Add a note and your own tags if you like. **Let AI sort** lets the
+chosen AI pick the category, summary and tags after you save.*
 
 ![A Resurface card with Done, Tomorrow and Keep](docs/images/resurface.png)
 *Resurface: a few saves a day. Keys 1, 2 and 3 answer.*
@@ -151,8 +152,9 @@ What you can do in it:
 - **Item page:** read the full text and pictures, see where and when you saved it, write a
   note, set the category, add or remove tags. Tags you add look different from the ones
   your AI suggests; press ✓ to keep a suggestion.
-- **Add by hand** at `/add`: a link (the title and picture are filled in from the page), a
-  note, tags, and a photo or file up to 10 MB.
+- **Add by hand** at `/add`: pick a link (the title and picture are filled in from the page),
+  a note, a voice memo (record it in the browser or pick a recording), up to 10 pictures or a
+  file up to 20 MB, then add a note and tags if you like.
 
 ## Sources
 
@@ -169,7 +171,7 @@ Each source shows its status on the Sources page (`/sources`).
 | Pinterest | Click Connect Pinterest. Brings in the pins on your boards, each tagged with its board name, then checks again every six hours. Needs the Pinterest keys. |
 | Screenshots | The iPhone app sends your Screenshots album. Your AI looks at each picture to sort it. |
 | Added by hand | The `/add` page, or "Save to Brain" in any iPhone app. |
-| Voice memos | Share a memo from Voice Memos to Save to Brain, pick a sound file in the iPhone Add sheet, speak in the Add sheet, or add a sound file on `/add`. |
+| Voice memos | Share a memo from Voice Memos to Save to Brain, pick a sound file in the iPhone Add sheet, speak in the Add sheet, or record one or pick a sound file on `/add`. |
 
 Feedly and other tools post to `/api/ingest/<source>?key=...`. The key is made for you
 and shown on the Sources page. Keep it private.
