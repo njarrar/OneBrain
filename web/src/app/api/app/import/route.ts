@@ -3,13 +3,14 @@ import { authorized } from "@/lib/apptoken";
 import { denied } from "@/lib/http";
 import { all, db, now } from "@/lib/db";
 import { saveStatements } from "@/lib/ingest";
-import { BATCH, sortItems } from "@/lib/sorter";
+import { readSortEmbed } from "@/lib/memory/pipeline";
 
 // The iPhone app uploads what it saved on the phone, up to 200 items at a time.
 // An item with the same key (see lib/canonical.ts) wins, then the same id, then the same link. Items already here keep what they have:
 // the phone only fills blanks, moves an item out of the inbox, and adds tags.
 const MAX_ITEMS = 200;
-const CHUNK = 40;
+// Each chunk looks up ids, keys and links in one statement: 30 x 3 stays under D1's 100 bound values.
+const CHUNK = 30;
 const STATUSES = ["inbox", "read", "archived"];
 
 type PhoneItem = {
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
   let added = 0;
   let updated = 0;
   const toSort: string[] = [];
+  const fresh: string[] = [];
 
   for (let i = 0; i < items.length; i += CHUNK) {
     const chunk = items.slice(i, i + CHUNK);
@@ -152,18 +154,21 @@ export async function POST(req: Request) {
       if (existing) updated++;
       else {
         added++;
+        fresh.push(id);
         if (!category) toSort.push(id);
       }
     }
     if (stmts.length) await d.batch(stmts);
   }
 
-  // Claude sorts the new unsorted items in the background, a batch at a time.
-  if (toSort.length) {
+  // New items are read, sorted (those the phone hadn't sorted) and given vectors in the background.
+  if (fresh.length) {
+    const sorted = new Set(toSort);
     getCloudflareContext().ctx.waitUntil(
       (async () => {
-        for (let i = 0; i < toSort.length; i += BATCH) await sortItems(toSort.slice(i, i + BATCH));
-      })().catch((err) => console.error("sort failed", err)),
+        await readSortEmbed(toSort);
+        await readSortEmbed(fresh.filter((id) => !sorted.has(id)), { sort: false });
+      })(),
     );
   }
   return Response.json({ added, updated });

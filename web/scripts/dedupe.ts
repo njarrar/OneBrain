@@ -77,7 +77,7 @@ async function main() {
   console.log(`${apply ? "MERGING" : "Dry run"} on the ${where === "--remote" ? "real" : "local"} database`);
   const items = selectAll<ItemRow>(
     `select id, url, canon, kind, status, title, body, note, summary, category, subtopic, author, author_handle,
-       posted_at, lang, sensitive, media, created_at from items`,
+       posted_at, lang, sensitive, media, created_at, transcript, facts, text_at from items`,
     "created_at, id",
     500,
   );

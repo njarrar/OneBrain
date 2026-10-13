@@ -65,7 +65,7 @@ export async function readNext(): Promise<{ read: number; remaining: number; err
   try {
     const r = await readItems();
     revalidatePath("/", "layout");
-    return { read: r.read + r.failed, remaining: await unreadTextCount() };
+    return { read: r.read + r.failed + r.skipped, remaining: await unreadTextCount() };
   } catch (err) {
     return { read: 0, remaining: await unreadTextCount(), error: err instanceof Error ? err.message : String(err) };
   }
@@ -75,6 +75,7 @@ export async function readNext(): Promise<{ read: number; remaining: number; err
 export async function readAgain(id: string) {
   await requireUser();
   await rereadItem(id);
+  await sortItems([id]).catch(() => 0);
   await embedItems([id]).catch(() => 0);
   revalidatePath("/", "layout");
 }
@@ -375,6 +376,6 @@ export async function makeDigestNow(): Promise<string | null> {
     revalidatePath("/digest");
     return r.made ? null : (r.reason ?? "No digest this time.");
   } catch (err) {
-    return `Claude couldn't write it: ${errorMessage(err)}`;
+    return `${await aiName()} couldn't write it: ${errorMessage(err)}`;
   }
 }

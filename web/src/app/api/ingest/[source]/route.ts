@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { saveOne } from "@/lib/ingest";
 import { hookKey, sameKey } from "@/lib/settings";
-import { sortItems } from "@/lib/sorter";
+import { readSortEmbed } from "@/lib/memory/pipeline";
 import { run } from "@/lib/db";
 
 // Tools such as IFTTT post new saves here: /api/ingest/feedly?key=...
@@ -74,6 +74,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ source:
     `update sources set status = 'connected', last_sync_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), last_error = null where id = ?`,
     source,
   );
-  getCloudflareContext().ctx.waitUntil(sortItems([id]).catch((err) => console.error("sort failed", err)));
+  getCloudflareContext().ctx.waitUntil(readSortEmbed([id]));
   return Response.json({ ok: true, id });
 }

@@ -58,6 +58,9 @@ struct Item: Codable, Identifiable, Hashable {
         case "image": return "image"
         case "note": return "note"
         case "video": return "video"
+        case "audio": return "audio"
+        case "email": return "email"
+        case "pin": return "pin"
         default: return url == nil ? "note" : "link"
         }
     }
@@ -98,8 +101,15 @@ struct ItemDetail: Codable {
     var textError: String?
 
     /// Voice memos and videos, to play.
+    private static let soundTypes: Set<String> = ["m4a", "mp3", "wav", "aac", "ogg", "opus", "webm", "caf", "mp4", "mov", "m4v"]
+
     var sounds: [File] {
-        files.filter { $0.mime.hasPrefix("audio/") || $0.mime.hasPrefix("video/") }
+        files.filter { f in
+            if f.mime.hasPrefix("audio/") || f.mime.hasPrefix("video/") { return true }
+            // Some uploads arrive as octet-stream; the file name still says what they are.
+            guard f.mime == "application/octet-stream" else { return false }
+            return Self.soundTypes.contains((f.filename as NSString).pathExtension.lowercased())
+        }
     }
 }
 
@@ -231,7 +241,7 @@ enum Sources {
     static func label(_ id: String) -> String {
         ["x": "X", "youtube": "YouTube", "instagram": "Instagram", "photos": "Screenshots", "feedly": "RSS",
          "gmail": "Gmail", "outlook": "Outlook", "pinterest": "Pinterest", "email": "Email", "pin": "Pins",
-         "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos"][id] ?? id
+         "manual": "Added by hand", "image": "Pictures", "note": "Notes", "link": "Links", "video": "Videos", "audio": "Voice memos"][id] ?? id
     }
 
     /// An SF Symbol for each source. X, YouTube and Instagram have no symbol, so they use a letter mark (see SourceMark).

@@ -146,7 +146,9 @@ async function linkedPicture(media: string): Promise<Part | null> {
 }
 
 // Reads one item. Returns true when it was read, false when it failed (the error is kept on the item).
-async function readItem(p: Pending, ready: boolean): Promise<"read" | "failed" | "skipped"> {
+// "skipped" means there was nothing to read and the item is marked done; "unready" means no AI key
+// yet, so the item stays in the queue for when one is added.
+async function readItem(p: Pending, ready: boolean): Promise<"read" | "failed" | "skipped" | "unready"> {
   const e = await env();
   const d = await db();
   const files = await all<FileRow>(`select mime, size, r2_key, filename from files where item_id = ? order by created_at`, p.id);
@@ -160,7 +162,7 @@ async function readItem(p: Pending, ready: boolean): Promise<"read" | "failed" |
       if (transcript) await d.prepare(`update items set transcript = ?, embedded_at = null where id = ?`).bind(transcript, p.id).run();
     }
     // Without an AI key the transcript is still searchable; facts come once a key is added.
-    if (!ready) return transcript ? "read" : "skipped";
+    if (!ready) return transcript ? "read" : "unready";
     const bytes = image ? await bytesOf(image) : null;
     const picture: Part | null = image && bytes
       ? { type: "image", mime: image.mime, data: base64(bytes) }
@@ -204,24 +206,33 @@ async function readItem(p: Pending, ready: boolean): Promise<"read" | "failed" |
 
 // Reads the given items, or the next batch nobody has read yet: every kind of save, newest first,
 // a few at a time. Returns how many it read.
-export async function readItems(ids?: string[], limit = READ_BATCH): Promise<{ read: number; failed: number }> {
+export async function readItems(ids?: string[], limit = READ_BATCH): Promise<{ read: number; failed: number; skipped: number }> {
   const ready = await aiReady();
   const cols = `id, kind, title, body, note, transcript, posted_at, created_at, media`;
-  const pending = ids?.length
-    ? await all<Pending>(`select ${cols} from items where deleted_at is null and id in (${ids.map(() => "?").join(",")})`, ...ids)
-    : await all<Pending>(
-        `select ${cols} from items where text_at is null and deleted_at is null
-         order by created_at desc limit ?`,
-        limit,
-      );
+  const pending: Pending[] = [];
+  if (ids?.length) {
+    // D1 caps bound values per statement.
+    for (let i = 0; i < ids.length; i += 90) {
+      const chunk = ids.slice(i, i + 90);
+      pending.push(...(await all<Pending>(`select ${cols} from items where deleted_at is null and id in (${chunk.map(() => "?").join(",")})`, ...chunk)));
+    }
+  } else {
+    pending.push(...(await all<Pending>(
+      `select ${cols} from items where text_at is null and deleted_at is null
+       order by created_at desc limit ?`,
+      limit,
+    )));
+  }
   let read = 0;
   let failed = 0;
+  let skipped = 0;
   for (let i = 0; i < pending.length; i += PARALLEL) {
     const results = await Promise.all(pending.slice(i, i + PARALLEL).map((p) => readItem(p, ready)));
     read += results.filter((r) => r === "read").length;
     failed += results.filter((r) => r === "failed").length;
+    skipped += results.filter((r) => r === "skipped").length;
   }
-  return { read, failed };
+  return { read, failed, skipped };
 }
 
 // How many of your saves still wait to be read.

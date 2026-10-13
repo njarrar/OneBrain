@@ -20,6 +20,18 @@ export async function readToken(name: string): Promise<string | null> {
   }
 }
 
+// For X and YouTube, which kept their tokens as plain text before 0.6.0: reads the encrypted token,
+// or moves an old plain one over to the encrypted slot and clears the old one.
+export async function loadToken(name: string, legacy: string): Promise<string | null> {
+  const token = await readToken(name);
+  if (token) return token;
+  const plain = await getSetting(legacy);
+  if (!plain) return null;
+  await saveToken(name, plain);
+  await setSetting(legacy, null);
+  return plain;
+}
+
 // Where an import got to, kept as JSON in settings.
 export async function readState<T extends object>(name: string, empty: T): Promise<T> {
   const raw = await getSetting(name);

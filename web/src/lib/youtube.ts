@@ -1,6 +1,10 @@
 import { db, env } from "@/lib/db";
 import { markSynced, saveStatements, type Incoming } from "@/lib/ingest";
 import { getSetting, setSetting } from "@/lib/settings";
+import { loadToken, saveToken } from "@/lib/connect/tokens";
+
+// The refresh token, kept encrypted (it was plain text before 0.6.0).
+const TOKEN = "youtube_token";
 
 // YouTube has its own Google sign-in, separate from signing in to Brain, so it can ask
 // for read-only access to your YouTube account and keep it.
@@ -14,7 +18,7 @@ export async function redirectUri() {
 }
 
 export async function youtubeConnected() {
-  return !!(await getSetting("youtube_refresh_token"));
+  return !!(await loadToken(TOKEN, "youtube_refresh_token"));
 }
 
 export async function authUrl(state: string) {
@@ -48,10 +52,11 @@ export async function tokenRequest(body: Record<string, string>) {
 export async function finishConnect(code: string) {
   const t = await tokenRequest({ code, grant_type: "authorization_code", redirect_uri: await redirectUri() });
   if (!t.refresh_token) throw new Error("Google did not give lasting access. Remove Brain at myaccount.google.com/permissions and connect again.");
-  await setSetting("youtube_refresh_token", t.refresh_token);
+  await saveToken(TOKEN, t.refresh_token);
 }
 
 export async function disconnect() {
+  await saveToken(TOKEN, null);
   await setSetting("youtube_refresh_token", null);
   await markSynced("youtube", 0, null, "not_connected");
 }
@@ -100,7 +105,7 @@ function video(videoId: string, s: Snippet, savedAt: string | null, from: string
 }
 
 async function accessToken() {
-  const refresh = await getSetting("youtube_refresh_token");
+  const refresh = await loadToken(TOKEN, "youtube_refresh_token");
   if (!refresh) throw new Error("YouTube is not connected.");
   return (await tokenRequest({ refresh_token: refresh, grant_type: "refresh_token" })).access_token!;
 }

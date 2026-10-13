@@ -36,7 +36,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.5.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.6.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 

@@ -21,6 +21,10 @@ export type ItemRow = {
   sensitive: number;
   media: string;
   created_at: string;
+  // What reading found (migration 0010). Optional so older dumps still load.
+  transcript?: string | null;
+  facts?: string | null;
+  text_at?: string | null;
 };
 export type SaveRow = { item_id: string; source_id: string; external_id: string | null };
 export type FileRow = { id: string; item_id: string; sha256: string | null; r2_key: string; created_at: string };
@@ -116,6 +120,10 @@ export async function plan(items: ItemRow[], saves: SaveRow[], files: FileRow[])
          select ${q(keeper.id)}, tag_id, added_by, added_at from item_tags where item_id in (${ids})
          order by added_by = 'user' desc
          on conflict (item_id, tag_id) do update set added_by = case when excluded.added_by = 'user' then 'user' else item_tags.added_by end;`,
+      // A reminder on a copy moves too, unless the keeper has its own.
+      `insert or ignore into reminders (item_id, due_at, interval_days, ease, reviews, created_at, updated_at)
+         select ${q(keeper.id)}, due_at, interval_days, ease, reviews, created_at, updated_at from reminders
+         where item_id in (${ids}) order by due_at limit 1;`,
       `delete from items where id in (${ids});`,
     );
     const status = all.map((i) => i.status).sort((a, b) => (STATUS_RANK[b] ?? 0) - (STATUS_RANK[a] ?? 0))[0];
@@ -130,6 +138,8 @@ export async function plan(items: ItemRow[], saves: SaveRow[], files: FileRow[])
          author_handle = ${q(fill("author_handle") as string | null)}, posted_at = ${q(fill("posted_at") as string | null)},
          lang = ${q(fill("lang") as string | null)}, url = ${q(fill("url") as string | null)},
          sensitive = ${Math.max(...all.map((i) => i.sensitive ?? 0))}, media = ${q(media)}, created_at = ${q(created)},
+         transcript = ${q(fill("transcript") as string | null)}, facts = ${q(fill("facts") as string | null)},
+         text_at = ${q(fill("text_at") as string | null)}, embedded_at = null,
          canon = ${q(key)}, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
        where id = ${q(keeper.id)};`,
     );

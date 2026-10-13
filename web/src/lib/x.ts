@@ -1,6 +1,10 @@
 import { db, env } from "@/lib/db";
 import { countSaves, markSynced, saveStatements, type Incoming } from "@/lib/ingest";
-import { getSetting, setSetting } from "@/lib/settings";
+import { setSetting } from "@/lib/settings";
+import { loadToken, saveToken } from "@/lib/connect/tokens";
+
+// The refresh token, kept encrypted (it was plain text before 0.6.0).
+const TOKEN = "x_token";
 
 // X sign-in (OAuth 2.0 with PKCE) with read-only access to your bookmarks, kept with a
 // refresh token. X swaps the refresh token on every use, so each new one is saved.
@@ -14,7 +18,7 @@ export async function redirectUri() {
 }
 
 export async function xConnected() {
-  return !!(await getSetting("x_refresh_token"));
+  return !!(await loadToken(TOKEN, "x_refresh_token"));
 }
 
 const base64url = (bytes: Uint8Array) =>
@@ -59,20 +63,21 @@ async function tokenRequest(body: Record<string, string>) {
 export async function finishConnect(code: string, verifier: string) {
   const t = await tokenRequest({ code, grant_type: "authorization_code", redirect_uri: await redirectUri(), code_verifier: verifier });
   if (!t.refresh_token) throw new Error("X did not give lasting access. Connect again.");
-  await setSetting("x_refresh_token", t.refresh_token);
+  await saveToken(TOKEN, t.refresh_token);
 }
 
 // Imported bookmarks stay, so the source goes back to "imported from file".
 export async function disconnect() {
+  await saveToken(TOKEN, null);
   await setSetting("x_refresh_token", null);
   await markSynced("x", 0, null, (await countSaves("x")) ? "import" : "not_connected");
 }
 
 async function accessToken() {
-  const refresh = await getSetting("x_refresh_token");
+  const refresh = await loadToken(TOKEN, "x_refresh_token");
   if (!refresh) throw new Error("X is not connected.");
   const t = await tokenRequest({ refresh_token: refresh, grant_type: "refresh_token" });
-  if (t.refresh_token) await setSetting("x_refresh_token", t.refresh_token);
+  if (t.refresh_token) await saveToken(TOKEN, t.refresh_token);
   return t.access_token!;
 }
 

@@ -12,6 +12,10 @@ const MAX_CATEGORIES = 24;
 // Colors for categories the AI adds, in turn.
 const NEW_COLORS = ["#0ea5e9", "#f97316", "#14b8a6", "#e11d48", "#84cc16", "#8b5cf6", "#f59e0b", "#06b6d4"];
 const MAX_TEXT = 1500;
+// Pictures sent with one batch, so a batch of screenshots stays a small request.
+const MAX_BATCH_IMAGES = 4;
+// Where an item goes when the AI's answer can't be used as a category, so it never sits unsorted for good.
+const FALLBACK = "Other";
 
 type Pending = {
   id: string;
@@ -64,7 +68,13 @@ async function taxonomy() {
 
 function describe(p: Pending) {
   const text = [p.title, p.body, p.transcript && `Heard or read in it: ${p.transcript}`].filter(Boolean).join("\n").slice(0, MAX_TEXT);
-  const pics = JSON.parse(p.media || "[]").length;
+  let pics = 0;
+  try {
+    const media = JSON.parse(p.media || "[]");
+    pics = Array.isArray(media) ? media.length : 0;
+  } catch {
+    // A broken media list just means no picture count.
+  }
   return [
     `<item id="${p.id}">`,
     p.author || p.author_handle ? `Author: ${[p.author, p.author_handle].filter(Boolean).join(" ")}` : null,
@@ -77,11 +87,16 @@ function describe(p: Pending) {
 
 async function contentFor(pending: Pending[]): Promise<Part[]> {
   const blocks: Part[] = [];
+  let pictures = 0;
   for (const p of pending) {
     blocks.push({ type: "text", text: describe(p) });
-    if (p.kind === "image") {
+    // Once Brain has read a picture, its text is in the transcript, so the picture itself isn't needed.
+    if (p.kind === "image" && !p.transcript && pictures < MAX_BATCH_IMAGES) {
       const pic = await pictureBlock(p.id);
-      if (pic) blocks.push({ type: "text", text: `Picture for item ${p.id}:` }, pic);
+      if (pic) {
+        blocks.push({ type: "text", text: `Picture for item ${p.id}:` }, pic);
+        pictures++;
+      }
     }
   }
   return blocks;
@@ -148,7 +163,8 @@ For every item give:
   let sorted = 0;
   for (const r of out) {
     if (!known.has(r.id)) continue;
-    const asked = r.category.trim().replace(/\s+/g, " ");
+    // "AI / ML" becomes "AI & ML"; brackets and stray marks go.
+    const asked = r.category.trim().replace(/\s*\/\s*/g, " & ").replace(/[()[\]{}"“”.:;!?*#]/g, "").replace(/\s+/g, " ").trim();
     let category = valid.get(asked.toLowerCase());
     // A new category, when there's room and the name looks like one.
     if (!category && valid.size < MAX_CATEGORIES && /^[\p{L}\p{N}][\p{L}\p{N} &',-]{1,38}$/u.test(asked)) {
@@ -159,7 +175,18 @@ For every item give:
       );
       valid.set(asked.toLowerCase(), category);
     }
-    if (!category) continue;
+    if (!category) {
+      // Full list or an odd name: "Other" keeps the item from blocking the queue.
+      category = valid.get(FALLBACK.toLowerCase());
+      if (!category) {
+        category = FALLBACK;
+        stmts.push(
+          d.prepare(`insert or ignore into categories (name, description, color) values (?, ?, ?)`)
+            .bind(FALLBACK, "Anything that fits nowhere else.", "#94a3b8"),
+        );
+        valid.set(FALLBACK.toLowerCase(), FALLBACK);
+      }
+    }
     sorted++;
     r.category = category;
     stmts.push(

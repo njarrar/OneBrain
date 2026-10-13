@@ -25,6 +25,9 @@ type State = {
   // Where the walk through older mail got to; null at the start.
   page: string | null;
   done: boolean;
+  // Where the walk through new mail stopped when a run ran out of budget. "since" holds still
+  // until that walk ends, so no new mail is skipped.
+  newPage?: string | null;
 };
 
 async function accessToken(): Promise<string> {
@@ -98,25 +101,28 @@ async function sync(): Promise<SyncResult> {
     const state = await readState<State>(STATE, { since: Date.now(), page: null, done: false });
     let budget = BUDGET;
 
-    // New mail first. "after:" takes seconds; an hour back covers clock drift, and repeats are skipped.
-    const fresh: string[] = [];
-    let page: string | null = null;
+    // New mail first, a page at a time. "after:" takes seconds; an hour back covers clock drift.
+    // Only mail not here yet counts against the budget, so a run never stalls on mail it has.
+    const after = Math.floor(state.since / 1000) - 3600;
+    let page: string | null = state.newPage ?? null;
     do {
-      const r = await list(token, `${SKIP} after:${Math.floor(state.since / 1000) - 3600}`, page);
-      fresh.push(...r.ids);
+      const r = await list(token, `${SKIP} after:${after}`, page);
+      const known = await knownIds(d, "gmail", r.ids);
+      const missing = r.ids.filter((id) => !known.has(id));
+      if (missing.length) await fetchAndSave(token, missing);
+      budget -= Math.max(missing.length, 10);
       page = r.next;
-    } while (page && fresh.length < BUDGET);
-    const known = await knownIds(d, "gmail", fresh);
-    const wanted = fresh.filter((id) => !known.has(id)).slice(0, budget);
-    if (wanted.length) {
-      await fetchAndSave(token, wanted);
-      budget -= wanted.length;
+    } while (page && budget > 0);
+    state.newPage = page;
+    const hasMoreNew = !!page;
+    // Only once every page of new mail is in does "since" move up to the newest mail here.
+    if (!hasMoreNew) {
+      const latest = await d
+        .prepare(`select max(saved_at) as t from saves where source_id = 'gmail'`)
+        .first<{ t: string | null }>();
+      if (latest?.t) state.since = Math.max(state.since, new Date(latest.t).getTime());
     }
-    // The newest time among what's here now, so the next run asks only for later mail.
-    const latest = await d
-      .prepare(`select max(saved_at) as t from saves where source_id = 'gmail'`)
-      .first<{ t: string | null }>();
-    if (latest?.t) state.since = Math.max(state.since, new Date(latest.t).getTime());
+    await saveState(STATE, state);
 
     // Then older mail, a page at a time, until the budget runs out.
     while (!state.done && budget > 0) {
@@ -131,9 +137,9 @@ async function sync(): Promise<SyncResult> {
     }
     await saveState(STATE, state);
 
-    const after = (await d.prepare(`select count(*) as n from saves where source_id = 'gmail'`).first<{ n: number }>())?.n ?? 0;
-    await markSynced("gmail", after - before);
-    return { added: after - before, more: !state.done };
+    const total = (await d.prepare(`select count(*) as n from saves where source_id = 'gmail'`).first<{ n: number }>())?.n ?? 0;
+    await markSynced("gmail", total - before);
+    return { added: total - before, more: !state.done || hasMoreNew };
   } catch (err) {
     await markSynced("gmail", 0, err instanceof Error ? err.message : String(err));
     throw err;

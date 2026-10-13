@@ -99,7 +99,11 @@ final class ScreenshotSync {
         let scale = min(1, 1600 / Double(max(asset.pixelWidth, asset.pixelHeight, 1)))
         let size = CGSize(width: Double(asset.pixelWidth) * scale, height: Double(asset.pixelHeight) * scale)
         return await withCheckedContinuation { cont in
-            PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: options) { image, _ in
+            // Photos can call back twice (a small draft first); answer once, with the full picture.
+            var resumed = false
+            PHImageManager.default().requestImage(for: asset, targetSize: size, contentMode: .aspectFit, options: options) { image, info in
+                if (info?[PHImageResultIsDegradedKey] as? Bool) == true || resumed { return }
+                resumed = true
                 cont.resume(returning: image?.jpegData(compressionQuality: 0.8))
             }
         }
