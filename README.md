@@ -36,7 +36,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.5.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.6.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -316,6 +316,14 @@ Tap **+** on any screen to open **Add to Brain**:
   you say and keeps it as a voice memo, and **Files** adds pictures, sound or video files.
 - **Save** sends it to the cloud. The web and the phone both see it at once.
 
+## The Android app
+
+`android/` holds a native Android app (Kotlin, Jetpack Compose) that does what the iPhone app
+does: Inbox, Library, Search, Ask Brain, the Add sheet and "Save to Brain" from the share sheet.
+It talks to the same web app with the same app key. GitHub builds it on every change; to install
+it, open **Actions**, pick **android**, and download **brain-android-apk** from the latest run.
+Set your own server under **Server** on the sign-in screen. See [android/README.md](android/README.md).
+
 ## Deploys
 
 To run your own copy:
@@ -408,6 +416,7 @@ Other scripts:
 │   └── wrangler.jsonc       D1, R2 and timer settings
 ├── db/migrations/           D1 schema, applied in name order
 ├── ios/                     iPhone app and "Save to Brain" share extension
+├── android/                 Android app (Kotlin, Jetpack Compose)
 ├── docs/                    Design doc and README screenshots
 ├── CHANGELOG.md             What changed in each version
 └── .github/workflows/       Deploy by hand, checks on pull requests

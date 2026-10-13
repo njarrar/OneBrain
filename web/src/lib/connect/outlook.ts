@@ -23,6 +23,10 @@ type State = {
   // Graph's link to the next page of older mail; null at the start.
   next: string | null;
   done: boolean;
+  // Where the walk through new mail stopped when a run ran out of pages, and the newest time it
+  // saw. "since" holds still until that walk ends, so no new mail is skipped.
+  newNext?: string | null;
+  pendingSince?: string | null;
 };
 
 type Address = { emailAddress?: { name?: string; address?: string } };
@@ -124,8 +128,8 @@ async function sync(): Promise<SyncResult> {
     let pages = PAGES;
 
     // New mail since the last run.
-    let url: string | undefined = firstPage(`receivedDateTime gt ${state.since}`);
-    let latest = state.since;
+    let url: string | undefined = state.newNext ?? firstPage(`receivedDateTime gt ${state.since}`);
+    let latest = state.pendingSince ?? state.since;
     while (url && pages > 0) {
       const page: Page = await get<Page>(token, url);
       added += await keep(d, skip, page.value ?? []);
@@ -133,7 +137,16 @@ async function sync(): Promise<SyncResult> {
       url = page["@odata.nextLink"];
       pages--;
     }
-    state.since = latest;
+    if (url) {
+      // Out of pages with new mail left: the next run picks up on this page.
+      state.newNext = url;
+      state.pendingSince = latest;
+    } else {
+      state.newNext = null;
+      state.pendingSince = null;
+      state.since = latest;
+    }
+    await saveState(STATE, state);
 
     // Then older mail, from where the last run stopped.
     while (!state.done && pages > 0) {
@@ -146,7 +159,7 @@ async function sync(): Promise<SyncResult> {
     }
     await saveState(STATE, state);
     await markSynced("outlook", added);
-    return { added, more: !state.done };
+    return { added, more: !state.done || !!state.newNext };
   } catch (err) {
     await markSynced("outlook", added, err instanceof Error ? err.message : String(err));
     throw err;

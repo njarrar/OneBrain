@@ -4,7 +4,7 @@ import { captureItem, type CaptureInput } from "@/lib/items/service";
 
 // The share sheet, the Add sheet and the Screenshots album post here.
 //   JSON { url?, text?, title?, sort?, tags?, remindAt? }         a link or a note from any app
-//   form { file, text?, externalId?, takenAt?, sort?, tags? }     a screenshot or a shared picture
+//   form { file, url?, text?, title?, externalId?, takenAt?, sort?, tags?, remindAt? }   a picture, a voice memo or a file
 // sort: false skips the AI's sorting. tags: a list, or one comma-separated string.
 export const POST = appRoute(async (req) => {
   let input: CaptureInput;
@@ -14,8 +14,12 @@ export const POST = appRoute(async (req) => {
     if (!form || !(file instanceof File) || !file.size) return jsonError("No file");
     const str = (k: string, max = 20000) => String(form.get(k) ?? "").trim().slice(0, max) || null;
     const takenAt = str("takenAt", 64);
+    const remindAt = str("remindAt", 64);
     input = {
       file,
+      url: str("url", 2000),
+      title: str("title", 500),
+      remindAt: remindAt && !isNaN(Date.parse(remindAt)) ? new Date(remindAt).toISOString() : null,
       text: str("text"),
       externalId: str("externalId", 500),
       takenAt: takenAt && !isNaN(Date.parse(takenAt)) ? new Date(takenAt).toISOString() : null,

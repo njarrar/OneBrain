@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Brain pocket, from design/icons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.82" android:scaleY="0.82" android:translateX="13" android:translateY="13">
+      <group android:rotation="-12" android:pivotX="34" android:pivotY="44">
+        <path android:fillColor="#000000" android:pathData="M24,20 H44 A4,4 0 0 1 48,24 V60 A4,4 0 0 1 44,64 H24 A4,4 0 0 1 20,60 V24 A4,4 0 0 1 24,20 Z" />
+        <path android:fillColor="#1F2A33" android:fillAlpha="0.5" android:pathData="M26.5,27 H41.5 A1.5,1.5 0 0 1 43,28.5 V28.5 A1.5,1.5 0 0 1 41.5,30 H26.5 A1.5,1.5 0 0 1 25,28.5 V28.5 A1.5,1.5 0 0 1 26.5,27 Z" />
+        <path android:fillColor="#1F2A33" android:fillAlpha="0.5" android:pathData="M26.5,33 H36.5 A1.5,1.5 0 0 1 38,34.5 V34.5 A1.5,1.5 0 0 1 36.5,36 H26.5 A1.5,1.5 0 0 1 25,34.5 V34.5 A1.5,1.5 0 0 1 26.5,33 Z" />
+      </group>
+        <path android:fillColor="#000000" android:pathData="M42,14 H60 A4,4 0 0 1 64,18 V60 A4,4 0 0 1 60,64 H42 A4,4 0 0 1 38,60 V18 A4,4 0 0 1 42,14 Z" />
+        <path android:fillColor="#1F2A33" android:fillAlpha="0.55" android:pathData="M46,26 A5,5 0 1 0 56,26 A5,5 0 1 0 46,26 Z" />
+      <group android:rotation="11" android:pivotX="70" android:pivotY="44">
+        <path android:fillColor="#000000" android:pathData="M61,22 H81 A4,4 0 0 1 85,26 V60 A4,4 0 0 1 81,64 H61 A4,4 0 0 1 57,60 V26 A4,4 0 0 1 61,22 Z" />
+        <path android:fillColor="#1F2A33" android:fillAlpha="0.6" android:pathData="M67,30 l9,5 l-9,5 Z" />
+      </group>
+        <path android:fillColor="#000000" android:pathData="M14,48 H86 V70 Q86,88 68,88 H32 Q14,88 14,70 Z" />
+    </group>
+</vector>

@@ -115,7 +115,7 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
 
       {(item.transcript || textError || sounds.length > 0) && (
         <section className="panel transcript">
-          <h2>{item.kind === "image" ? "Text in the picture" : "What was said"}</h2>
+          <h2>{sounds.length > 0 || item.kind === "audio" || item.kind === "video" ? "What was said" : "Text in the picture"}</h2>
           {item.transcript && <div className="body" dir="auto">{item.transcript}</div>}
           {!item.transcript && !textError && <p className="muted small">Brain is still listening to this one.</p>}
           {textError && <p className="error small">Brain couldn&apos;t read this: {textError}</p>}

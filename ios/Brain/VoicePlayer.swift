@@ -52,6 +52,7 @@ struct VoicePlayer: View {
             player?.pause()
             playing = false
             if let done { NotificationCenter.default.removeObserver(done) }
+            done = nil
         }
     }
 
@@ -82,6 +83,7 @@ struct VoicePlayer: View {
             let item = AVPlayerItem(url: url)
             let p = AVPlayer(playerItem: item)
             if let seconds = try? await item.asset.load(.duration).seconds, seconds.isFinite { length = seconds }
+            if let done { NotificationCenter.default.removeObserver(done) }
             done = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main) { _ in
                 Task { @MainActor in
                     playing = false

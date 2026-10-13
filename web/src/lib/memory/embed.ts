@@ -60,13 +60,26 @@ export async function embedItems(ids?: string[], limit = 200): Promise<number> {
   const b = await bindings();
   if (!b) return 0;
   const cols = `id, title, body, summary, note, subtopic, category, author, url, transcript, facts`;
-  const rows = ids?.length
-    ? await all<Source>(`select ${cols} from items where deleted_at is null and id in (${ids.map(() => "?").join(",")})`, ...ids)
-    : await all<Source>(
-        `select ${cols} from items where embedded_at is null and deleted_at is null order by created_at desc limit ?`,
-        limit,
-      );
+  const rows: Source[] = [];
+  if (ids?.length) {
+    // D1 caps bound values per statement.
+    for (let i = 0; i < ids.length; i += 90) {
+      const chunk = ids.slice(i, i + 90);
+      rows.push(...(await all<Source>(`select ${cols} from items where deleted_at is null and id in (${chunk.map(() => "?").join(",")})`, ...chunk)));
+    }
+  } else {
+    rows.push(...(await all<Source>(
+      `select ${cols} from items where embedded_at is null and deleted_at is null order by created_at desc limit ?`,
+      limit,
+    )));
+  }
   const usable = rows.filter((r) => textOf(r));
+  const empty = rows.filter((r) => !textOf(r));
+  const d = await db();
+  const stamp = now();
+  // An item with no text yet is marked done too, or it would block the queue for good. Reading,
+  // sorting or a note clears embedded_at again, so it gets its vector once it has words.
+  if (empty.length) await d.batch(empty.map((r) => d.prepare(`update items set embedded_at = ? where id = ?`).bind(stamp, r.id)));
   if (!usable.length) return 0;
 
   const vectors = await embed(b.ai, usable.map(textOf));
@@ -75,8 +88,6 @@ export async function embedItems(ids?: string[], limit = 200): Promise<number> {
       usable.slice(i, i + UPSERT_BATCH).map((r, j) => ({ id: r.id, values: vectors[i + j], metadata: { category: r.category ?? "" } })),
     );
   }
-  const d = await db();
-  const stamp = now();
   await d.batch(usable.map((r) => d.prepare(`update items set embedded_at = ? where id = ?`).bind(stamp, r.id)));
   return usable.length;
 }

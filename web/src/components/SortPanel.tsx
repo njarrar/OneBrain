@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { sortNext } from "@/lib/actions";
 
 // Sorts everything still unsorted, one batch at a time, and shows progress.
@@ -9,6 +9,11 @@ export function SortPanel({ ready, remaining: start, ai }: { ready: boolean; rem
   const [done, setDone] = useState(0);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A fresh count from the page (after a sync) shows when no run is going.
+  useEffect(() => {
+    if (!running) setRemaining(start);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start]);
 
   async function run() {
     setRunning(true);

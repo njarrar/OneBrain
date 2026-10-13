@@ -26,6 +26,8 @@ struct ItemView: View {
 
     private var item: Item { detail?.item ?? preview }
     private var hidden: Bool { blur && item.isSensitive && !reveal }
+    /// A voice memo or video, so its text was heard rather than read off a picture.
+    private var heard: Bool { detail?.sounds.isEmpty == false || item.kind == "audio" || item.kind == "video" }
 
     var body: some View {
         ScrollView {
@@ -197,8 +199,8 @@ struct ItemView: View {
     private var transcriptCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: item.kind == "image" ? "text.viewfinder" : "quote.bubble").foregroundStyle(Theme.accent)
-                Text(item.kind == "image" ? "Text in the picture" : "What was said")
+                Image(systemName: heard ? "quote.bubble" : "text.viewfinder").foregroundStyle(Theme.accent)
+                Text(heard ? "What was said" : "Text in the picture")
                 Spacer()
                 Button("Read again") { Task { await reread() } }.font(.system(size: 12.5, weight: .semibold))
             }

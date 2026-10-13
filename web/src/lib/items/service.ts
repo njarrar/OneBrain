@@ -4,8 +4,8 @@ import { noteKey, sha256Hex, urlKey } from "@/lib/canonical";
 import { saveOne } from "@/lib/ingest";
 import { reminderStatement } from "@/lib/memory/reminders";
 import { embedItems, forgetItems } from "@/lib/memory/embed";
-import { isAudioFile, readItems } from "@/lib/memory/read";
-import { sortItems } from "@/lib/sorter";
+import { isAudioFile } from "@/lib/memory/read";
+import { readSortEmbed } from "@/lib/memory/pipeline";
 import { firstUrl, isWebLink, sourceOfUrl, type SourceId } from "@/lib/sources";
 import { unfurl } from "@/lib/unfurl";
 import type { ItemChange, ListFilter } from "@/lib/items/schema";
@@ -168,9 +168,16 @@ export async function markOpened(id: string) {
 export async function purgeItems(ids?: string[]): Promise<number> {
   if (ids && !ids.length) return 0;
   const d = await db();
-  const where = ids ? `deleted_at is not null and id in (${ids.map(() => "?").join(",")})` : `deleted_at is not null`;
-  const args = ids ?? [];
-  const gone = await all<{ id: string }>(`select id from items where ${where}`, ...args);
+  // D1 caps bound values per statement, so ids go 90 at a time.
+  const gone: { id: string }[] = [];
+  if (ids) {
+    for (let i = 0; i < ids.length; i += 90) {
+      const chunk = ids.slice(i, i + 90);
+      gone.push(...(await all<{ id: string }>(`select id from items where deleted_at is not null and id in (${chunk.map(() => "?").join(",")})`, ...chunk)));
+    }
+  } else {
+    gone.push(...(await all<{ id: string }>(`select id from items where deleted_at is not null`)));
+  }
   if (!gone.length) return 0;
   const goneIds = gone.map((g) => g.id);
   const files: { r2_key: string }[] = [];
@@ -180,13 +187,18 @@ export async function purgeItems(ids?: string[]): Promise<number> {
     files.push(...(await all<{ r2_key: string }>(`select r2_key from files where item_id in (${chunk.map(() => "?").join(",")})`, ...chunk)));
   }
   // Rows go first, then the files: a failure midway leaves an unused file, never a broken item.
-  const res = await d.prepare(`delete from items where ${where}`).bind(...args).run();
+  let removed = 0;
+  for (let i = 0; i < goneIds.length; i += 90) {
+    const chunk = goneIds.slice(i, i + 90);
+    const res = await d.prepare(`delete from items where deleted_at is not null and id in (${chunk.map(() => "?").join(",")})`).bind(...chunk).run();
+    removed += res.meta.changes ?? 0;
+  }
   if (files.length) {
     const bucket = (await env()).FILES;
     for (let i = 0; i < files.length; i += 100) await bucket.delete(files.slice(i, i + 100).map((f) => f.r2_key));
   }
   await forgetItems(goneIds).catch((err) => console.error("forget vectors failed", err));
-  return res.meta.changes ?? 0;
+  return removed;
 }
 
 // ───────────────────────────── Saving ─────────────────────────────
@@ -239,10 +251,13 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
     const hash = await sha256Hex(bytes);
     const key = `img:${hash}`;
     const source: SourceId = x.source ?? (x.externalId ? "photos" : "manual");
-    existed = !!(await first(TARGET, key, null));
+    // A link sent with the file stays on the item.
+    existed = !!(await first(TARGET, key, url));
     id = await saveOne({
       source,
       externalId: x.externalId ?? key,
+      key,
+      url,
       imageHash: hash,
       kind: file.type.startsWith("image/") ? "image"
         : file.type.startsWith("video/") ? "video"
@@ -250,7 +265,7 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
       title: title ?? words?.split("\n")[0].slice(0, 120) ?? null,
       postedAt: x.takenAt ?? null,
       savedAt: x.takenAt ?? t,
-      raw: { filename: file.name },
+      raw: { filename: file.name, url },
     });
     const hasCopy = await first(`select 1 from files where item_id = ? and sha256 = ?`, id, hash);
     if (!hasCopy) {
@@ -311,8 +326,7 @@ export async function captureItem(x: CaptureInput): Promise<{ id: string; existe
   // After the response, so saving stays quick: Brain hears or reads the save (voice memo, picture,
   // note) and pulls out people and dates, Claude sorts it, then it gets its vector. Each step uses
   // what the one before found, so a voice memo is sorted by what was said in it.
-  const readFirst = !existed && (file || !url) ? readItems([id]).catch(() => null) : Promise.resolve(null);
-  if (!existed && x.sort !== false) runLater(readFirst.then(() => sortItems([id]).catch(() => 0)).then(() => embedItems([id])), "read, sort and embed");
-  else if (!existed || note) runLater(readFirst.then(() => embedItems([id])), "read and embed");
+  if (!existed) runLater(readSortEmbed([id], { sort: x.sort !== false }), "read, sort and embed");
+  else if (note) runLater(embedItems([id]), "embed");
   return { id, existed };
 }

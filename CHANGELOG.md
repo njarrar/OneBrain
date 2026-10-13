@@ -1,7 +1,45 @@
 # Changelog
 
-Versions cover the web app (`web/`) and the iPhone app (`ios/`) together. Each one is a git
+Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
+
+## 0.6.0 "Android" (2026-10-13)
+
+### New
+
+- **Android app** (`android/`), written in Kotlin with Jetpack Compose. Sign in, browse and
+  search your saves, open one, Ask Brain, and add a link or note, or share one from any app.
+  Each push builds an APK; get it from the Android run on the Actions tab.
+
+### Fixed, on the web
+
+- New saves from the iPhone's bulk import, the share menu and ingest hooks are now read
+  (text in pictures, what was said) before they are sorted and searched, not only sorted.
+- Gmail and Outlook new-mail checks pick up where they stopped, so a large batch of new mail
+  is no longer skipped. Pinterest remembers how far it got on each board.
+- A file saved with a link keeps the link. The phone's file upload keeps its title, link and
+  reminder.
+- Instagram links with a username in them (`instagram.com/name/p/...`) import, and a post seen
+  twice keeps its author and date.
+- Merging copies keeps reminders, transcripts and facts, and the merged save is searched again.
+- Large batches of reading, embedding and Trash emptying no longer hit the database's limit on
+  how many ids one request can hold.
+- Reading stops only when nothing is left, not when one batch fails; Read again also sorts.
+- The AI may name a new category oddly, or the list may be full: those saves now go to
+  **Other** instead of staying unsorted for good. At most 4 pictures go with each sorting batch.
+- X and YouTube sign-in tokens are now stored encrypted, like the rest.
+- Voice memos and videos play from any point (range requests), and odd ranges get a proper error.
+- Signing in from a phone keeps the phone's name on its key, even when you weren't signed in
+  on the web yet.
+- "What was said" shows for any save with sound, and "Text in the picture" for the rest.
+- The Read and Sort panels show the right count after the page updates.
+- Digest errors name the AI you picked.
+
+### Fixed, on the iPhone
+
+- Screenshot sync waits for the full picture, not the blurry draft Photos sends first.
+- Voice memos no longer leave a stale "finished playing" watcher behind.
+- Voice memos, emails and pins show their own icon, and sound files saved as plain data still play.
 
 ## 0.5.1 (2026-10-13)
 

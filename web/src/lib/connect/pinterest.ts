@@ -1,6 +1,6 @@
 import { db, env } from "@/lib/db";
 import { markSynced, saveMany, type Incoming } from "@/lib/ingest";
-import { knownIds, readToken, saveToken } from "@/lib/connect/tokens";
+import { knownIds, readState, readToken, saveState, saveToken } from "@/lib/connect/tokens";
 import type { Connector, SyncResult } from "@/lib/connect/types";
 
 // Pinterest: your own boards and the pins on them, read only, through the Pinterest API.
@@ -9,9 +9,17 @@ import type { Connector, SyncResult } from "@/lib/connect/types";
 const API = "https://api.pinterest.com/v5";
 const SCOPE = "boards:read,pins:read,user_accounts:read";
 const TOKEN = "pinterest_refresh_token";
+const STATE = "pinterest_state";
 const MAX_PAGES = 40; // 100 pins or boards a page
 
 type Board = { id: string; name: string };
+
+type State = {
+  // Boards whose pins have all come in once. Later runs stop at the first page with nothing new.
+  doneBoards: string[];
+  // Where a board's first walk stopped when a run ran out of pages, by board id.
+  cursors: Record<string, string>;
+};
 type Pin = {
   id: string;
   created_at?: string;
@@ -46,14 +54,16 @@ async function accessToken(): Promise<string> {
   return t.access_token!;
 }
 
-async function* pages<T>(token: string, path: string, budget: { left: number }) {
-  let bookmark = "";
-  while (budget.left-- > 0) {
+// Pages of a list, each with the bookmark for the page after it (null on the last page).
+async function* pages<T>(token: string, path: string, budget: { left: number }, start = "") {
+  let bookmark = start;
+  while (budget.left > 0) {
+    budget.left--;
     const q = new URLSearchParams({ page_size: "100", ...(bookmark ? { bookmark } : {}) });
     const res = await fetch(`${API}/${path}?${q}`, { headers: { authorization: `Bearer ${token}` } });
     const json = (await res.json().catch(() => ({}))) as { items?: T[]; bookmark?: string | null; message?: string };
     if (!res.ok) throw new Error(`Pinterest said: ${json.message ?? res.status}`);
-    yield json.items ?? [];
+    yield { items: json.items ?? [], next: json.bookmark ?? null };
     if (!json.bookmark) return;
     bookmark = json.bookmark;
   }
@@ -85,11 +95,16 @@ async function sync(): Promise<SyncResult> {
   let added = 0;
   try {
     const token = await accessToken();
+    const state = await readState<State>(STATE, { doneBoards: [], cursors: {} });
+    const done = new Set(state.doneBoards);
     const budget = { left: MAX_PAGES };
+    let more = false;
     const boards: Board[] = [];
-    for await (const batch of pages<Board>(token, "boards", budget)) boards.push(...batch);
+    for await (const page of pages<Board>(token, "boards", budget)) boards.push(...page.items);
     for (const board of boards) {
-      for await (const batch of pages<Pin>(token, `boards/${board.id}/pins`, budget)) {
+      const resume = done.has(board.id) ? "" : (state.cursors[board.id] ?? "");
+      let finished = false;
+      for await (const { items: batch, next } of pages<Pin>(token, `boards/${board.id}/pins`, budget, resume)) {
         const known = await knownIds(d, "pinterest", batch.map((p) => p.id));
         const fresh = batch.filter((p) => p.id && !known.has(p.id));
         await saveMany(fresh.map((p) => toIncoming(p, board.name)));
@@ -107,12 +122,30 @@ async function sync(): Promise<SyncResult> {
           ]);
         }
         added += fresh.length;
-        // A board seen before stops at the first page with nothing new.
-        if (!fresh.length && known.size) break;
+        if (!done.has(board.id)) {
+          // Still on the board's first walk: remember the page, so a short run picks up here.
+          if (next) state.cursors[board.id] = next;
+          else finished = true;
+        } else if (!fresh.length && known.size) {
+          // A board walked once before stops at the first page with nothing new.
+          break;
+        }
+        if (!next) finished = true;
+      }
+      if (finished && !done.has(board.id)) {
+        done.add(board.id);
+        delete state.cursors[board.id];
+      }
+      if (!finished && !done.has(board.id)) more = true;
+      state.doneBoards = [...done];
+      await saveState(STATE, state);
+      if (budget.left <= 0) {
+        more = true;
+        break;
       }
     }
     await markSynced("pinterest", added);
-    return { added, more: budget.left < 0 };
+    return { added, more };
   } catch (err) {
     await markSynced("pinterest", added, err instanceof Error ? err.message : String(err));
     throw err;
@@ -136,6 +169,7 @@ export const pinterest: Connector = {
   sync,
   async disconnect() {
     await saveToken(TOKEN, null);
+    await saveState(STATE, null);
     await markSynced("pinterest", 0, null, "not_connected");
   },
 };

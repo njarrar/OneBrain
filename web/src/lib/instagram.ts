@@ -4,7 +4,8 @@ import { markSynced, saveStatements, type Incoming } from "@/lib/ingest";
 
 // Reads Instagram's "Download your information" export: saved_posts.json and saved_collections.json,
 // or the whole .zip. Instagram only gives the link, the account and the time, not the picture.
-const POST_LINK = /^https?:\/\/(www\.)?instagram\.com\/(p|reel|reels|tv)\/([\w-]+)/i;
+// Newer exports put the account in the link: instagram.com/<user>/p/<code>/.
+const POST_LINK = /^https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/i;
 
 type Found = { href: string; code: string; author: string | null; at: number | null; collection: string | null };
 
@@ -20,8 +21,16 @@ function walk(node: unknown, author: string | null, collection: string | null, o
   const title = typeof o.title === "string" ? o.title : null;
   const href = typeof o.href === "string" ? o.href : null;
   const m = href?.match(POST_LINK);
-  if (m && !out.has(m[3])) {
-    out.set(m[3], { href: href!, code: m[3], author, at: typeof o.timestamp === "number" ? o.timestamp : null, collection });
+  if (m) {
+    const code = m[2];
+    const seen = out.get(code);
+    // The same post can be in saved_posts.json and saved_collections.json: keep what each one knows.
+    if (!seen) out.set(code, { href: href!, code, author, at: typeof o.timestamp === "number" ? o.timestamp : null, collection });
+    else {
+      seen.author ??= author;
+      seen.collection ??= collection;
+      if (seen.at === null && typeof o.timestamp === "number") seen.at = o.timestamp;
+    }
   }
   const isCollection = o.string_map_data && typeof o.string_map_data === "object" && "Creation Time" in (o.string_map_data as object);
   for (const [k, v] of Object.entries(o)) {
@@ -45,17 +54,20 @@ export async function importInstagram(name: string, bytes: Uint8Array): Promise<
 
   const d = await db();
   const before = (await d.prepare(`select count(*) as n from saves where source_id = 'instagram'`).first<{ n: number }>())?.n ?? 0;
-  const incoming: Incoming[] = [...found.values()].map((f) => ({
+  const incoming: Incoming[] = [...found.values()].map((f) => {
+    const handle = f.author?.replace(/^@/, "") || null;
+    return {
     source: "instagram",
     externalId: f.code,
     url: `https://www.instagram.com/${f.href.match(/\/(reels?|tv)\//i) ? "reel" : "p"}/${f.code}/`,
-    title: f.author ? `Post by @${f.author}` : "Instagram post",
-    authorHandle: f.author ? `@${f.author}` : null,
-    author: f.author,
+    title: handle ? `Post by @${handle}` : "Instagram post",
+    authorHandle: handle ? `@${handle}` : null,
+    author: handle,
     kind: "post",
     savedAt: f.at ? new Date(f.at * 1000).toISOString() : null,
     raw: f,
-  }));
+  };
+  });
   for (let i = 0; i < incoming.length; i += 40) {
     const stmts = (await Promise.all(incoming.slice(i, i + 40).map((x) => saveStatements(x)))).flatMap((s) => s.stmts);
     await d.batch(stmts);
@@ -64,3 +76,4 @@ export async function importInstagram(name: string, bytes: Uint8Array): Promise<
   await markSynced("instagram", after - before, null, "import");
   return { found: found.size, added: after - before };
 }
+export const forTests = { walk, POST_LINK };

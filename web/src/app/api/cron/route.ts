@@ -48,13 +48,14 @@ export async function POST(req: Request) {
     }
   }
   // Reading goes first, so sorting and vectors use what was heard or read.
-  const reading = { read: 0, failed: 0 };
+  const reading = { read: 0, failed: 0, skipped: 0 };
   try {
     for (let i = 0; i < READ_BATCHES; i++) {
       const r = await readItems();
       reading.read += r.read;
       reading.failed += r.failed;
-      if (!r.read && !r.failed) break;
+      reading.skipped += r.skipped;
+      if (!r.read && !r.failed && !r.skipped) break;
     }
   } catch (err) {
     report.readError = String(err);
