@@ -3,6 +3,12 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.8.1 (2026-10-31)
+
+### Web
+- Moves the web app to Next.js 16 and React 19.3. The Cloudflare build tool no longer
+  takes Next.js 15, so 0.8.0 needs this release to deploy.
+
 ## 0.8.0 "Keep" (2026-10-31)
 
 Ways to get through what you saved, say why you kept it, and take it with you.
