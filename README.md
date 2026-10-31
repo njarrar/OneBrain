@@ -43,7 +43,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.8.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.8.1.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -161,7 +161,7 @@ The categories live in the `categories` table, so you can rename or add them too
 
 ## The web app
 
-The app is in `web/`. It is a Next.js 15 app that runs on Cloudflare Workers through
+The app is in `web/`. It is a Next.js 16 app that runs on Cloudflare Workers through
 OpenNext.
 
 - **Data:** Cloudflare D1 (SQLite), database `digital-brain`. The schema is in
