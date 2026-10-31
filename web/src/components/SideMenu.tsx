@@ -18,7 +18,7 @@ export function SideMenu({
   tags,
   userName,
 }: {
-  views: { inbox: number; all: number; archived: number; media: number; sensitive: number; trash: number; unread: number; resurface: number };
+  views: { inbox: number; all: number; archived: number; media: number; sensitive: number; trash: number; unread: number; resurface: number; pile: number };
   categories: CategoryCount[];
   tags: Count[];
   userName: string;
@@ -87,7 +87,13 @@ export function SideMenu({
             <span>✦ Resurface</span>
             {views.resurface > 0 && <span className="memory-count">{views.resurface}</span>}
           </Link>
+          <Link href="/pile" className={pathname === "/pile" ? "menu-row resurface active" : "menu-row resurface"} aria-current={pathname === "/pile" ? "page" : undefined}>
+            <span>✦ Clear the pile</span>
+            {views.pile > 0 && <span className="count">{views.pile.toLocaleString()}</span>}
+          </Link>
           {row("/digest", "Weekly digest", null, pathname === "/digest")}
+          {row("/podcast", "Podcast", null, pathname === "/podcast")}
+          {row("/map", "Topic map", null, pathname === "/map")}
         </div>
 
         <div className="menu-group">

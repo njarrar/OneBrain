@@ -10,6 +10,9 @@ enum Route: Hashable {
     case resurface
     case digest
     case ask(String)
+    case pile
+    case map
+    case podcast
 }
 
 enum AppTab: Hashable { case inbox, library, search }
@@ -151,6 +154,9 @@ extension View {
             case .resurface: ResurfaceView()
             case .digest: DigestView()
             case .ask(let question): AskView(question: question)
+            case .pile: PileView()
+            case .map: TopicMapView()
+            case .podcast: PodcastView()
             }
         }
     }

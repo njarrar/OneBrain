@@ -171,6 +171,53 @@ object Api {
         send(request("api/app/resurface", method = "POST", body = jsonBody(buildJsonObject { put("id", id); put("how", how) })))
     }
 
+    // Clear the pile
+
+    /** The next saves in the pile, leaving out ones the screen already holds. */
+    suspend fun pile(skip: List<String> = emptyList()): PilePage {
+        val q = if (skip.isEmpty()) emptyList() else listOf("skip" to skip.takeLast(80).joinToString(","))
+        return decode(send(request("api/app/pile", q)))
+    }
+
+    /** done (keep), letgo (Trash), snooze (two weeks) or undo. */
+    suspend fun pileCall(id: String, how: String) {
+        send(request("api/app/pile", method = "POST", body = jsonBody(buildJsonObject { put("id", id); put("how", how) })))
+    }
+
+    /** Why a save was kept. null clears it. */
+    suspend fun keptWhy(id: String, why: KeptWhy?) {
+        send(request("api/app/pile", method = "POST", body = jsonBody(buildJsonObject { put("id", id); put("why", why?.raw) })))
+    }
+
+    // Topic map and podcast
+
+    suspend fun topicMap(): TopicMap = decode(send(request("api/app/map")))
+
+    suspend fun podcasts(): List<Podcast> =
+        decode(send(request("api/app/podcast")).jsonObject["podcasts"] ?: JsonArray(emptyList()))
+
+    /** Makes a new episode. The script and the voices take about a minute. */
+    suspend fun makePodcast(): Made = withContext(Dispatchers.IO) {
+        val slow = client.newBuilder().readTimeout(5, TimeUnit.MINUTES).build()
+        slow.newCall(request("api/app/podcast", method = "POST", body = empty)).execute().use { res ->
+            if (res.code == 401) {
+                AppSession.signOut()
+                throw SignedOutException()
+            }
+            val text = res.body?.string().orEmpty()
+            if (!res.isSuccessful) throw ServerException("Couldn't make it (${res.code}).")
+            decode<Made>(parse(text))
+        }
+    }
+
+    /** One episode's sound, loaded with the key. */
+    suspend fun podcastAudio(p: Podcast): ByteArray = withContext(Dispatchers.IO) {
+        client.newCall(request(p.audio.trimStart('/'))).execute().use { res ->
+            if (!res.isSuccessful) throw ServerException("Sound not found")
+            res.body?.bytes() ?: throw ServerException("Sound not found")
+        }
+    }
+
     /** Asks a question of your own saves. */
     suspend fun ask(question: String): Answer =
         decode(send(request("api/app/ask", method = "POST", body = jsonBody(buildJsonObject { put("q", question) }))))

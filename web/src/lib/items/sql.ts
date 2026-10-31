@@ -38,6 +38,9 @@ export type ItemRow = {
   created_at: string;
   sort_at: string;
   remind_at: string | null;
+  // Why it was kept (use, learn, buy, someone, idea), and when a snooze in the pile ends.
+  kept_why?: string | null;
+  snoozed_until?: string | null;
   // What Brain heard in a voice memo or read in a picture, and the people and dates Claude found.
   transcript: string | null;
   facts: Facts | null;

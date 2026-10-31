@@ -22,7 +22,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.BubbleChart
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.MarkEmailUnread
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Search
@@ -107,16 +110,22 @@ private fun RowIcon(icon: ImageVector, accent: Boolean = false) {
     Icon(icon, null, tint = if (accent) Theme.colors.accent else Theme.colors.ink2, modifier = Modifier.size(20.dp))
 }
 
-/** Resurface and the weekly digest, at the top so the daily cards are one tap away. */
+/** Resurface, the pile, the digest, the podcast and the map, at the top so they are one tap away. */
 @Composable
 private fun Memory(menu: MenuData) {
     val nav = LocalNav.current
     val due = menu.views.resurface ?: 0
+    val pile = menu.views.pile ?: 0
     GroupBox {
         GroupRow("Resurface", if (due > 0) "$due today" else null, onClick = { nav.go(ResurfaceRoute) }) {
             RowIcon(Icons.Outlined.AutoAwesome, accent = true)
         }
-        GroupRow("Weekly digest", divider = false, onClick = { nav.go(DigestRoute) }) { RowIcon(Icons.Outlined.Newspaper) }
+        GroupRow("Clear the pile", if (pile > 0) "${count(pile)} left" else null, onClick = { nav.go(PileRoute) }) {
+            RowIcon(Icons.Outlined.Inbox, accent = true)
+        }
+        GroupRow("Weekly digest", onClick = { nav.go(DigestRoute) }) { RowIcon(Icons.Outlined.Newspaper) }
+        GroupRow("Podcast", onClick = { nav.go(PodcastRoute) }) { RowIcon(Icons.Outlined.GraphicEq) }
+        GroupRow("Topic map", divider = false, onClick = { nav.go(MapRoute) }) { RowIcon(Icons.Outlined.BubbleChart) }
     }
 }
 

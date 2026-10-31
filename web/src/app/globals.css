@@ -695,3 +695,42 @@ kbd {
   display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; color: var(--ink); font: 13px var(--sans);
 }
 .answer-sources a:hover { background: var(--card); text-decoration: none; }
+
+/* Clear the pile */
+.pile-page .page-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+.pile-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pile-bar .btn { margin-inline-start: auto; }
+.pile-left { font: 500 14px var(--mono); color: var(--soft); }
+.pile-left b { font-size: 26px; color: var(--ink); margin-inline-end: 4px; }
+.pile-why { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; background: var(--memory-bg); }
+.pile-why .chip { border: 1px solid var(--line); cursor: pointer; }
+.pile-why .chip.on { background: var(--memory); color: var(--bg); border-color: var(--memory); }
+.pile-why kbd { font-size: 10px; padding: 0 4px; }
+
+/* Topic map */
+.map-page .page-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+.topic-map { width: 100%; height: auto; max-height: 78vh; display: block; margin: 0 auto 20px; overflow: visible; }
+.map-link { stroke: var(--soft); stroke-dasharray: 10 8; stroke-linecap: round; }
+.map-node circle { fill: color-mix(in srgb, var(--c) 22%, transparent); stroke: var(--c); stroke-width: 2.5; transition: fill .15s; }
+.map-node:hover circle { fill: color-mix(in srgb, var(--c) 40%, transparent); }
+.map-name { font: 600 22px var(--mono); fill: var(--ink); text-transform: uppercase; letter-spacing: .04em; }
+.map-count { font: 600 26px var(--mono); fill: var(--ink); }
+.map-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.map-list h2 { font-size: 15px; margin: 0; }
+.map-list h2 a { color: var(--ink); }
+
+/* Podcast */
+.podcast-audio { width: 100%; }
+.podcast-page details summary { cursor: pointer; color: var(--accent); }
+.podcast-page details p { margin: 6px 0; }
+.podcast-items { margin: 6px 0; padding-inline-start: 18px; display: grid; gap: 4px; }
+.podcast-page form .btn.danger { align-self: flex-start; }
+
+/* Connector links */
+.connector-link { display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--accent-bg); }
+.connector-link code { font: 12px var(--mono); word-break: break-all; user-select: all; }
+.connector-link .btn { justify-self: start; }
+.connector-link ol { margin: 0; padding-inline-start: 18px; }
+.connector-keys { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.connector-keys li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.connector-keys li form { margin-inline-start: auto; }

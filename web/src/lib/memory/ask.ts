@@ -4,6 +4,7 @@ import { searchByMeaning } from "@/lib/memory/embed";
 import { factsText } from "@/lib/memory/read";
 import { aiReady, askJson, askText } from "@/lib/ai";
 import { sourceLabel } from "@/lib/sources";
+import { whyLabel } from "@/lib/memory/pile";
 import { z } from "zod";
 
 // Ask: answer a question from your own saves, joining up what's spread across them. For "what
@@ -115,6 +116,7 @@ function describe(item: ItemRow, n: number) {
     item.summary,
     facts && `Facts found in it:\n${facts}`,
     item.note && `My note: ${item.note}`,
+    whyLabel(item.kept_why) && `Why I kept it: ${whyLabel(item.kept_why)}`,
     item.transcript && `${item.kind === "image" ? "Text in the picture" : "What was said"}: ${item.transcript}`,
     item.body,
   ]

@@ -145,6 +145,10 @@ export async function updateItem(id: string, c: ItemChange): Promise<ItemDetail 
     sets.push("category = ?", "embedded_at = null");
     vals.push(c.category?.trim() || null);
   }
+  if (c.keptWhy !== undefined) {
+    sets.push("kept_why = ?");
+    vals.push(c.keptWhy);
+  }
   if (c.note !== undefined) {
     sets.push("note = ?", "embedded_at = null");
     vals.push(c.note?.trim() || null);

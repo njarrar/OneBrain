@@ -142,6 +142,69 @@ struct API {
         _ = try await post("api/app/resurface", ["id": id, "how": how], as: Out.self)
     }
 
+    // MARK: Clear the pile
+
+    /// The next saves in the pile, leaving out ones the screen already holds.
+    func pile(skip: [String] = []) async throws -> PilePage {
+        if Demo.on { return PilePage(items: [], left: 0) }
+        let q = skip.isEmpty ? [] : [URLQueryItem(name: "skip", value: skip.suffix(80).joined(separator: ","))]
+        return try await send(request("api/app/pile", query: q), as: PilePage.self)
+    }
+
+    /// done (keep), letgo (Trash), snooze (two weeks) or undo. Returns how many are left.
+    @discardableResult
+    func pileCall(_ id: String, how: String) async throws -> Int {
+        struct Out: Decodable { let left: Int }
+        return try await post("api/app/pile", ["id": id, "how": how], as: Out.self).left
+    }
+
+    /// Why a save was kept. nil clears it.
+    func keptWhy(_ id: String, _ why: KeptWhy?) async throws {
+        struct Body: Encodable {
+            let id: String
+            let why: String?
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: Keys.self)
+                try c.encode(id, forKey: .id)
+                try c.encode(why, forKey: .why)
+            }
+            enum Keys: String, CodingKey { case id, why }
+        }
+        struct Out: Decodable { let ok: Bool }
+        _ = try await post("api/app/pile", Body(id: id, why: why?.rawValue), as: Out.self)
+    }
+
+    // MARK: Topic map and podcast
+
+    func topicMap() async throws -> TopicMap {
+        if Demo.on { return TopicMap(nodes: [], links: [], total: 0) }
+        return try await send(request("api/app/map"), as: TopicMap.self)
+    }
+
+    func podcasts() async throws -> [Podcast] {
+        struct Out: Decodable { let podcasts: [Podcast] }
+        if Demo.on { return [] }
+        return try await send(request("api/app/podcast"), as: Out.self).podcasts
+    }
+
+    struct Made: Decodable {
+        let made: Bool
+        var reason: String?
+    }
+
+    /// Makes a new episode. The script and the voices take about a minute.
+    func makePodcast() async throws -> Made {
+        var req = try request("api/app/podcast", method: "POST")
+        req.timeoutInterval = 300
+        return try await send(req, as: Made.self)
+    }
+
+    /// One episode's sound, loaded with the key.
+    func podcastAudio(_ p: Podcast) async throws -> Data {
+        guard let url = URL(string: p.audio, relativeTo: Config.baseURL)?.absoluteURL else { throw APIError.server("Bad link") }
+        return try await imageData(url)
+    }
+
     /// Asks a question of your own saves.
     func ask(_ question: String) async throws -> Answer {
         try await post("api/app/ask", ["q": question], as: Answer.self)

@@ -62,18 +62,34 @@ struct LibraryView: View {
         }
     }
 
-    /// Resurface and the weekly digest, at the top so the daily cards are one tap away.
+    /// Resurface, the pile, the digest, the podcast and the map, at the top so they are one tap away.
     private func memory(_ menu: MenuData) -> some View {
         let due = menu.views.resurface ?? 0
+        let pile = menu.views.pile ?? 0
         return VStack(spacing: 0) {
             NavigationLink(value: Route.resurface) {
                 GroupRow(label: "Resurface", value: due > 0 ? "\(due) today" : nil, divider: true) {
                     Image(systemName: "sparkles").font(.ui(18)).foregroundStyle(Theme.accent).frame(width: 20)
                 }
             }
+            NavigationLink(value: Route.pile) {
+                GroupRow(label: "Clear the pile", value: pile > 0 ? "\(pile.formatted()) left" : nil, divider: true) {
+                    Image(systemName: "tray.full").font(.ui(18)).foregroundStyle(Theme.accent).frame(width: 20)
+                }
+            }
             NavigationLink(value: Route.digest) {
-                GroupRow(label: "Weekly digest", divider: false) {
+                GroupRow(label: "Weekly digest", divider: true) {
                     Image(systemName: "newspaper").font(.ui(18)).foregroundStyle(Theme.ink2).frame(width: 20)
+                }
+            }
+            NavigationLink(value: Route.podcast) {
+                GroupRow(label: "Podcast", divider: true) {
+                    Image(systemName: "waveform").font(.ui(18)).foregroundStyle(Theme.ink2).frame(width: 20)
+                }
+            }
+            NavigationLink(value: Route.map) {
+                GroupRow(label: "Topic map", divider: false) {
+                    Image(systemName: "circle.hexagongrid").font(.ui(18)).foregroundStyle(Theme.ink2).frame(width: 20)
                 }
             }
         }

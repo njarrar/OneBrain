@@ -4,10 +4,11 @@ import { RemindMenu } from "@/components/RemindMenu";
 import { MarkOpened } from "@/components/MarkOpened";
 import { getItem } from "@/lib/items/service";
 import { listCategoryNames } from "@/lib/queries";
-import { acceptTag, addTags, purgeItem, readAgain, removeTag, restoreItem, saveNote, setCategory, setRead, setStatus, trashItem } from "@/lib/actions";
+import { acceptTag, addTags, purgeItem, readAgain, removeTag, restoreItem, saveNote, setCategory, setKeptWhy, setRead, setStatus, trashItem } from "@/lib/actions";
 import { relatedItems } from "@/lib/memory/embed";
 import { SOURCE_LABELS, shortDate } from "@/lib/links";
 import { dayLabel, isAudioFile } from "@/lib/memory/read";
+import { WHY_LABEL } from "@/lib/memory/pile";
 
 // One item in full. Used by the item page and by the reading pane beside the list.
 // Opening an item marks it read, same as on the iPhone.
@@ -145,6 +146,14 @@ export async function ItemView({ id, pane = false }: { id: string; pane?: boolea
         <form action={saveNote.bind(null, item.id)} className="note-form">
           <textarea id={`note-${item.id}`} name="note" rows={4} defaultValue={item.note ?? ""} placeholder="Why you saved this, what to do with it…" dir="auto" aria-label="Your note" />
           <button className="btn">Save note</button>
+        </form>
+        <form action={setKeptWhy.bind(null, item.id)} className="inline-form">
+          <label htmlFor={`why-${item.id}`} className="muted small">Why I kept it</label>
+          <select id={`why-${item.id}`} name="why" defaultValue={item.kept_why ?? ""}>
+            <option value="">Not said</option>
+            {Object.entries(WHY_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
+          <button className="btn quiet">Set</button>
         </form>
       </section>
 

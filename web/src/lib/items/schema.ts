@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+// Clear the pile: the calls on one save, and why a save was kept.
+export const DECISIONS = ["done", "letgo", "snooze", "undo"] as const;
+export type Decision = (typeof DECISIONS)[number];
+export const WHYS = ["use", "learn", "buy", "someone", "idea"] as const;
+export type Why = (typeof WHYS)[number];
+
 // The data contract between the web app, the iPhone app and the share extension.
 // ios/Shared/Models.swift and ios/Shared/API.swift mirror these shapes; change both together
 // (see contracts/README.md).
@@ -40,6 +46,8 @@ export const ItemChange = z
     removeTags: z.array(z.string().max(60)).max(20).optional(),
     // When the item should come back in Resurface. null clears the reminder.
     remindAt: IsoDate.nullable().optional(),
+    // Why it was kept. null clears it.
+    keptWhy: z.enum(WHYS).nullable().optional(),
   })
   .strict();
 export type ItemChange = z.infer<typeof ItemChange>;
@@ -57,6 +65,11 @@ export const SaveJson = z.object({
 export type SaveJson = z.infer<typeof SaveJson>;
 
 export const Review = z.object({ id: z.string().min(1).max(200), how: z.enum(["keep", "later", "done"]) });
+// Clear the pile: one call on one save, or why it was kept (null clears it).
+export const PileCall = z.union([
+  z.object({ id: z.string().min(1).max(200), how: z.enum(DECISIONS) }).strict(),
+  z.object({ id: z.string().min(1).max(200), why: z.enum(WHYS).nullable() }).strict(),
+]);
 export const Question = z.object({ q: z.string().trim().min(1).max(500) });
 
 // Tags sent as a list or as one comma-separated string (a form field). Bad names are dropped.

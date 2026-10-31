@@ -3,6 +3,41 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.8.0 "Keep" (2026-10-31)
+
+Ways to get through what you saved, say why you kept it, and take it with you.
+
+### Web, iPhone and Android
+- **Clear the pile.** Every inbox save, oldest first, one at a time, with a count of how
+  many are left. **Keep** moves it to the Archive, **Let go** moves it to Trash, **Snooze**
+  hides it for two weeks, and **Undo** takes the last call back. The screen moves on at
+  once and saves behind you. On the web, keys D, X, S and U do the same.
+- **Why I kept it.** After Keep, one tap says why: to use, to learn, to buy, for someone,
+  or an idea (keys 1 to 5 on the web). Every item page can set or change it. Ask Brain
+  reads it, so "what did I save to buy?" works.
+- **Podcast.** Press Make and two hosts, Maya and Sam, talk through the last thirty days
+  of what you saved and kept, and push back on each other. Your AI writes the script and
+  Workers AI speaks it. It takes about a minute; the script and the saves it covers sit
+  under the player.
+- **Topic map.** One circle per category, sized by how much you saved in it, with lines
+  between categories whose saves share tags. Tap a circle to open it; the main
+  sub-topics are listed under the map.
+
+### Web
+- **Use Brain in other AIs.** Settings has a new section that makes a connector link.
+  Add it as a custom connector in Claude or ChatGPT (or any app that takes MCP
+  connectors) and that AI can search your saves, read one in full, see what you saved
+  lately and how your topics look, and ask Brain. It can't change or delete anything.
+  Each link has its own key, and you can remove one alone. A connector key never opens
+  the app's own routes.
+- The menu has Clear the pile (with its count), Podcast and Topic map.
+
+### Server
+- Migration `0013_pile_podcast.sql` adds `items.kept_why`, `items.snoozed_until` and a
+  `podcasts` table. Episodes are kept in R2 under `podcasts/`.
+- New routes: `/api/app/pile`, `/api/app/map`, `/api/app/podcast`,
+  `/api/app/podcast/<id>/audio` and `/api/mcp/<key>`.
+
 ## 0.7.0 (2026-10-13)
 
 A design pass on the phone apps, from a review of the iPhone app.
