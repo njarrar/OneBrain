@@ -22,7 +22,14 @@ You pick the AI in Settings: **Claude**, **ChatGPT** or **Gemini**, with your ow
   words and by meaning, then searches again for the people it found, so a name in a voice
   memo links to the screenshots, bookmarks and emails about that person.
 - **It brings things back.** **Remind me**, a daily **Resurface**, **Related** saves on each
-  item, and a **weekly digest** of what you saved.
+  item, a **weekly digest** of what you saved, and a **podcast** where two hosts talk
+  through your month.
+- **It helps you decide.** **Clear the pile** walks your inbox oldest first, one save at a
+  time: keep it, let it go or snooze it. When you keep one, say why (to use, to learn, to
+  buy, for someone, an idea), and Ask Brain uses that later. The **topic map** shows what
+  you keep, by topic.
+- **It goes where you work.** A connector link lets Claude, ChatGPT or any AI app that takes
+  MCP connectors search and read your saves. It can't change anything.
 
 ## What goes in
 
@@ -36,7 +43,7 @@ Nothing is thrown away. Your data stays in your own cloud account, and the web a
 apps stay in sync. You can search, filter, read, archive, retag or add a note to anything.
 Arabic text shows right to left.
 
-**Version 0.7.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
+**Version 0.8.0.** See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it looks like
 
@@ -183,6 +190,21 @@ What you can do in it:
 - **Weekly digest:** every Sunday evening your AI writes a short note on what you saved
   that week, grouped by theme, with links to the items. "Write this week's now" makes one
   at once.
+- **Clear the pile:** every inbox save, oldest first, one at a time, with how many are
+  left. Keep (`d`) moves it to the Archive, Let go (`x`) moves it to Trash, Snooze (`s`)
+  hides it for two weeks, Undo (`u`) takes the last call back. After Keep, keys 1 to 5
+  say why you kept it. The item page can change the reason later.
+- **Podcast:** press Make and two hosts talk through the last thirty days of what you saved
+  and kept, and push back on each other. The chosen AI writes the script; Workers AI
+  (`@cf/deepgram/aura-1`) speaks it, and the episode is kept in R2 as one MP3.
+- **Topic map:** one circle per category, sized by how much you saved in it, with lines
+  between categories whose saves share tags.
+- **Use Brain in other AIs:** Settings makes a connector link,
+  `https://<your site>/api/mcp/<key>`. Add it as a custom connector in Claude (Settings,
+  Connectors, Add custom connector) or ChatGPT (Settings, Apps and Connectors, Create, No
+  authentication). The connector is read only, with five tools: `search_saves`,
+  `get_save`, `recent_saves`, `topics` and `ask_brain`. Each link has its own key; remove
+  one in Settings and it stops working. A connector key can't open `/api/app/*`.
 - **Related:** each item page lists saves about the same thing.
 - **Reading pane:** in the List layout a card opens beside the list. `j` and `k` move,
   `e` archives, `u` marks unread, `Esc` closes.
@@ -305,12 +327,15 @@ Unknown fields are refused.
 | Route | What it does |
 | --- | --- |
 | `GET /items` | The list. Same filters as the web page. Page with `cursor` (from `nextCursor`); `page` still works. |
-| `GET /items/:id`, `PATCH /items/:id` | One item. PATCH takes `status`, `read`, `trash`, `category`, `note`, `addTags`, `removeTags`, `remindAt` (null clears). |
+| `GET /items/:id`, `PATCH /items/:id` | One item. PATCH takes `status`, `read`, `trash`, `category`, `note`, `addTags`, `removeTags`, `remindAt`, `keptWhy` (null clears). |
 | `DELETE /items/:id`, `DELETE /items?view=trash` | Delete for good, from Trash only. |
 | `GET /items/:id/related` | Saves about the same thing. |
 | `POST /items/:id/read` | Hear or read the item again: transcript, people and dates. |
 | `GET /resurface`, `POST /resurface` | Today's cards; answer one with `{ id, how: keep, later or done }`. |
 | `POST /ask` | `{ q }`, answers from your saves with the items it used. |
+| `GET /pile`, `POST /pile` | The next inbox saves, oldest first, and how many are `left` (`skip` leaves out ids the screen holds). POST `{ id, how: done, letgo, snooze or undo }`, or `{ id, why: use, learn, buy, someone, idea or null }`. |
+| `GET /map` | The topic map: circles with `x`, `y`, `r` on a 1000 by 1000 square, and the lines between them. |
+| `GET /podcast`, `POST /podcast` | The latest episodes; POST makes a new one (about a minute). The sound is at `/podcast/:id/audio`. |
 | `GET /digest`, `POST /digest` | The latest weekly digests; POST writes this week's now. |
 | `POST /save` | A link, a note or a file (a picture, a voice memo or a video). |
 | `GET /ai`, `PUT /ai`, `POST /ai/test` | The AI in use, its model and keys (last four only); change them; test one. |
@@ -329,10 +354,11 @@ Screenshots album and anything shared to Save to Brain go straight to the cloud.
 It has three tabs in the system tab bar: **Inbox**, **Library** and **Search**. Search finds
 saves as you type, and its top row, **Ask Brain**, turns the same words into an answer from
 your saves. Before you type it offers questions drawn from your own saves. Library opens
-Resurface and the weekly digest, and each item has **Remind me** in its More menu and a list
+Resurface, Clear the pile, the weekly digest, the podcast and the topic map, and each item has **Remind me** in its More menu and a list
 of related saves. Text follows the phone's text size setting, and saving, archiving, deleting,
 tagging and setting a reminder each give a small buzz. Speaking in the Add sheet keeps the voice
-memo, and an item shows a player, what was said and what Brain found in it. See
+memo, and an item shows a player, what was said and what Brain found in it, and a **Kept** row
+that says why you kept it. See
 [ios/README.md](ios/README.md) to build it.
 
 <p>

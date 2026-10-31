@@ -30,6 +30,8 @@ struct Item: Codable, Identifiable, Hashable {
     var transcript: String?
     /// The people and dates Claude found in it (0.3 servers).
     var facts: Facts?
+    /// Why it was kept: use, learn, buy, someone or idea (0.8 servers).
+    var keptWhy: String?
 
     var isSensitive: Bool { (sensitive ?? 0) != 0 }
     var isUnread: Bool { readAt == nil && deletedAt == nil }
@@ -162,6 +164,8 @@ struct MenuData: Codable {
         var unsorted: Int?
         /// Resurface cards waiting today.
         var resurface: Int?
+        /// Saves left in the pile (0.8 servers).
+        var pile: Int?
     }
     struct Category: Codable, Hashable, Identifiable {
         let name: String
@@ -362,5 +366,82 @@ struct Digest: Codable, Identifiable, Hashable {
     var title: String {
         guard let d = Dates.parse(weekStart + "T00:00:00Z") else { return "Week of \(weekStart)" }
         return "Week of " + d.formatted(.dateTime.month(.wide).day())
+    }
+}
+
+/// Why a save was kept. Ask Brain, the digest and the podcast read it.
+enum KeptWhy: String, CaseIterable, Identifiable {
+    case use, learn, buy, someone, idea
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .use: return "To use"
+        case .learn: return "To learn"
+        case .buy: return "To buy"
+        case .someone: return "For someone"
+        case .idea: return "An idea"
+        }
+    }
+
+    static func label(_ raw: String?) -> String? { raw.flatMap(KeptWhy.init(rawValue:))?.label }
+}
+
+/// The next saves in the pile, oldest first, and how many are left.
+struct PilePage: Codable {
+    let items: [Item]
+    let left: Int
+}
+
+/// The topic map. x, y and r are on a 1000 by 1000 square, worked out by the server.
+struct TopicMap: Codable {
+    struct Sub: Codable, Hashable {
+        let name: String
+        let count: Int
+    }
+    struct Node: Codable, Hashable, Identifiable {
+        let name: String
+        let color: String?
+        let count: Int
+        let x: Double
+        let y: Double
+        let r: Double
+        let subtopics: [Sub]
+        var id: String { name }
+    }
+    struct Link: Codable, Hashable {
+        let a: String
+        let b: String
+        let shared: Int
+    }
+    let nodes: [Node]
+    let links: [Link]
+    let total: Int
+}
+
+/// One podcast episode: two hosts talking through thirty days of saves.
+struct Podcast: Codable, Identifiable, Hashable {
+    struct Line: Codable, Hashable {
+        let host: String
+        let text: String
+    }
+    struct Save: Codable, Hashable, Identifiable {
+        let id: String
+        let title: String
+        let category: String?
+    }
+    let id: String
+    let title: String
+    let fromDay: String
+    let toDay: String
+    let seconds: Double?
+    let createdAt: String
+    let audio: String
+    let lines: [Line]
+    let items: [Save]
+
+    var span: String {
+        let f = { (s: String) in Dates.parse(s + "T00:00:00Z").map { Dates.short($0) } ?? s }
+        return "\(f(fromDay)) to \(f(toDay))"
     }
 }

@@ -262,6 +262,8 @@ struct ItemView: View {
         VStack(spacing: 0) {
             noteRow
             divider
+            whyRow
+            divider
             categoryRow
             divider
             tagsRow
@@ -299,6 +301,43 @@ struct ItemView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 14)
         .onChange(of: noteFocus) { _, focused in if !focused { saveNote() } }
+    }
+
+    /// Why it was kept. Ask Brain, the digest and the podcast read it.
+    private var whyRow: some View {
+        Menu {
+            if item.keptWhy != nil {
+                Button("Not said") { Task { await setWhy(nil) } }
+            }
+            ForEach(KeptWhy.allCases) { w in
+                Button(w.label) { Task { await setWhy(w) } }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Text("Kept").foregroundStyle(Theme.soft).frame(width: 78, alignment: .leading)
+                if let label = KeptWhy.label(item.keptWhy) {
+                    Text(label).foregroundStyle(Theme.ink).lineLimit(1)
+                } else {
+                    Text("Why did you keep it?").foregroundStyle(Theme.faint)
+                }
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right").font(.ui(13, weight: .semibold)).foregroundStyle(Theme.chevron)
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 48)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func setWhy(_ why: KeptWhy?) async {
+        do {
+            try await API.shared.keptWhy(preview.id, why)
+            Haptic.tap()
+            await load()
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 
     private var categoryRow: some View {

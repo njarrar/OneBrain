@@ -1,6 +1,7 @@
 import { all, first } from "@/lib/db";
 import { HAS_MEDIA } from "@/lib/items/sql";
 import { countDue } from "@/lib/memory/reminders";
+import { pileLeft } from "@/lib/memory/pile";
 
 // Menu counts, sources and categories. Items themselves are read and changed in lib/items/service.ts;
 // the names below are re-exported so older imports keep working.
@@ -21,7 +22,7 @@ export async function menuCounts() {
             coalesce(sum(deleted_at is null and category is null), 0) as unsorted
      from items i`,
   ))!;
-  const resurface = await countDue();
+  const [resurface, pile] = await Promise.all([countDue(), pileLeft()]);
   const categories = await all<{ name: string; color: string | null; count: number }>(
     `select c.name, c.color, count(i.id) as count
      from categories c left join items i on i.category = c.name and i.status <> 'archived' and i.deleted_at is null
@@ -33,7 +34,7 @@ export async function menuCounts() {
      join items i on i.id = it.item_id and i.status <> 'archived' and i.deleted_at is null
      group by t.id order by count desc, t.name`,
   );
-  return { views: { ...views, resurface }, categories, tags };
+  return { views: { ...views, resurface, pile }, categories, tags };
 }
 
 export async function listSources() {

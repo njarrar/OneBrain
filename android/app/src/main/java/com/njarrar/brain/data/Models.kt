@@ -34,6 +34,8 @@ data class Item(
     val transcript: String? = null,
     /** The people and dates the AI found in it. */
     val facts: Facts? = null,
+    /** Why it was kept: use, learn, buy, someone or idea. */
+    val keptWhy: String? = null,
 ) {
     val isSensitive get() = (sensitive ?: 0) != 0
     val isUnread get() = readAt == null && deletedAt == null
@@ -165,6 +167,8 @@ data class MenuData(
         val unsorted: Int? = null,
         /** Resurface cards waiting today. */
         val resurface: Int? = null,
+        /** Saves left in the pile. */
+        val pile: Int? = null,
     )
 
     @Serializable
@@ -307,3 +311,71 @@ data class Filter(
             return out
         }
 }
+
+/** Why a save was kept. Ask Brain, the digest and the podcast read it. */
+enum class KeptWhy(val raw: String, val label: String) {
+    Use("use", "To use"),
+    Learn("learn", "To learn"),
+    Buy("buy", "To buy"),
+    Someone("someone", "For someone"),
+    Idea("idea", "An idea");
+
+    companion object {
+        fun of(raw: String?): KeptWhy? = entries.firstOrNull { it.raw == raw }
+    }
+}
+
+/** The next saves in the pile, oldest first, and how many are left. */
+@Serializable
+data class PilePage(val items: List<Item> = emptyList(), val left: Int = 0)
+
+/** The topic map. x, y and r are on a 1000 by 1000 square, worked out by the server. */
+@Serializable
+data class TopicMap(val nodes: List<Node> = emptyList(), val links: List<Link> = emptyList(), val total: Int = 0) {
+    @Serializable
+    data class Sub(val name: String, val count: Int = 0)
+
+    @Serializable
+    data class Node(
+        val name: String,
+        val color: String? = null,
+        val count: Int = 0,
+        val x: Double = 0.0,
+        val y: Double = 0.0,
+        val r: Double = 0.0,
+        val subtopics: List<Sub> = emptyList(),
+    )
+
+    @Serializable
+    data class Link(val a: String, val b: String, val shared: Int = 0)
+}
+
+/** One podcast episode: two hosts talking through thirty days of saves. */
+@Serializable
+data class Podcast(
+    val id: String,
+    val title: String = "",
+    val fromDay: String = "",
+    val toDay: String = "",
+    val seconds: Double? = null,
+    val createdAt: String = "",
+    val audio: String = "",
+    val lines: List<Line> = emptyList(),
+    val items: List<Save> = emptyList(),
+) {
+    @Serializable
+    data class Line(val host: String = "", val text: String = "")
+
+    @Serializable
+    data class Save(val id: String, val title: String = "", val category: String? = null)
+
+    val span: String
+        get() {
+            val f = java.time.format.DateTimeFormatter.ofPattern("MMM d")
+            fun day(s: String) = runCatching { java.time.LocalDate.parse(s).format(f) }.getOrDefault(s)
+            return "${day(fromDay)} to ${day(toDay)}"
+        }
+}
+
+@Serializable
+data class Made(val made: Boolean = false, val reason: String? = null)

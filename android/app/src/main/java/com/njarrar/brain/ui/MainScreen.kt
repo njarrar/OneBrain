@@ -103,6 +103,9 @@ fun MainScreen() {
                 composable<AISettingsRoute> { AISettingsScreen() }
                 composable<ResurfaceRoute> { ResurfaceScreen() }
                 composable<DigestRoute> { DigestScreen() }
+                composable<PileRoute> { PileScreen() }
+                composable<MapRoute> { TopicMapScreen() }
+                composable<PodcastRoute> { PodcastScreen() }
                 composable<AnswerRoute> { e -> AnswerScreen(e.toRoute<AnswerRoute>().question) }
             }
 

@@ -117,6 +117,7 @@ import com.njarrar.brain.data.Change
 import com.njarrar.brain.data.Dates
 import com.njarrar.brain.data.Facts
 import com.njarrar.brain.data.Item
+import com.njarrar.brain.data.KeptWhy
 import com.njarrar.brain.data.ItemDetail
 import com.njarrar.brain.data.MenuStore
 import com.njarrar.brain.data.SignedOutException
@@ -175,6 +176,20 @@ class ItemModel(private val id: String) : ViewModel() {
 
     fun set(c: Change, after: () -> Unit = {}) {
         viewModelScope.launch { if (change(c)) after() }
+    }
+
+    fun setWhy(why: KeptWhy?) {
+        viewModelScope.launch {
+            try {
+                Api.keptWhy(id, why)
+                val d = Api.item(id)
+                detail = d
+                MenuStore.edited(d.item)
+                error = null
+            } catch (e: Exception) {
+                error = e.friendly()
+            }
+        }
     }
 
     fun saveNote() {
@@ -546,6 +561,8 @@ private fun Details(item: Item, detail: ItemDetail?, m: ItemModel) {
     OutlineBox {
         NoteRow(m)
         RowDivider()
+        WhyRow(item, m)
+        RowDivider()
         CategoryRow(item, m)
         RowDivider()
         TagsRow(detail, m)
@@ -596,6 +613,37 @@ private fun NoteRow(m: ItemModel) {
             )
         } else if (saved.isNotEmpty()) {
             Text("Saved", fontSize = 12.sp, color = c.faint)
+        }
+    }
+}
+
+/** Why it was kept. Ask Brain, the digest and the podcast read it. */
+@Composable
+private fun WhyRow(item: Item, m: ItemModel) {
+    val c = Theme.colors
+    var open by remember { mutableStateOf(false) }
+    val now = KeptWhy.of(item.keptWhy)
+    Box {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable { open = true }.padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("Kept", fontSize = 15.sp, color = c.soft, modifier = Modifier.width(78.dp))
+            Text(now?.label ?: "Why did you keep it?", fontSize = 15.sp, color = if (now != null) c.ink else c.faint, maxLines = 1, modifier = Modifier.weight(1f))
+            Chevron()
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (now != null) {
+                DropdownMenuItem(text = { Text("Not said", color = c.soft) }, onClick = { open = false; m.setWhy(null) })
+            }
+            KeptWhy.entries.forEach { w ->
+                DropdownMenuItem(
+                    text = { Text(w.label) },
+                    trailingIcon = { if (w == now) Icon(Icons.Outlined.Check, null, tint = c.accent) },
+                    onClick = { open = false; m.setWhy(w) },
+                )
+            }
         }
     }
 }

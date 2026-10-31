@@ -4,16 +4,19 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getAuth } from "@/lib/auth";
+import { CONNECTOR_PREFIX, createAppToken, removeConnectorKey } from "@/lib/apptoken";
 import { requireUser } from "@/lib/session";
 import { sortItems, unsortedCount } from "@/lib/sorter";
 import { captureItem, listItems, markOpened, purgeItems, updateItem, type ItemRow } from "@/lib/items/service";
-import { ItemChange, Question, Review, tagList } from "@/lib/items/schema";
+import { ItemChange, PileCall, WHYS, Question, Review, tagList, type Decision, type Why } from "@/lib/items/schema";
 import { InputError, errorMessage } from "@/lib/http";
 import { review } from "@/lib/memory/reminders";
+import { decide, pileCard, pileNext, setWhy } from "@/lib/memory/pile";
 import { embedItems, searchByMeaning } from "@/lib/memory/embed";
 import { readItems, rereadItem, unreadTextCount } from "@/lib/memory/read";
 import { ask } from "@/lib/memory/ask";
 import { makeDigest } from "@/lib/memory/digest";
+import { deletePodcast, makePodcast } from "@/lib/memory/podcast";
 import { importInstagram } from "@/lib/instagram";
 import { disconnect as disconnectYT, setPickedPlaylists, syncYouTube } from "@/lib/youtube";
 import { disconnect as disconnectXApi, syncX } from "@/lib/x";
@@ -280,6 +283,11 @@ export async function setCategory(id: string, form: FormData) {
   await change(id, { category: String(form.get("category") ?? "") || null });
 }
 
+export async function setKeptWhy(id: string, form: FormData) {
+  const v = String(form.get("why") ?? "");
+  await change(id, { keptWhy: (WHYS as readonly string[]).includes(v) ? (v as Why) : null });
+}
+
 export async function addTags(id: string, form: FormData) {
   const tags = tagList(form.get("tags"));
   if (tags.length) await change(id, { addTags: tags });
@@ -306,6 +314,31 @@ export async function reviewCard(id: string, how: "keep" | "later" | "done") {
   const out = await review(r.data.id, r.data.how);
   revalidatePath("/", "layout");
   return out;
+}
+
+// ───────────── Clear the pile ─────────────
+
+export async function pileCall(id: string, how: Decision): Promise<{ left: number }> {
+  await requireUser();
+  const r = PileCall.safeParse({ id, how });
+  if (!r.success || !("how" in r.data)) throw new Error("That call isn't allowed.");
+  const out = await decide(r.data.id, r.data.how);
+  if (!out) throw new Error("That save is gone.");
+  return out;
+}
+
+export async function pileWhy(id: string, why: Why | null) {
+  await requireUser();
+  const r = PileCall.safeParse({ id, why });
+  if (!r.success || !("why" in r.data)) throw new Error("That reason isn't allowed.");
+  await setWhy(r.data.id, r.data.why);
+}
+
+// More saves for the pile once the screen runs low.
+export async function pileMore(skip: string[]) {
+  await requireUser();
+  const { items, left } = await pileNext(30, Array.isArray(skip) ? skip.map(String) : []);
+  return { cards: items.map(pileCard), left };
 }
 
 // The Add page: a link, a note, tags and an optional picture. Opens the item when saved.
@@ -386,4 +419,43 @@ export async function makeDigestNow(): Promise<string | null> {
   } catch (err) {
     return `${await aiName()} couldn't write it: ${errorMessage(err)}`;
   }
+}
+
+// ───────────── Podcast ─────────────
+
+export async function makePodcastNow(): Promise<string | null> {
+  await requireUser();
+  try {
+    const r = await makePodcast();
+    revalidatePath("/podcast");
+    return r.made ? null : (r.reason ?? "No episode this time.");
+  } catch (err) {
+    return `Couldn't make it: ${errorMessage(err)}`;
+  }
+}
+
+export async function removePodcast(id: string) {
+  await requireUser();
+  await deletePodcast(String(id));
+  revalidatePath("/podcast");
+}
+
+// ───────────── Connector for other AIs ─────────────
+
+// A new connector link. Shown once; Brain keeps only a hash of the key.
+export async function makeConnectorLink(_: unknown, form: FormData): Promise<{ url?: string; error?: string }> {
+  await requireUser();
+  const name = String(form.get("name") ?? "").trim().slice(0, 40) || "Other AI";
+  const key = await createAppToken(`${CONNECTOR_PREFIX} · ${name}`);
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  if (!host) return { error: "Couldn't tell this site's address." };
+  revalidatePath("/settings");
+  return { url: `https://${host}/api/mcp/${key}` };
+}
+
+export async function removeConnectorLink(id: string) {
+  await requireUser();
+  await removeConnectorKey(String(id));
+  revalidatePath("/settings");
 }

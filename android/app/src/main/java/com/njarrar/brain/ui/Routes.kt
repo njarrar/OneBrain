@@ -28,6 +28,9 @@ import kotlinx.serialization.Serializable
 @Serializable object ResurfaceRoute
 @Serializable object DigestRoute
 @Serializable data class AnswerRoute(val question: String)
+@Serializable object PileRoute
+@Serializable object MapRoute
+@Serializable object PodcastRoute
 
 enum class Tab(val route: Any, val label: String, val icon: ImageVector, val picked: ImageVector) {
     Inbox(InboxRoute, "Inbox", Icons.Outlined.Inbox, Icons.Filled.Inbox),
