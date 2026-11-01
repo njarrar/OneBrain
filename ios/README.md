@@ -40,3 +40,18 @@ To check it compiles without signing:
 xcodebuild -project Brain.xcodeproj -scheme Brain \
   -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
+
+## TestFlight and the App Store
+
+This needs a paid Apple Developer Program membership. Once you have one:
+
+1. Set `DEVELOPMENT_TEAM` in `project.yml` to your paid team's id (shown at
+   developer.apple.com, Account, Membership details), change `bundleIdPrefix` and the
+   bundle ids to your own, then run `xcodegen`.
+2. In Xcode, pick **Any iOS Device (arm64)**, then **Product, Archive**.
+3. In the Organizer window that opens, press **Distribute App**, then **TestFlight & App Store**.
+
+Each upload needs a higher build number (`CURRENT_PROJECT_VERSION` in `project.yml`).
+`PrivacyInfo.xcprivacy` in each target lists what the app reads, for Apple's privacy rules.
+The privacy and help pages are `/privacy` and `/support` on the web app. Put your own
+contact address at the top of each page first.

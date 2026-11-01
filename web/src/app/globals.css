@@ -377,6 +377,13 @@ textarea { resize: vertical; }
 .pill.bad { background: var(--bad-bg); color: var(--bad); }
 .pill.off { background: var(--bg); color: var(--soft); }
 
+/* Privacy and help pages */
+.doc-page { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; line-height: 1.6; color: var(--ink); }
+.doc-page h1 { margin: 0 0 4px; }
+.doc-page h2 { font-size: 18px; margin: 28px 0 6px; }
+.doc-page ul, .doc-page ol { padding-left: 20px; }
+.doc-page a { color: var(--accent, inherit); }
+
 /* Sign in */
 .login-box { display: flex; flex-direction: column; gap: 14px; }
 .login-box .viewing button { font: inherit; font-size: 13px; cursor: pointer; background: none; }

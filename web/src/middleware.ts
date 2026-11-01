@@ -14,5 +14,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!login|api/auth|api/ingest|api/cron|api/app|api/mcp|.well-known|files|_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest).*)"],
+  matcher: ["/((?!login|privacy|support|api/auth|api/ingest|api/cron|api/app|api/mcp|.well-known|files|_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest).*)"],
 };
