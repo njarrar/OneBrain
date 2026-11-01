@@ -76,6 +76,14 @@ struct SettingsView: View {
                 GroupCaption("Account")
                 VStack(spacing: 0) {
                     GroupRow(label: "Signed in on this iPhone", chevron: false)
+                    Button { openURL(Config.baseURL.appendingPathComponent("privacy")) } label: {
+                        GroupRow(label: "Privacy")
+                    }
+                    .buttonStyle(.plain)
+                    Button { openURL(Config.baseURL.appendingPathComponent("support")) } label: {
+                        GroupRow(label: "Help")
+                    }
+                    .buttonStyle(.plain)
                     Button { session.signOut() } label: {
                         Text("Sign out").font(.ui(16)).foregroundStyle(Theme.bad)
                             .padding(.horizontal, 14).frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)

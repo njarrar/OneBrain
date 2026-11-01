@@ -3,6 +3,20 @@
 Versions cover the web app (`web/`), the iPhone app (`ios/`) and, from 0.6.0, the Android app (`android/`) together. Each one is a git
 tag, such as `v0.2.0`.
 
+## 0.8.2 (2026-11-01)
+
+Gets the iPhone app ready for TestFlight and the App Store.
+
+### iPhone
+- Adds the privacy file Apple now asks every app for, and says the app only uses standard
+  HTTPS, so uploads skip the export question.
+- iPhone only, so the store listing needs no iPad screenshots.
+- Settings, Account has **Privacy** and **Help**.
+
+### Web
+- New public pages `/privacy` and `/support`, readable without signing in, for the App Store
+  listing and Google's app check.
+
 ## 0.8.1 (2026-10-31)
 
 ### Web
